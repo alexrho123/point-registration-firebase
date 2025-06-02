@@ -12,7 +12,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
   <script>
-    // -------------------------------
     // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
@@ -33,8 +32,10 @@
       const cancelBtn = document.getElementById("cancelBtn");
       const pointForm = document.getElementById("pointForm");
       const pointsContainer = document.getElementById("pointsContainer");
+      const regionFilter = document.getElementById("regionFilter");
       let userLatitude = null;
       let userLongitude = null;
+      let allPoints = [];
 
       // Όταν πατάμε το “+”, ζητάμε geolocation και εμφανίζουμε το modal
       openModalBtn.addEventListener("click", () => {
@@ -91,13 +92,27 @@
       db.collection("points")
         .orderBy("timestamp", "desc")
         .onSnapshot((snapshot) => {
-          pointsContainer.innerHTML = ""; // καθαρίζουμε το container
+          allPoints = [];
           snapshot.forEach((doc) => {
             const data = doc.data();
             const id = doc.id;
-            addPointToDOM({ id, ...data }, pointsContainer);
+            allPoints.push({ id, ...data });
           });
+          renderPoints();
         });
+
+      // Όταν αλλάζει το φίλτρο περιοχής, κάνουμε render ξανά
+      regionFilter.addEventListener("change", renderPoints);
+
+      function renderPoints() {
+        const selectedRegion = regionFilter.value;
+        pointsContainer.innerHTML = "";
+        allPoints.forEach((point) => {
+          if (!selectedRegion || point.area === selectedRegion) {
+            addPointToDOM(point, pointsContainer);
+          }
+        });
+      }
     });
 
     // Συνάρτηση για εμφάνιση ενός point ως “card”
@@ -113,7 +128,7 @@
       title.textContent = point.name + " (" + point.area + ")";
 
       const deleteBtn = document.createElement("button");
-      deleteBtn.className = "text-red-600 hover:text-red-800 font-semibold";
+      deleteBtn.className = "text-red-600 hover:text-red-800 font-semibold uppercase";
       deleteBtn.textContent = "ΔΙΑΓΡΑΦΗ";
       deleteBtn.addEventListener("click", async () => {
         if (confirm("Είστε σίγουρος ότι θέλετε να διαγράψετε;")) {
@@ -143,7 +158,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center py-12">
   <!-- Header -->
-  <header class="w-full bg-white shadow-md py-4 mb-10">
+  <header class="w-full bg-white shadow-md py-4 mb-6">
     <div class="max-w-2xl mx-auto px-6 flex justify-between items-center">
       <h1 class="text-2xl font-extrabold tracking-wider uppercase text-gray-900">Καταχώριση Σημείου</h1>
       <button
@@ -157,7 +172,23 @@
   </header>
 
   <!-- Main Container -->
-  <main class="w-full max-w-2xl px-6">
+  <main class="w-full max-w-2xl px-6 mb-10">
+    <!-- Φίλτρο Περιοχής -->
+    <div class="mb-6 flex justify-center">
+      <select
+        id="regionFilter"
+        class="block w-full max-w-xs border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 uppercase font-medium"
+      >
+        <option value="">ΟΛΕΣ ΟΙ ΠΕΡΙΟΧΕΣ</option>
+        <option value="Πόλη">ΠΟΛΗ</option>
+        <option value="Ιαλυσός">ΙΑΛΥΣΟΣ</option>
+        <option value="Φαληράκι">ΦΑΛΗΡΑΚΙ</option>
+        <option value="Κολύμπια">ΚΟΛΥΜΠΙΑ</option>
+        <option value="Νότια Ρόδος">ΝΟΤΙΑ ΡΟΔΟΣ</option>
+        <option value="Δυτική Ρόδος">ΔΥΤΙΚΗ ΡΟΔΟΣ</option>
+      </select>
+    </div>
+
     <!-- Περιγραφή / Οδηγίες -->
     <p class="text-center text-gray-600 mb-6 uppercase tracking-wide">
       Πατήστε το κουμπί “+” για να καταχωρήσετε νέο σημείο
