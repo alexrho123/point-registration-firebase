@@ -6,42 +6,28 @@
   <title>Καταχώριση Σημείου (Firebase)</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Firebase JS SDK (v9 modular) -->
-  <script type="module">
-    // 1. Εισάγουμε τα απαραίτητα από το Firebase SDK
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      addDoc,
-      onSnapshot,
-      query,
-      orderBy,
-      doc,
-      deleteDoc,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-    // 2. Το Firebase config για το project σου (βάλε τα δικά σου)
-const firebaseConfig = {
-  apiKey: "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
-  authDomain: "pointregistrationapp.firebaseapp.com",
-  projectId: "pointregistrationapp",
-  storageBucket: "pointregistrationapp.firebasestorage.app",
-  messagingSenderId: "925139386507",
-  appId: "1:925139386507:web:588ae991f39a7bab04548e"
-};
+  <!-- Firebase “compat” SDKs (non-module) για ευρεία συμβατότητα -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
+  <script>
+    // -------------------------------
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
+      authDomain: "pointregistrationapp.firebaseapp.com",
+      projectId: "pointregistrationapp",
+      storageBucket: "pointregistrationapp.firebasestorage.app",
+      messagingSenderId: "925139386507",
+      appId: "1:925139386507:web:588ae991f39a7bab04548e"
+    };
 
-    // 3. Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    // Initialize Firebase (compat)
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    // 4. Αναφορές στη συλλογή “points”
-    const pointsCol = collection(db, "points");
-
-    // 5. Μόλις φορτώσει η σελίδα, δέσμευση σε real-time updates
-    window.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", () => {
       const openModalBtn = document.getElementById("openModalBtn");
       const modal = document.getElementById("modal");
       const cancelBtn = document.getElementById("cancelBtn");
@@ -50,32 +36,32 @@ const firebaseConfig = {
       let userLatitude = null;
       let userLongitude = null;
 
-      // 5.1 Όταν πατάμε το “+”, ζητάμε geolocation και ανοίγουμε modal
+      // Όταν πατάμε το “+”, ζητάμε geolocation και εμφανίζουμε το modal
       openModalBtn.addEventListener("click", () => {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              userLatitude = pos.coords.latitude;
-              userLongitude = pos.coords.longitude;
-              modal.classList.remove("hidden");
-            },
-            (err) => {
-              alert("Αδυναμία πρόσβασης στην τοποθεσία.");
-              console.error(err);
-            }
-          );
-        } else {
+        if (!navigator.geolocation) {
           alert("Το πρόγραμμα περιήγησης δεν υποστηρίζει γεωεντοπισμό.");
+          return;
         }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            userLatitude = pos.coords.latitude;
+            userLongitude = pos.coords.longitude;
+            modal.classList.remove("hidden");
+          },
+          (err) => {
+            console.error("Geolocation error:", err);
+            alert("Αδυναμία πρόσβασης στην τοποθεσία.");
+          }
+        );
       });
 
-      // 5.2 Κλείσιμο modal με “Ακύρωση”
+      // Κλείσιμο modal με “Ακύρωση”
       cancelBtn.addEventListener("click", () => {
         modal.classList.add("hidden");
         pointForm.reset();
       });
 
-      // 5.3 Όταν υποβάλλεται η φόρμα: γράφουμε νέο document στο Firestore
+      // Όταν υποβάλλεται η φόρμα: γράφουμε νέο document στο Firestore
       pointForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const name = document.getElementById("pointName").value.trim();
@@ -86,12 +72,12 @@ const firebaseConfig = {
         }
 
         try {
-          await addDoc(pointsCol, {
+          await db.collection("points").add({
             name,
             area,
             latitude: userLatitude,
             longitude: userLongitude,
-            timestamp: serverTimestamp()
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
           });
           modal.classList.add("hidden");
           pointForm.reset();
@@ -101,37 +87,38 @@ const firebaseConfig = {
         }
       });
 
-      // 5.4 Listener για real-time εμφάνιση όλων των σημείων, ταξινομημένα κατά timestamp φθίνουσα
-      const q = query(pointsCol, orderBy("timestamp", "desc"));
-      onSnapshot(q, (snapshot) => {
-        pointsContainer.innerHTML = ""; // καθαρίζουμε το container
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          const id = docSnap.id;
-          addPointToDOM({ id, ...data }, pointsContainer);
+      // Listener για real-time εμφάνιση όλων των σημείων, ταξινομημένα κατά timestamp φθίνουσα
+      db.collection("points")
+        .orderBy("timestamp", "desc")
+        .onSnapshot((snapshot) => {
+          pointsContainer.innerHTML = ""; // καθαρίζουμε το container
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            const id = doc.id;
+            addPointToDOM({ id, ...data }, pointsContainer);
+          });
         });
-      });
     });
 
-    // 5.5 Συνάρτηση για εμφάνιση ενός point ως “card”
+    // Συνάρτηση για εμφάνιση ενός point ως “card”
     function addPointToDOM(point, container) {
       const card = document.createElement("div");
-      card.className = "bg-white rounded-lg p-4 shadow";
+      card.className = "bg-white rounded-xl p-6 shadow-lg transition hover:shadow-2xl";
 
       const header = document.createElement("div");
-      header.className = "flex justify-between items-center";
+      header.className = "flex justify-between items-center mb-4";
 
       const title = document.createElement("h3");
-      title.className = "text-lg font-semibold";
+      title.className = "text-xl font-bold tracking-wide uppercase text-gray-800";
       title.textContent = point.name + " (" + point.area + ")";
 
       const deleteBtn = document.createElement("button");
-      deleteBtn.className = "text-red-500 hover:text-red-700";
-      deleteBtn.textContent = "Διαγραφή";
+      deleteBtn.className = "text-red-600 hover:text-red-800 font-semibold";
+      deleteBtn.textContent = "ΔΙΑΓΡΑΦΗ";
       deleteBtn.addEventListener("click", async () => {
         if (confirm("Είστε σίγουρος ότι θέλετε να διαγράψετε;")) {
           try {
-            await deleteDoc(doc(getFirestore(), "points", point.id));
+            await db.collection("points").doc(point.id).delete();
           } catch (err) {
             console.error("Σφάλμα διαγραφής:", err);
             alert("Σφάλμα διαγραφής.");
@@ -145,8 +132,8 @@ const firebaseConfig = {
       const mapLink = document.createElement("a");
       mapLink.href = `https://www.google.com/maps/search/?api=1&query=${point.latitude},${point.longitude}`;
       mapLink.target = "_blank";
-      mapLink.textContent = "Δείτε στον Χάρτη";
-      mapLink.className = "text-blue-600 hover:underline";
+      mapLink.textContent = "ΔΕΙΤΕ ΣΤΟΝ ΧΑΡΤΗ";
+      mapLink.className = "mt-2 inline-block text-blue-600 hover:underline font-medium uppercase";
 
       card.appendChild(header);
       card.appendChild(mapLink);
@@ -154,61 +141,82 @@ const firebaseConfig = {
     }
   </script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
-  <!-- Στρογγυλό κουμπί -->
-  <button
-    id="openModalBtn"
-    class="fixed bottom-10 right-10 bg-blue-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg hover:bg-blue-700 transition"
-  >
-    <span class="text-xl font-bold">+</span>
-  </button>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center py-12">
+  <!-- Header -->
+  <header class="w-full bg-white shadow-md py-4 mb-10">
+    <div class="max-w-2xl mx-auto px-6 flex justify-between items-center">
+      <h1 class="text-2xl font-extrabold tracking-wider uppercase text-gray-900">Καταχώριση Σημείου</h1>
+      <button
+        id="openModalBtn"
+        class="bg-blue-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-blue-700 transition"
+        title="Καταχώριση Νέου Σημείου"
+      >
+        <span class="text-2xl font-bold leading-none">+</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="w-full max-w-2xl px-6">
+    <!-- Περιγραφή / Οδηγίες -->
+    <p class="text-center text-gray-600 mb-6 uppercase tracking-wide">
+      Πατήστε το κουμπί “+” για να καταχωρήσετε νέο σημείο
+    </p>
+
+    <!-- Points List -->
+    <div id="pointsContainer" class="space-y-6">
+      <!-- Cards με καταχωρημένα σημεία θα εμφανίζονται εδώ -->
+    </div>
+  </main>
 
   <!-- Modal Overlay -->
   <div
     id="modal"
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden"
+    class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50"
   >
-    <div class="bg-white rounded-lg w-11/12 max-w-md p-6">
-      <h2 class="text-xl font-semibold mb-4">Καταχώριση Σημείου</h2>
+    <div class="bg-white rounded-xl w-full max-w-xs p-6 mx-4">
+      <h2 class="text-xl font-bold tracking-wide uppercase text-gray-800 mb-4 text-center">
+        Καταχώριση Σημείου
+      </h2>
       <form id="pointForm" class="space-y-4">
         <div>
-          <label for="pointName" class="block text-sm font-medium">Όνομα Σημείου</label>
+          <label for="pointName" class="block text-sm font-semibold uppercase text-gray-700">Όνομα Σημείου</label>
           <input
             type="text"
             id="pointName"
             name="name"
-            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 uppercase"
             required
           />
         </div>
         <div>
-          <label for="areaSelect" class="block text-sm font-medium">Περιοχή</label>
+          <label for="areaSelect" class="block text-sm font-semibold uppercase text-gray-700">Περιοχή</label>
           <select
             id="areaSelect"
             name="area"
-            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 uppercase"
             required
           >
-            <option value="">Επιλέξτε...</option>
-            <option value="Πόλη">Πόλη</option>
-            <option value="Ιαλυσός">Ιαλυσός</option>
-            <option value="Φαληράκι">Φαληράκι</option>
-            <option value="Κολύμπια">Κολύμπια</option>
-            <option value="Νότια Ρόδος">Νότια Ρόδος</option>
-            <option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
+            <option value="">ΕΠΙΛΕΞΤΕ...</option>
+            <option value="Πόλη">ΠΟΛΗ</option>
+            <option value="Ιαλυσός">ΙΑΛΥΣΟΣ</option>
+            <option value="Φαληράκι">ΦΑΛΗΡΑΚΙ</option>
+            <option value="Κολύμπια">ΚΟΛΥΜΠΙΑ</option>
+            <option value="Νότια Ρόδος">ΝΟΤΙΑ ΡΟΔΟΣ</option>
+            <option value="Δυτική Ρόδος">ΔΥΤΙΚΗ ΡΟΔΟΣ</option>
           </select>
         </div>
-        <div class="flex justify-end space-x-2 mt-6">
+        <div class="flex justify-end space-x-3 mt-6">
           <button
             type="button"
             id="cancelBtn"
-            class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+            class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition uppercase font-semibold"
           >
             Ακύρωση
           </button>
           <button
             type="submit"
-            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition uppercase font-semibold"
           >
             Καταχώριση
           </button>
@@ -216,8 +224,5 @@ const firebaseConfig = {
       </form>
     </div>
   </div>
-
-  <!-- Container για τα cards των σημείων -->
-  <div id="pointsContainer" class="w-full max-w-2xl mt-10 space-y-4"></div>
 </body>
 </html>
