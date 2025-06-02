@@ -33,6 +33,7 @@
       const pointForm = document.getElementById("pointForm");
       const pointsContainer = document.getElementById("pointsContainer");
       const regionFilter = document.getElementById("regionFilter");
+      const routeBtn = document.getElementById("routeBtn");
       let userLatitude = null;
       let userLongitude = null;
       let allPoints = [];
@@ -104,6 +105,34 @@
       // Όταν αλλάζει το φίλτρο περιοχής, κάνουμε render ξανά
       regionFilter.addEventListener("change", renderPoints);
 
+      // Όταν πατάμε “Δρομολόγιο Περιοχής”
+      routeBtn.addEventListener("click", () => {
+        const selectedRegion = regionFilter.value;
+        if (!selectedRegion) {
+          alert("Επιλέξτε πρώτα περιοχή για να δημιουργηθεί διαδρομή.");
+          return;
+        }
+        // Φιλτράρουμε τα σημεία της επιλεγμένης περιοχής
+        const filtered = allPoints.filter(pt => pt.area === selectedRegion);
+        if (filtered.length < 2) {
+          alert("Χρειάζεται τουλάχιστον δύο σημεία για να δημιουργηθεί διαδρομή.");
+          return;
+        }
+        // Ταξινόμηση με βάση timestamp (παλαιότερο πρώτο)
+        filtered.sort((a, b) => a.timestamp?.seconds - b.timestamp?.seconds);
+
+        // Δημιουργούμε το URL για Google Maps Directions
+        const coords = filtered.map(pt => `${pt.latitude},${pt.longitude}`);
+        const origin = coords[0];
+        const destination = coords[coords.length - 1];
+        const waypoints = coords.slice(1, coords.length - 1).join("|");
+        let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
+        if (waypoints) {
+          url += `&waypoints=${waypoints}`;
+        }
+        window.open(url, "_blank");
+      });
+
       function renderPoints() {
         const selectedRegion = regionFilter.value;
         pointsContainer.innerHTML = "";
@@ -159,18 +188,18 @@
 <body class="bg-gray-100 min-h-screen flex flex-col items-center py-12">
   <!-- Header -->
   <header class="w-full bg-white shadow-md py-4 mb-6">
-    <div class="max-w-2xl mx-auto px-6">
+    <div class="max-w-2xl mx-auto px-6 flex justify-between items-center">
       <h1 class="text-2xl font-extrabold tracking-wider uppercase text-gray-900">Καταχώριση Σημείου</h1>
     </div>
   </header>
 
   <!-- Main Container -->
-  <main class="w-full max-w-2xl px-6 mb-10">
-    <!-- Φίλτρο Περιοχής -->
-    <div class="mb-6 flex justify-center">
+  <main class="w-full max-w-2xl px-6 mb-10 space-y-6">
+    <!-- Φίλτρα & Δρομολόγιο -->
+    <div class="flex flex-col sm:flex-row sm:justify-between items-center gap-4">
       <select
         id="regionFilter"
-        class="block w-full max-w-xs border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 uppercase font-medium"
+        class="block w-full sm:w-auto border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 uppercase font-medium"
       >
         <option value="">ΟΛΕΣ ΟΙ ΠΕΡΙΟΧΕΣ</option>
         <option value="Πόλη">ΠΟΛΗ</option>
@@ -180,11 +209,17 @@
         <option value="Νότια Ρόδος">ΝΟΤΙΑ ΡΟΔΟΣ</option>
         <option value="Δυτική Ρόδος">ΔΥΤΙΚΗ ΡΟΔΟΣ</option>
       </select>
+      <button
+        id="routeBtn"
+        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition uppercase font-semibold"
+      >
+        ΔΡΟΜΟΛΟΓΙΟ ΠΕΡΙΟΧΗΣ
+      </button>
     </div>
 
     <!-- Περιγραφή / Οδηγίες -->
-    <p class="text-center text-gray-600 mb-6 uppercase tracking-wide">
-      Πατήστε το κουμπί “+” για να καταχωρήσετε νέο σημείο
+    <p class="text-center text-gray-600 mb-4 uppercase tracking-wide">
+      Πατήστε το κουμπί “+” για να καταχωρήσετε νέο σημείο ή “ΔΡΟΜΟΛΟΓΙΟ ΠΕΡΙΟΧΗΣ” για να δείτε όλα τα σημεία μιας περιοχής σε μία διαδρομή.
     </p>
 
     <!-- Points List -->
