@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Καταχώριση Σημείου (Firebase)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Firebase JS SDK (v9 modular) -->
+  <script type="module">
+    // 1. Εισάγουμε τα απαραίτητα από το Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      onSnapshot,
+      query,
+      orderBy,
+      doc,
+      deleteDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+    // 2. Το Firebase config για το project σου (βάλε τα δικά σου)
+    const firebaseConfig = {
+      apiKey: "AIzaSyXXXXXXXXXXXXXX",
+      authDomain: "point-registration-app.firebaseapp.com",
+      projectId: "point-registration-app",
+      storageBucket: "point-registration-app.appspot.com",
+      messagingSenderId: "1234567890",
+      appId: "1:1234567890:web:abcdefghijklmnopqrstuvwxyz"
+    };
+
+    // 3. Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 4. Αναφορές στη συλλογή “points”
+    const pointsCol = collection(db, "points");
+
+    // 5. Μόλις φορτώσει η σελίδα, δέσμευση σε real-time updates
+    window.addEventListener("DOMContentLoaded", () => {
+      const openModalBtn = document.getElementById("openModalBtn");
+      const modal = document.getElementById("modal");
+      const cancelBtn = document.getElementById("cancelBtn");
+      const pointForm = document.getElementById("pointForm");
+      const pointsContainer = document.getElementById("pointsContainer");
+      let userLatitude = null;
+      let userLongitude = null;
+
+      // 5.1 Όταν πατάμε το “+”, ζητάμε geolocation και ανοίγουμε modal
+      openModalBtn.addEventListener("click", () => {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              userLatitude = pos.coords.latitude;
+              userLongitude = pos.coords.longitude;
+              modal.classList.remove("hidden");
+            },
+            (err) => {
+              alert("Αδυναμία πρόσβασης στην τοποθεσία.");
+              console.error(err);
+            }
+          );
+        } else {
+          alert("Το πρόγραμμα περιήγησης δεν υποστηρίζει γεωεντοπισμό.");
+        }
+      });
+
+      // 5.2 Κλείσιμο modal με “Ακύρωση”
+      cancelBtn.addEventListener("click", () => {
+        modal.classList.add("hidden");
+        pointForm.reset();
+      });
+
+      // 5.3 Όταν υποβάλλεται η φόρμα: γράφουμε νέο document στο Firestore
+      pointForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = document.getElementById("pointName").value.trim();
+        const area = document.getElementById("areaSelect").value;
+        if (!name || !area) {
+          alert("Παρακαλώ συμπληρώστε όλα τα πεδία.");
+          return;
+        }
+
+        try {
+          await addDoc(pointsCol, {
+            name,
+            area,
+            latitude: userLatitude,
+            longitude: userLongitude,
+            timestamp: serverTimestamp()
+          });
+          modal.classList.add("hidden");
+          pointForm.reset();
+        } catch (err) {
+          console.error("Σφάλμα προσθήκης:", err);
+          alert("Σφάλμα καταχώρισης. Προσπάθησε ξανά.");
+        }
+      });
+
+      // 5.4 Listener για real-time εμφάνιση όλων των σημείων, ταξινομημένα κατά timestamp φθίνουσα
+      const q = query(pointsCol, orderBy("timestamp", "desc"));
+      onSnapshot(q, (snapshot) => {
+        pointsContainer.innerHTML = ""; // καθαρίζουμε το container
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          const id = docSnap.id;
+          addPointToDOM({ id, ...data }, pointsContainer);
+        });
+      });
+    });
+
+    // 5.5 Συνάρτηση για εμφάνιση ενός point ως “card”
+    function addPointToDOM(point, container) {
+      const card = document.createElement("div");
+      card.className = "bg-white rounded-lg p-4 shadow";
+
+      const header = document.createElement("div");
+      header.className = "flex justify-between items-center";
+
+      const title = document.createElement("h3");
+      title.className = "text-lg font-semibold";
+      title.textContent = point.name + " (" + point.area + ")";
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "text-red-500 hover:text-red-700";
+      deleteBtn.textContent = "Διαγραφή";
+      deleteBtn.addEventListener("click", async () => {
+        if (confirm("Είστε σίγουρος ότι θέλετε να διαγράψετε;")) {
+          try {
+            await deleteDoc(doc(getFirestore(), "points", point.id));
+          } catch (err) {
+            console.error("Σφάλμα διαγραφής:", err);
+            alert("Σφάλμα διαγραφής.");
+          }
+        }
+      });
+
+      header.appendChild(title);
+      header.appendChild(deleteBtn);
+
+      const mapLink = document.createElement("a");
+      mapLink.href = `https://www.google.com/maps/search/?api=1&query=${point.latitude},${point.longitude}`;
+      mapLink.target = "_blank";
+      mapLink.textContent = "Δείτε στον Χάρτη";
+      mapLink.className = "text-blue-600 hover:underline";
+
+      card.appendChild(header);
+      card.appendChild(mapLink);
+      container.appendChild(card);
+    }
+  </script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
+  <!-- Στρογγυλό κουμπί -->
+  <button
+    id="openModalBtn"
+    class="fixed bottom-10 right-10 bg-blue-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg hover:bg-blue-700 transition"
+  >
+    <span class="text-xl font-bold">+</span>
+  </button>
+
+  <!-- Modal Overlay -->
+  <div
+    id="modal"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden"
+  >
+    <div class="bg-white rounded-lg w-11/12 max-w-md p-6">
+      <h2 class="text-xl font-semibold mb-4">Καταχώριση Σημείου</h2>
+      <form id="pointForm" class="space-y-4">
+        <div>
+          <label for="pointName" class="block text-sm font-medium">Όνομα Σημείου</label>
+          <input
+            type="text"
+            id="pointName"
+            name="name"
+            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+        <div>
+          <label for="areaSelect" class="block text-sm font-medium">Περιοχή</label>
+          <select
+            id="areaSelect"
+            name="area"
+            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            required
+          >
+            <option value="">Επιλέξτε...</option>
+            <option value="Πόλη">Πόλη</option>
+            <option value="Ιαλυσός">Ιαλυσός</option>
+            <option value="Φαληράκι">Φαληράκι</option>
+            <option value="Κολύμπια">Κολύμπια</option>
+            <option value="Νότια Ρόδος">Νότια Ρόδος</option>
+            <option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
+          </select>
+        </div>
+        <div class="flex justify-end space-x-2 mt-6">
+          <button
+            type="button"
+            id="cancelBtn"
+            class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+          >
+            Ακύρωση
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Καταχώριση
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Container για τα cards των σημείων -->
+  <div id="pointsContainer" class="w-full max-w-2xl mt-10 space-y-4"></div>
+</body>
+</html>
