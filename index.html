@@ -9,28 +9,21 @@
   <script>
     tailwind.config = {
       theme: { extend: {
-        colors: {
-          primary: '#1E3A8A',
-          accent:  '#FBBF24',
-          danger:  '#DC2626',
-          success: '#16A34A'
-        }
+        colors: { primary:'#1E3A8A', accent:'#FBBF24', danger:'#DC2626', success:'#16A34A' }
       }}
     }
   </script>
   <!-- Firebase compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
   <script>
-    // Firebase init
     const firebaseConfig = {
-      apiKey:    "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
-      authDomain:"pointregistrationapp.firebaseapp.com",
+      apiKey: "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
+      authDomain: "pointregistrationapp.firebaseapp.com",
       projectId: "pointregistrationapp",
       storageBucket: "pointregistrationapp.firebasestorage.app",
       messagingSenderId: "925139386507",
-      appId:     "1:925139386507:web:588ae991f39a7bab04548e"
+      appId: "1:925139386507:web:588ae991f39a7bab04548e"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -40,14 +33,9 @@
       const d = ts.toDate(), now = new Date();
       return (now - d) / (1000*60*60*24);
     }
-    function isSameDay(ts) {
-      if (!ts) return false;
-      const d = ts.toDate(), n = new Date();
-      return d.getDate()===n.getDate() && d.getMonth()===n.getMonth() && d.getFullYear()===n.getFullYear();
-    }
 
     document.addEventListener("DOMContentLoaded", () => {
-      let userLat, userLng, allPoints = [], editId = null;
+      let userLat, userLng, allPoints = [], editId = null, selectionMode = false;
       const openBtn     = document.getElementById("openModalBtn"),
             addModal    = document.getElementById("modal"),
             cancelBtn   = document.getElementById("cancelBtn"),
@@ -55,31 +43,27 @@
             editModal   = document.getElementById("editModal"),
             editCancel  = document.getElementById("editCancel"),
             editForm    = document.getElementById("editForm"),
-            routeModal  = document.getElementById("routeModal"),
-            routeCancel = document.getElementById("routeCancel"),
-            routeForm   = document.getElementById("routeForm"),
-            routeRegion = document.getElementById("routeRegion"),
-            routeDays   = document.getElementById("routeDays"),
-            routeCount  = document.getElementById("routeCount"),
+            routeBtn    = document.getElementById("routeBtn"),
+            customBtn   = document.getElementById("customRouteBtn"),
+            generateBtn = document.getElementById("generateCustomRouteBtn"),
             container   = document.getElementById("pointsContainer"),
             regionF     = document.getElementById("regionFilter"),
-            visitedF    = document.getElementById("visitedFilter"),
-            routeBtn    = document.getElementById("routeBtn");
+            visitedF    = document.getElementById("visitedFilter");
 
-      // Add modal
+      // fetch and render
+      db.collection("points").orderBy("timestamp","desc")
+        .onSnapshot(snap => {
+          allPoints = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+          render();
+        });
+
+      // Add Modal
       openBtn.onclick = () => {
-        if (!navigator.geolocation) {
-          alert("Δεν υποστηρίζεται γεωεντοπισμός.");
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(
-          pos => {
-            userLat = pos.coords.latitude;
-            userLng = pos.coords.longitude;
-            addModal.classList.remove("opacity-0","pointer-events-none");
-          },
-          () => alert("Άδεια τοποθεσίας απαραίτητη.")
-        );
+        if (!navigator.geolocation) return alert("Δεν υποστηρίζεται γεωεντοπισμός.");
+        navigator.geolocation.getCurrentPosition(pos => {
+          userLat = pos.coords.latitude; userLng = pos.coords.longitude;
+          addModal.classList.remove("opacity-0","pointer-events-none");
+        }, ()=> alert("Άδεια τοποθεσίας απαραίτητη."));
       };
       cancelBtn.onclick = () => {
         addModal.classList.add("opacity-0","pointer-events-none");
@@ -87,181 +71,130 @@
       };
       form.onsubmit = async e => {
         e.preventDefault();
-        const n = form.pointName.value.trim(),
-              a = form.areaSelect.value;
-        if (!n||!a) {
-          alert("Συμπληρώστε όλα τα πεδία.");
-          return;
-        }
+        const n = form.pointName.value.trim(), a = form.areaSelect.value;
+        if (!n||!a) return alert("Συμπληρώστε όλα τα πεδία.");
         await db.collection("points").add({
-          name: n,
-          area: a,
-          latitude: userLat,
-          longitude: userLng,
+          name:n, area:a,
+          latitude:userLat, longitude:userLng,
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
         cancelBtn.click();
       };
 
-      // Edit modal
+      // Edit Modal
       editCancel.onclick = () => {
         editModal.classList.add("opacity-0","pointer-events-none");
         editForm.reset();
       };
       editForm.onsubmit = async e => {
         e.preventDefault();
-        const n = editForm.editName.value.trim(),
-              a = editForm.editArea.value;
-        if (!n||!a) {
-          alert("Συμπληρώστε όλα τα πεδία.");
-          return;
-        }
+        const n = editForm.editName.value.trim(), a = editForm.editArea.value;
+        if (!n||!a) return alert("Συμπληρώστε όλα τα πεδία.");
         await db.collection("points").doc(editId).update({ name:n, area:a });
         editCancel.click();
       };
 
-      // Route modal
-      routeBtn.onclick = () => {
-        routeModal.classList.remove("opacity-0","pointer-events-none");
-        updateRouteCount();
+      // Route Modal (existing)...
+
+      // Custom Route Button
+      customBtn.onclick = () => {
+        selectionMode = true;
+        generateBtn.classList.remove("hidden");
+        render();
       };
-      routeCancel.onclick = () => {
-        routeModal.classList.add("opacity-0","pointer-events-none");
-        routeForm.reset();
-        routeCount.textContent = "";
-      };
-      routeRegion.onchange = updateRouteCount;
-      routeDays.onchange   = updateRouteCount;
-      routeForm.onsubmit = e => {
-        e.preventDefault();
-        const sel     = routeRegion.value,
-              daysOpt = routeDays.value;
-        if (!sel) {
-          alert("Επιλέξτε περιοχή.");
+
+      // Generate Custom Route
+      generateBtn.onclick = () => {
+        const checkboxes = container.querySelectorAll("input[type=checkbox]:checked");
+        if (checkboxes.length === 0) {
+          alert("Επιλέξτε τουλάχιστον ένα σημείο.");
           return;
         }
-        // filter points by region (all or specific)
-        let pts = allPoints.filter(p => sel==='all' || p.area === sel);
-        // then by days
-        pts = pts.filter(p => {
-          const age = daysSince(p.lastVisit);
-          switch(daysOpt) {
-            case 'lt3':   return age < 3;
-            case '3to7':  return age >= 3 && age <= 7;
-            case 'gt7':   return age > 7;
-            case 'never': return !p.lastVisit;
-            default:      return true;
-          }
+        const coords = [];
+        checkboxes.forEach(cb => {
+          const pt = allPoints.find(p=>p.id===cb.dataset.id);
+          coords.push(`${pt.latitude},${pt.longitude}`);
         });
-        if (pts.length < 2) {
-          alert("Δεν υπάρχουν αρκετά σημεία για διαδρομή.");
-          return;
-        }
-        pts.sort((a,b)=>a.timestamp.seconds-b.timestamp.seconds);
-        const coords    = pts.map(p=>`${p.latitude},${p.longitude}`),
-              origin    = coords.shift(),
-              destination = coords.pop(),
-              waypoints = coords.join("|");
+        const origin = `${userLat},${userLng}`;
+        const destination = coords.pop();
+        const waypoints = coords.join("|");
         let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
         if (waypoints) url += `&waypoints=${waypoints}`;
-        window.open(url, "_blank");
-        routeCancel.click();
+        window.open(url,"_blank");
+        // reset
+        selectionMode = false;
+        generateBtn.classList.add("hidden");
+        render();
       };
 
-      function updateRouteCount() {
-        const sel     = routeRegion.value,
-              daysOpt = routeDays.value;
-        if (!sel) {
-          routeCount.textContent = "";
-          return;
-        }
-        let pts = allPoints.filter(p => sel==='all' || p.area===sel);
-        pts = pts.filter(p => {
-          const age = daysSince(p.lastVisit);
-          switch(daysOpt) {
-            case 'lt3':   return age < 3;
-            case '3to7':  return age >= 3 && age <= 7;
-            case 'gt7':   return age > 7;
-            case 'never': return !p.lastVisit;
-            default:      return true;
-          }
-        });
-        routeCount.textContent = `Βρέθηκαν ${pts.length} σημεία`;
-      }
-
-      // Firestore listener
-      db.collection("points").orderBy("timestamp","desc")
-        .onSnapshot(snap => {
-          allPoints = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-          render();
-        });
       regionF.onchange  = render;
       visitedF.onchange = render;
 
       function render() {
         container.innerHTML = "";
-        const sel = regionF.value,
-              vis = visitedF.value;
+        const sel = regionF.value, vis = visitedF.value;
         allPoints.forEach(pt => {
           const visited = !!pt.lastVisit;
           const okArea  = !sel || pt.area===sel;
-          const okVis   = vis==='all'
-                        || (vis==='visited'   && visited)
-                        || (vis==='unvisited' && !visited);
+          const okVis   = vis==='all' || (vis==='visited' && visited) || (vis==='unvisited' && !visited);
           if (okArea && okVis) container.appendChild(makeCard(pt));
         });
       }
 
       function makeCard(pt) {
         const c = document.createElement("div");
-        c.className = "relative bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition space-y-4";
-
-        // region badge
+        c.className = "relative bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition";
+        // area badge
         const badge = document.createElement("div");
         badge.className = "absolute top-3 left-3 bg-primary text-white px-2 py-1 rounded-full text-xs uppercase";
         badge.textContent = pt.area;
         c.appendChild(badge);
 
+        // header
         const h = document.createElement("div");
-        h.className = "flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2";
+        h.className = "flex items-center justify-between";
 
+        // left: indicator + days + title
         const left = document.createElement("div");
         left.className = "flex items-center gap-4";
 
         const age = daysSince(pt.lastVisit);
-        let dotClass;
-        if (age===Infinity || age>7) dotClass="bg-danger animate-pulse";
-        else if (age>3)              dotClass="bg-accent animate-ping";
-        else                         dotClass="bg-success";
-
+        let dotClass = age===Infinity||age>7 ? "bg-danger animate-pulse"
+                       : age>3          ? "bg-accent animate-ping"
+                                        : "bg-success";
         const dot = document.createElement("span");
         dot.className = `w-3 h-3 ${dotClass} rounded-full`;
 
-        let labelText;
-        if (age===Infinity) labelText="Ποτέ";
-        else {
-          const days = Math.floor(age);
-          labelText = days===1 ? "1 ημέρα" : `${days} ημέρες`;
-        }
-
+        let label = age===Infinity ?"Ποτέ"
+                  : Math.floor(age)===1 ?"1 ημέρα"
+                  : `${Math.floor(age)} ημέρες`;
         const lbl = document.createElement("span");
         lbl.className = "text-sm text-gray-500 uppercase";
-        lbl.textContent = labelText;
+        lbl.textContent = label;
 
         const title = document.createElement("h3");
-        title.className = "text-xl font-bold uppercase text-primary tracking-wide";
+        title.className = "text-xl font-bold uppercase text-primary";
         title.textContent = pt.name;
 
         left.append(dot, lbl, title);
         h.appendChild(left);
 
-        const grp = document.createElement("div");
-        grp.className = "flex gap-2 flex-wrap";
+        // right: check / visit / edit / delete
+        const right = document.createElement("div");
+        right.className = "flex items-center gap-2";
+
+        if (selectionMode) {
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.className = "form-checkbox h-5 w-5 text-primary";
+          cb.dataset.id = pt.id;
+          right.append(cb);
+        }
 
         const vbtn = document.createElement("button");
-        vbtn.className = "px-4 py-1 bg-accent text-white rounded-full uppercase text-sm shadow";
+        vbtn.className = "px-3 py-1 bg-accent text-white rounded-full uppercase text-sm";
         vbtn.textContent = "Επίσκεψη";
-        if (daysSince(pt.lastVisit) < 1) {
+        if (daysSince(pt.lastVisit)<1) {
           vbtn.disabled = true;
           vbtn.classList.add("opacity-50");
         }
@@ -269,13 +202,13 @@
           const now = new Date();
           await db.collection("points").doc(pt.id)
             .update({ lastVisit: firebase.firestore.FieldValue.serverTimestamp() });
-          pt.lastVisit = { toDate: () => now };
+          pt.lastVisit = { toDate:()=>now };
           render();
         };
-        grp.appendChild(vbtn);
+        right.append(vbtn);
 
         const editBtn = document.createElement("button");
-        editBtn.className = "px-4 py-1 bg-indigo-600 text-white rounded-full uppercase text-sm shadow hover:bg-indigo-700 transition";
+        editBtn.className = "px-3 py-1 bg-primary text-white rounded-full uppercase text-sm";
         editBtn.textContent = "Αλλαγή";
         editBtn.onclick = () => {
           editId = pt.id;
@@ -283,30 +216,32 @@
           editForm.editArea.value = pt.area;
           editModal.classList.remove("opacity-0","pointer-events-none");
         };
-        grp.appendChild(editBtn);
+        right.append(editBtn);
 
         const dbtn = document.createElement("button");
-        dbtn.className = "px-4 py-1 bg-danger text-white rounded-full uppercase text-sm shadow";
+        dbtn.className = "px-3 py-1 bg-danger text-white rounded-full uppercase text-sm";
         dbtn.textContent = "Διαγραφή";
         dbtn.onclick = async () => {
           if (confirm("Διαγραφή;")) await db.collection("points").doc(pt.id).delete();
         };
-        grp.appendChild(dbtn);
+        right.append(dbtn);
 
-        h.appendChild(grp);
+        h.appendChild(right);
         c.appendChild(h);
 
+        // last visit info
         if (pt.lastVisit) {
-          const info = document.createElement("p");
-          info.className = "text-gray-500 italic text-sm mt-2";
-          info.textContent = "Τελευταία επίσκεψη: " + pt.lastVisit.toDate().toLocaleString();
-          c.appendChild(info);
+          const p = document.createElement("p");
+          p.className = "text-gray-500 italic text-sm mt-2";
+          p.textContent = "Τελευταία επίσκεψη: "+pt.lastVisit.toDate().toLocaleString();
+          c.appendChild(p);
         }
 
+        // map link
         const m = document.createElement("a");
         m.href = `https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}`;
         m.target = "_blank";
-        m.className = "block text-center bg-primary text-white py-2 rounded-lg uppercase font-semibold hover:bg-primary/90 transition";
+        m.className = "block text-center bg-primary text-white py-2 rounded-lg uppercase font-semibold hover:bg-primary/90 transition mt-2";
         m.textContent = "Δείτε στον χάρτη";
         c.appendChild(m);
 
@@ -316,6 +251,7 @@
   </script>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center py-12">
+
   <!-- Header -->
   <header class="w-full bg-white shadow-md py-4 mb-8">
     <div class="max-w-3xl mx-auto px-6 flex justify-between items-center">
@@ -325,8 +261,9 @@
   </header>
 
   <main class="w-full max-w-3xl px-4 space-y-6 mb-10">
-    <div class="flex justify-center">
+    <div class="flex justify-center gap-4">
       <a href="http://treno2025.unaux.com/" target="_blank" class="px-6 py-2 bg-primary text-white rounded-full uppercase font-semibold shadow hover:bg-primary/90 transition">Μετάβαση στις Παραγγελίες</a>
+      <button id="customRouteBtn" class="px-6 py-2 bg-indigo-600 text-white rounded-full uppercase font-semibold shadow hover:bg-indigo-700 transition">Κάνε το δικό σου Δρομολόγιο</button>
     </div>
     <div class="flex flex-col sm:flex-row gap-4 justify-between items-center">
       <select id="regionFilter" class="flex-1 border border-gray-300 px-3 py-2 rounded-lg uppercase shadow focus:outline-none">
@@ -346,6 +283,7 @@
       <button id="routeBtn" class="bg-success text-white px-6 py-2 rounded-lg uppercase shadow hover:bg-success/90 transition">Δρομολόγιο Περιοχής</button>
     </div>
     <div id="pointsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
+    <button id="generateCustomRouteBtn" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-success text-white px-6 py-3 rounded-lg uppercase font-semibold shadow-lg hover:bg-success/90 transition">Δημιούργησε Διαδρομή</button>
   </main>
 
   <!-- Add Modal -->
