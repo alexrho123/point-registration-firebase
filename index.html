@@ -8,12 +8,7 @@
   <script>
     tailwind.config = {
       theme: { extend: {
-        colors: {
-          primary: '#1E3A8A',
-          accent:  '#FBBF24',
-          danger:  '#DC2626',
-          success: '#16A34A'
-        }
+        colors: { primary:'#1E3A8A', accent:'#FBBF24', danger:'#DC2626', success:'#16A34A' }
       }}
     }
   </script>
@@ -36,13 +31,10 @@
       const d = ts.toDate(), now = new Date();
       return (now - d) / (1000*60*60*24);
     }
-
     function isSameDay(ts) {
       if (!ts) return false;
       const d = ts.toDate(), n = new Date();
-      return d.getDate() === n.getDate()
-          && d.getMonth() === n.getMonth()
-          && d.getFullYear() === n.getFullYear();
+      return d.getDate()===n.getDate()&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -57,151 +49,116 @@
             routeBtn  = document.getElementById("routeBtn");
 
       openBtn.onclick = () => {
-        if (!navigator.geolocation) {
-          return alert("Δεν υποστηρίζεται γεωεντοπισμός.");
-        }
+        if (!navigator.geolocation) return alert("Δεν υποστηρίζεται γεωεντοπισμός.");
         navigator.geolocation.getCurrentPosition(
-          pos => {
-            userLat = pos.coords.latitude;
-            userLng = pos.coords.longitude;
-            modal.classList.remove("opacity-0","pointer-events-none");
-          },
+          pos => { userLat=pos.coords.latitude; userLng=pos.coords.longitude; modal.classList.remove("opacity-0","pointer-events-none"); },
           () => alert("Άδεια τοποθεσίας απαραίτητη.")
         );
       };
-
-      cancelBtn.onclick = () => {
-        modal.classList.add("opacity-0","pointer-events-none");
-        form.reset();
-      };
-
+      cancelBtn.onclick = () => { modal.classList.add("opacity-0","pointer-events-none"); form.reset(); };
       form.onsubmit = async e => {
         e.preventDefault();
-        const n = form.pointName.value.trim(),
-              a = form.areaSelect.value;
-        if (!n || !a) {
-          return alert("Συμπληρώστε όλα τα πεδία.");
-        }
+        const n=form.pointName.value.trim(), a=form.areaSelect.value;
+        if (!n||!a) return alert("Συμπληρώστε όλα τα πεδία.");
         await db.collection("points").add({
-          name: n,
-          area: a,
-          latitude: userLat,
-          longitude: userLng,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          name:n, area:a,
+          latitude:userLat, longitude:userLng,
+          timestamp:firebase.firestore.FieldValue.serverTimestamp()
         });
         cancelBtn.click();
       };
 
       db.collection("points").orderBy("timestamp","desc")
         .onSnapshot(snap => {
-          allPoints = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          allPoints = snap.docs.map(d=>({ id:d.id, ...d.data() }));
           render();
         });
 
       regionF.onchange  = render;
       visitedF.onchange = render;
       routeBtn.onclick  = () => {
-        const sel = regionF.value;
+        const sel=regionF.value;
         if (!sel) return alert("Επιλέξτε περιοχή.");
-        const pts = allPoints.filter(p => p.area === sel);
-        if (pts.length < 2) return alert("Χρειάζονται τουλάχιστον δύο σημεία.");
-        pts.sort((a,b) => a.timestamp.seconds - b.timestamp.seconds);
-        const coords = pts.map(p => `${p.latitude},${p.longitude}`);
-        const origin = coords[0],
-              dest   = coords.at(-1),
-              waypts = coords.slice(1,-1).join("|");
-        let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}`;
-        if (waypts) url += `&waypoints=${waypts}`;
-        window.open(url, "_blank");
+        const pts = allPoints.filter(p=>p.area===sel);
+        if (pts.length<2) return alert("Χρειάζονται τουλάχιστον δύο σημεία.");
+        pts.sort((a,b)=>a.timestamp.seconds-b.timestamp.seconds);
+        const coords=pts.map(p=>`${p.latitude},${p.longitude}`),
+              origin=coords[0], dest=coords.at(-1),
+              way=coords.slice(1,-1).join("|");
+        let url=`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}`;
+        if (way) url+=`&waypoints=${way}`;
+        window.open(url,"_blank");
       };
 
       function render() {
-        container.innerHTML = "";
-        const sel   = regionF.value;
-        const vis   = visitedF.value; // 'all'|'visited'|'unvisited'
-        allPoints.forEach(pt => {
-          const visited = !!pt.lastVisit;
-          const okArea  = !sel || pt.area === sel;
-          const okVisit = (vis === 'all')
-                        || (vis === 'visited'   && visited)
-                        || (vis === 'unvisited' && !visited);
-          if (okArea && okVisit) {
-            container.appendChild(makeCard(pt));
-          }
+        container.innerHTML="";
+        const sel=regionF.value, vis=visitedF.value;
+        allPoints.forEach(pt=>{
+          const visited=!!pt.lastVisit;
+          const okArea = !sel||pt.area===sel;
+          const okVis  = vis==='all'||(vis==='visited'&&visited)||(vis==='unvisited'&&!visited);
+          if (okArea&&okVis) container.appendChild(makeCard(pt));
         });
       }
 
       function makeCard(pt) {
-        const c = document.createElement("div");
-        c.className = "bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition space-y-4";
+        const c=document.createElement("div");
+        c.className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition space-y-4";
 
-        // Header row
-        const h = document.createElement("div");
-        h.className = "flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2";
+        const h=document.createElement("div");
+        h.className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2";
 
-        // Dot, label, title
-        const tdiv = document.createElement("div");
-        tdiv.className = "flex items-center gap-2";
-        const age = daysSince(pt.lastVisit);
-        let dotClass, label;
-        if (age === Infinity)           { dotClass="bg-danger animate-pulse"; label="Ποτέ";      }
-        else if (age > 7)               { dotClass="bg-danger animate-pulse"; label=">7 μέρες"; }
-        else if (age > 3)               { dotClass="bg-accent animate-ping";  label="3–7 μέρες";}
-        else                            { dotClass="bg-success";              label="<3 μέρες";}
-        const dot = document.createElement("span");
-        dot.className = `w-3 h-3 ${dotClass} rounded-full`;
+        // --- Εδώ προστέθηκε το whitespace-nowrap ---
+        const tdiv=document.createElement("div");
+        tdiv.className="flex items-center gap-2 whitespace-nowrap";
+        const age=daysSince(pt.lastVisit);
+        let dotClass,label;
+        if      (age===Infinity)      { dotClass="bg-danger animate-pulse"; label="Ποτέ";      }
+        else if (age>7)               { dotClass="bg-danger animate-pulse"; label=">7 μέρες"; }
+        else if (age>3)               { dotClass="bg-accent animate-ping";  label="3–7 μέρες";}
+        else                          { dotClass="bg-success";              label="<3 μέρες";}
+        const dot=document.createElement("span");
+        dot.className=`w-3 h-3 ${dotClass} rounded-full`;
         tdiv.appendChild(dot);
-        const lbl = document.createElement("span");
-        lbl.className = "text-sm text-gray-500 uppercase";
-        lbl.textContent = `(${label})`;
+        const lbl=document.createElement("span");
+        lbl.className="text-sm text-gray-500 uppercase";
+        lbl.textContent=`(${label})`;
         tdiv.appendChild(lbl);
-        const title = document.createElement("h3");
-        title.className = "text-xl font-bold uppercase text-primary tracking-wide";
-        title.textContent = `${pt.name} (${pt.area})`;
+        const title=document.createElement("h3");
+        title.className="text-xl font-bold uppercase text-primary tracking-wide";
+        title.textContent=`${pt.name} (${pt.area})`;
         tdiv.appendChild(title);
         h.appendChild(tdiv);
 
-        // Buttons
-        const grp = document.createElement("div");
-        grp.className = "flex gap-2";
-        const visitBtn = document.createElement("button");
-        visitBtn.className = "px-4 py-1 bg-accent text-white rounded-full uppercase text-sm shadow";
-        visitBtn.textContent = "Επίσκεψη";
-        if (pt.lastVisit && isSameDay(pt.lastVisit)) {
-          visitBtn.disabled = true;
-          visitBtn.classList.add("opacity-50");
-        }
-        visitBtn.onclick = async () => {
-          await db.collection("points").doc(pt.id)
-            .update({ lastVisit: firebase.firestore.FieldValue.serverTimestamp() });
-        };
-        grp.appendChild(visitBtn);
-
-        const delBtn = document.createElement("button");
-        delBtn.className = "px-4 py-1 bg-danger text-white rounded-full uppercase text-sm shadow";
-        delBtn.textContent = "Διαγραφή";
-        delBtn.onclick = async () => {
-          if (confirm("Διαγραφή;")) await db.collection("points").doc(pt.id).delete();
-        };
-        grp.appendChild(delBtn);
-
+        const grp=document.createElement("div");
+        grp.className="flex gap-2";
+        const vbtn=document.createElement("button");
+        vbtn.className="px-4 py-1 bg-accent text-white rounded-full uppercase text-sm shadow";
+        vbtn.textContent="Επίσκεψη";
+        if(pt.lastVisit&&isSameDay(pt.lastVisit)){ vbtn.disabled=true; vbtn.classList.add("opacity-50"); }
+        vbtn.onclick=async()=>{ await db.collection("points").doc(pt.id).update({ lastVisit:firebase.firestore.FieldValue.serverTimestamp() }); };
+        grp.appendChild(vbtn);
+        const dbtn=document.createElement("button");
+        dbtn.className="px-4 py-1 bg-danger text-white rounded-full uppercase text-sm shadow";
+        dbtn.textContent="Διαγραφή";
+        dbtn.onclick=async()=>{ if(confirm("Διαγραφή;")) await db.collection("points").doc(pt.id).delete(); };
+        grp.appendChild(dbtn);
         h.appendChild(grp);
+
         c.appendChild(h);
 
-        // Last visit info
-        if (pt.lastVisit) {
-          const info = document.createElement("p");
-          info.className = "text-gray-500 italic text-sm";
-          info.textContent = "Τελευταία επίσκεψη: " + pt.lastVisit.toDate().toLocaleString();
+        if(pt.lastVisit){
+          const info=document.createElement("p");
+          info.className="text-gray-500 italic text-sm";
+          info.textContent="Τελευταία επίσκεψη: "+pt.lastVisit.toDate().toLocaleString();
           c.appendChild(info);
         }
 
-        // Map link
-        const m = document.createElement("a");
-        m.href = `https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}`;
-        m.target = "_blank";
-        m.className = "block text-center bg-primary text-white py-2 rounded-lg uppercase font-semibold hover:bg-primary/90 transition";
-        m.textContent = "Δείτε στον χάρτη";
+        const m=document.createElement("a");
+        m.href=`https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}`;
+        m.target="_blank";
+        m.className="block text-center bg-primary text-white py-2 rounded-lg uppercase font-semibold hover:bg-primary/90 transition";
+        m.textContent="Δείτε στον χάρτη";
         c.appendChild(m);
 
         return c;
@@ -210,21 +167,27 @@
   </script>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center py-12">
-
   <!-- Header -->
   <header class="w-full bg-white shadow-md py-4 mb-8">
     <div class="max-w-3xl mx-auto px-6 flex justify-between items-center">
       <h1 class="text-3xl font-extrabold text-primary uppercase">Καταχώριση Σημείου</h1>
-      <button id="openModalBtn" class="bg-primary text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-lg hover:bg-primary/90 transition transform hover:scale-110">+</button>
+      <button id="openModalBtn"
+              class="bg-primary text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-lg hover:bg-primary/90 transition transform hover:scale-110">
+        +
+      </button>
     </div>
   </header>
 
   <main class="w-full max-w-3xl px-4 space-y-6 mb-10">
     <div class="flex justify-center">
-      <a href="http://treno2025.unaux.com/" target="_blank" class="px-6 py-2 bg-primary text-white rounded-full uppercase font-semibold shadow hover:bg-primary/90 transition">Μετάβαση στις Παραγγελίες</a>
+      <a href="http://treno2025.unaux.com/" target="_blank"
+         class="px-6 py-2 bg-primary text-white rounded-full uppercase font-semibold shadow hover:bg-primary/90 transition">
+        Μετάβαση στις Παραγγελίες
+      </a>
     </div>
     <div class="flex flex-col sm:flex-row gap-4 justify-between items-center">
-      <select id="regionFilter" class="flex-1 border border-gray-300 px-3 py-2 rounded-lg uppercase shadow focus:outline-none">
+      <select id="regionFilter"
+              class="flex-1 border border-gray-300 px-3 py-2 rounded-lg uppercase shadow focus:outline-none">
         <option value="">Όλες οι περιοχές</option>
         <option value="Πόλη">Πόλη</option>
         <option value="Ιαλυσός">Ιαλυσός</option>
@@ -233,40 +196,52 @@
         <option value="Νότια Ρόδος">Νότια Ρόδος</option>
         <option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
       </select>
-      <select id="visitedFilter" class="border border-gray-300 px-3 py-2 rounded-lg uppercase shadow focus:outline-none">
+      <select id="visitedFilter"
+              class="border border-gray-300 px-3 py-2 rounded-lg uppercase shadow focus:outline-none">
         <option value="all">Όλες</option>
         <option value="visited">Επισκεφθείσες</option>
         <option value="unvisited">Μη Επισκεφθείσες</option>
       </select>
-      <button id="routeBtn" class="bg-success text-white px-6 py-2 rounded-lg uppercase shadow hover:bg-success/90 transition">Δρομολόγιο Περιοχής</button>
+      <button id="routeBtn"
+              class="bg-success text-white px-6 py-2 rounded-lg uppercase shadow hover:bg-success/90 transition">
+        Δρομολόγιο Περιοχής
+      </button>
     </div>
     <div id="pointsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
   </main>
 
   <!-- Modal -->
-  <div id="modal" class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center transition-opacity">
+  <div id="modal"
+       class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center transition-opacity">
     <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-lg transform scale-95 transition-transform">
       <h2 class="text-center uppercase mb-4">Καταχώριση Σημείου</h2>
       <form id="pointForm" class="space-y-4">
         <div>
           <label class="block uppercase font-medium mb-1">Όνομα Σημείου</label>
-          <input id="pointName" class="w-full border px-3 py-2 rounded-lg uppercase focus:outline-none focus:ring-2 focus:ring-primary" required />
+          <input id="pointName"
+                 class="w-full border px-3 py-2 rounded-lg uppercase focus:outline-none focus:ring-2 focus:ring-primary"
+                 required />
         </div>
         <div>
           <label class="block uppercase font-medium mb-1">Περιοχή</label>
-          <select id="areaSelect" class="w-full border px-3 py-2 rounded-lg uppercase focus:outline-none focus:ring-2 focus:ring-primary" required>
+          <select id="areaSelect"
+                  class="w-full border px-3 py-2 rounded-lg uppercase focus:outline-none focus:ring-2 focus:ring-primary"
+                  required>
             <option value="">Επιλέξτε...</option>
             <option value="Πόλη">Πόλη</option>
-            <option value="Ιαλυσός">Ιαλυσός</option>
-            <option value="Φαληράκι">Φαληράκι</option>
-            <option value="Κολύμπια">Κολύμπια</option>
-            <option value="Νότια Ρόδος">Νότια Ρόδος</option>
-            <option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
+            <option value="Ιαλυσός">ΙΑΛΥΣΟΣ</option>
+            <option value="Φαληράκι">ΦΑΛΗΡΑΚΙ</option>
+            <option value="Κολύμπια">ΚΟΛΥΜΠΙΑ</option>
+            <option value="Νότια Ρόδος">ΝΟΤΙΑ ΡΟΔΟΣ</option>
+            <option value="Δυτική Ρόδος">ΔΥΤΙΚΗ ΡΟΔΟΣ</option>
           </select>
         </div>
         <div class="flex justify-end gap-2">
-          <button type="button" id="cancelBtn" class="px-4 py-2 bg-gray-300 uppercase rounded-lg">Ακύρωση</button>
-          <button type="submit" class="px-4 py-2 bg-primary text-white uppercase rounded-lg">Καταχώριση</button>
+          <button type="button"
+                  id="cancelBtn"
+                  class="px-4 py-2 bg-gray-300 uppercase rounded-lg">Ακύρωση</button>
+          <button type="submit"
+                  class="px-4 py-2 bg-primary text-white uppercase rounded-lg">Καταχώριση</button>
         </div>
       </form>
     </div>
