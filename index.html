@@ -149,10 +149,11 @@
         const vbtn = document.createElement("button");
         vbtn.className = "px-4 py-1 bg-accent text-white rounded-full uppercase text-sm shadow";
         vbtn.textContent = "Επίσκεψη";
-        if (pt.lastVisit && isSameDay(pt.lastVisit)) {
-          vbtn.disabled = true;
-          vbtn.classList.add("opacity-50");
-        }
+        const ageDays = daysSince(pt.lastVisit);        // ήδη επιστρέφει δεκαδικές ημέρες
+if (ageDays < 1) {                             // δηλαδή < 24 ώρες
+  visitBtn.disabled = true;
+  visitBtn.classList.add("opacity-50");
+}
         vbtn.onclick = async () => {
           await db.collection("points").doc(pt.id)
             .update({ lastVisit: firebase.firestore.FieldValue.serverTimestamp() });
