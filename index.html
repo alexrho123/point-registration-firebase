@@ -2,17 +2,31 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Καταχώριση Σημείου (Firebase)</title>
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS + Custom Theme -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1E3A8A',
+            accent:  '#FBBF24',
+            danger:  '#DC2626',
+            success: '#16A34A'
+          }
+        }
+      }
+    }
+  </script>
 
-  <!-- Firebase “compat” SDKs (non-module) για ευρεία συμβατότητα -->
+  <!-- Firebase compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
   <script>
-    // Firebase configuration
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
       authDomain: "pointregistrationapp.firebaseapp.com",
@@ -21,237 +35,212 @@
       messagingSenderId: "925139386507",
       appId: "1:925139386507:web:588ae991f39a7bab04548e"
     };
-
-    // Initialize Firebase (compat)
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Βοηθητική για έλεγχο ίδιας μέρας
-    function isSameDay(timestamp) {
-      const d = timestamp.toDate();
-      const n = new Date();
-      return d.getDate() === n.getDate() &&
-             d.getMonth() === n.getMonth() &&
-             d.getFullYear() === n.getFullYear();
+    function isSameDay(ts) {
+      const d = ts.toDate(), n = new Date();
+      return d.getDate()===n.getDate() && d.getMonth()===n.getMonth() && d.getFullYear()===n.getFullYear();
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      const openModalBtn = document.getElementById("openModalBtn");
-      const modal        = document.getElementById("modal");
-      const cancelBtn    = document.getElementById("cancelBtn");
-      const pointForm    = document.getElementById("pointForm");
-      const pointsContainer = document.getElementById("pointsContainer");
-      const regionFilter = document.getElementById("regionFilter");
-      const routeBtn     = document.getElementById("routeBtn");
-      let userLatitude = null, userLongitude = null, allPoints = [];
+      let userLat, userLng, allPoints = [];
+      const openBtn = document.getElementById("openModalBtn"),
+            modal   = document.getElementById("modal"),
+            cancel  = document.getElementById("cancelBtn"),
+            form    = document.getElementById("pointForm"),
+            container = document.getElementById("pointsContainer"),
+            filter  = document.getElementById("regionFilter"),
+            route   = document.getElementById("routeBtn");
 
-      // Άνοιγμα modal με γεωεντοπισμό
-      openModalBtn.addEventListener("click", () => {
-        if (!navigator.geolocation) {
-          return alert("Το πρόγραμμα περιήγησης δεν υποστηρίζει γεωεντοπισμό.");
-        }
-        navigator.geolocation.getCurrentPosition(
-          pos => {
-            userLatitude = pos.coords.latitude;
-            userLongitude = pos.coords.longitude;
-            modal.classList.remove("hidden");
-          },
-          () => alert("Αδυναμία πρόσβασης στην τοποθεσία.")
-        );
-      });
-
-      // Κλείσιμο modal
-      cancelBtn.addEventListener("click", () => {
-        modal.classList.add("hidden");
-        pointForm.reset();
-      });
-
-      // Υποβολή φόρμας
-      pointForm.addEventListener("submit", async e => {
+      // open modal
+      openBtn.onclick = () => {
+        if(!navigator.geolocation) return alert("Δεν υποστηρίζεται γεωεντοπισμός.");
+        navigator.geolocation.getCurrentPosition(pos => {
+          userLat = pos.coords.latitude; userLng = pos.coords.longitude;
+          modal.classList.remove("opacity-0","pointer-events-none");
+        }, ()=> alert("Άδεια τοποθεσίας απαραίτητη."));
+      };
+      cancel.onclick = ()=> {
+        modal.classList.add("opacity-0","pointer-events-none");
+        form.reset();
+      };
+      // submit
+      form.onsubmit = async e => {
         e.preventDefault();
-        const name = document.getElementById("pointName").value.trim();
-        const area = document.getElementById("areaSelect").value;
-        if (!name || !area) {
-          return alert("Παρακαλώ συμπληρώστε όλα τα πεδία.");
-        }
+        const n = form.pointName.value.trim(),
+              a = form.areaSelect.value;
+        if(!n||!a) return alert("Συμπληρώστε όλα τα πεδία.");
         await db.collection("points").add({
-          name, area,
-          latitude: userLatitude,
-          longitude: userLongitude,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          name:n, area:a,
+          latitude:userLat, longitude:userLng,
+          timestamp:firebase.firestore.FieldValue.serverTimestamp()
         });
-        modal.classList.add("hidden");
-        pointForm.reset();
-      });
+        cancel.click();
+      };
 
-      // Live listener
-      db.collection("points")
-        .orderBy("timestamp","desc")
-        .onSnapshot(snap => {
-          allPoints = [];
-          snap.forEach(doc => allPoints.push({ id: doc.id, ...doc.data() }));
-          renderPoints();
+      // live update
+      db.collection("points").orderBy("timestamp","desc")
+        .onSnapshot(snap=>{
+          allPoints = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+          render();
         });
-
-      // Φίλτρο περιοχής
-      regionFilter.addEventListener("change", renderPoints);
-
-      // Δρομολόγιο περιοχής
-      routeBtn.addEventListener("click", () => {
-        const sel = regionFilter.value;
-        if (!sel) return alert("Επιλέξτε πρώτα περιοχή.");
-        const pts = allPoints.filter(p => p.area === sel);
-        if (pts.length < 2) return alert("Χρειάζονται τουλάχιστον δύο σημεία.");
-        pts.sort((a,b)=> a.timestamp.seconds - b.timestamp.seconds);
-        const coords = pts.map(p=>`${p.latitude},${p.longitude}`);
-        const url = `https://www.google.com/maps/dir/?api=1&origin=${coords[0]}&destination=${coords[coords.length-1]}${coords.length>2?`&waypoints=${coords.slice(1,-1).join("|")}`:""}`;
+      filter.onchange = render;
+      route.onclick = ()=>{
+        const sel = filter.value;
+        if(!sel) return alert("Επιλέξτε περιοχή.");
+        const pts = allPoints.filter(p=>p.area===sel);
+        if(pts.length<2) return alert("Χρειάζονται 2 σημεία.");
+        pts.sort((a,b)=>a.timestamp.seconds-b.timestamp.seconds);
+        const coords = pts.map(p=>`${p.latitude},${p.longitude}`),
+              origin = coords[0], dest = coords.at(-1),
+              way   = coords.slice(1,-1).join("|");
+        let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}`;
+        if(way) url+=`&waypoints=${way}`;
         window.open(url,"_blank");
-      });
+      };
 
-      function renderPoints() {
-        const sel = regionFilter.value;
-        pointsContainer.innerHTML = "";
-        allPoints.forEach(p => {
-          if (!sel || p.area === sel) addPointToDOM(p, pointsContainer);
+      function render(){
+        container.innerHTML="";
+        const sel = filter.value;
+        allPoints.forEach(p=> {
+          if(!sel||p.area===sel) container.appendChild(card(p));
         });
+      }
+
+      function card(pt){
+        const c = document.createElement("div");
+        c.className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition space-y-4";
+
+        // title + buttons
+        const h = document.createElement("div");
+        h.className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2";
+        const t = document.createElement("h3");
+        t.className="text-lg font-bold text-primary uppercase tracking-wide";
+        t.textContent=`${pt.name} (${pt.area})`;
+        h.appendChild(t);
+
+        const grp = document.createElement("div");
+        grp.className="flex gap-2";
+
+        // visit
+        const v = document.createElement("button");
+        v.className="px-4 py-1 bg-accent text-white rounded-full uppercase text-sm shadow";
+        v.textContent="Επίσκεψη";
+        if(pt.lastVisit&&isSameDay(pt.lastVisit)){ v.disabled=true; v.classList.add("opacity-50"); }
+        v.onclick = async ()=>{
+          await db.collection("points").doc(pt.id)
+                .update({ lastVisit:firebase.firestore.FieldValue.serverTimestamp() });
+        };
+        grp.appendChild(v);
+
+        // delete
+        const d = document.createElement("button");
+        d.className="px-4 py-1 bg-danger text-white rounded-full uppercase text-sm shadow";
+        d.textContent="Διαγραφή";
+        d.onclick = async ()=>{
+          if(confirm("Διαγραφή;")) await db.collection("points").doc(pt.id).delete();
+        };
+        grp.appendChild(d);
+
+        h.appendChild(grp);
+        c.appendChild(h);
+
+        // last visit
+        if(pt.lastVisit){
+          const p = document.createElement("p");
+          p.className="text-gray-500 italic text-sm";
+          p.textContent = "Τελευταία επίσκεψη: " + pt.lastVisit.toDate().toLocaleString();
+          c.appendChild(p);
+        }
+
+        // map link
+        const m = document.createElement("a");
+        m.href=`https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}`;
+        m.target="_blank";
+        m.className="block text-center bg-primary text-white py-2 rounded-lg uppercase font-semibold hover:bg-primary/90 transition";
+        m.textContent="Δείτε στον χάρτη";
+        c.appendChild(m);
+
+        return c;
       }
     });
-
-    // Δημιουργία κάρτας σημείου
-    function addPointToDOM(point, container) {
-      const card = document.createElement("div");
-      card.className = "bg-white rounded-xl p-6 shadow-lg transition hover:shadow-2xl";
-
-      // Header με τίτλο + κουμπιά
-      const header = document.createElement("div");
-      header.className = "flex items-center justify-between mb-4";
-
-      const title = document.createElement("h3");
-      title.className = "text-xl font-bold uppercase";
-      title.textContent = `${point.name} (${point.area})`;
-      header.appendChild(title);
-
-      // Κουμπί ΕΠΙΣΚΕΨΗ
-      const visitBtn = document.createElement("button");
-      visitBtn.className = "mr-2 px-3 py-1 bg-yellow-500 text-white uppercase rounded";
-      visitBtn.textContent = "ΕΠΙΣΚΕΨΗ";
-      if (point.lastVisit && isSameDay(point.lastVisit)) {
-        visitBtn.disabled = true;
-        visitBtn.classList.add("opacity-50");
-      }
-      visitBtn.addEventListener("click", async () => {
-        await db.collection("points").doc(point.id)
-                .update({ lastVisit: firebase.firestore.FieldValue.serverTimestamp() });
-      });
-      header.appendChild(visitBtn);
-
-      // Κουμπί ΔΙΑΓΡΑΦΗ
-      const deleteBtn = document.createElement("button");
-      deleteBtn.className = "px-3 py-1 bg-red-600 text-white uppercase rounded";
-      deleteBtn.textContent = "ΔΙΑΓΡΑΦΗ";
-      deleteBtn.addEventListener("click", async () => {
-        if (confirm("Είστε σίγουρος;")) {
-          await db.collection("points").doc(point.id).delete();
-        }
-      });
-      header.appendChild(deleteBtn);
-
-      card.appendChild(header);
-
-      // Εμφάνιση τελευταίας επίσκεψης
-      if (point.lastVisit) {
-        const lv = point.lastVisit.toDate();
-        const info = document.createElement("p");
-        info.className = "text-sm text-gray-600 mb-2";
-        info.textContent = "Τελευταία επίσκεψη: " + lv.toLocaleString();
-        card.appendChild(info);
-      }
-
-      // Link Google Maps
-      const mapLink = document.createElement("a");
-      mapLink.href = `https://www.google.com/maps/search/?api=1&query=${point.latitude},${point.longitude}`;
-      mapLink.target = "_blank";
-      mapLink.className = "text-blue-600 hover:underline uppercase";
-      mapLink.textContent = "ΔΕΙΤΕ ΣΤΟΝ ΧΑΡΤΗ";
-      card.appendChild(mapLink);
-
-      container.appendChild(card);
-    }
   </script>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center py-12">
+
   <!-- Header -->
-  <header class="w-full bg-white shadow-md py-4 mb-6">
-    <div class="max-w-2xl mx-auto px-6">
-      <h1 class="text-2xl font-extrabold uppercase">Καταχώριση Σημείου</h1>
+  <header class="w-full bg-white shadow-md py-4 mb-8">
+    <div class="max-w-3xl mx-auto px-6 flex justify-between items-center">
+      <h1 class="text-3xl font-extrabold text-primary uppercase">Καταχώριση Σημείου</h1>
+      <button id="openModalBtn"
+              class="bg-primary text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-lg hover:bg-primary/90 transition transform hover:scale-110">
+        +
+      </button>
     </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="w-full max-w-2xl px-6 mb-10 space-y-6">
-    <!-- Κουμπί για μετάβαση στο treno2025 -->
-    <div class="flex justify-center mb-4">
+  <!-- Main -->
+  <main class="w-full max-w-3xl px-4 space-y-6 mb-10">
+    <!-- External -->
+    <div class="flex justify-center">
       <a href="http://treno2025.unaux.com/" target="_blank"
-         class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition uppercase font-semibold">
+         class="px-6 py-2 bg-primary text-white rounded-full uppercase font-semibold shadow hover:bg-primary/90 transition">
         Μετάβαση στις Παραγγελίες
       </a>
     </div>
 
-    <!-- Φίλτρα & Δρομολόγιο -->
-    <div class="flex flex-col sm:flex-row sm:justify-between items-center gap-4">
+    <!-- Controls -->
+    <div class="flex flex-col sm:flex-row gap-4 justify-between">
       <select id="regionFilter"
-              class="border rounded px-3 py-2 uppercase w-full sm:w-auto">
-        <option value="">ΟΛΕΣ ΟΙ ΠΕΡΙΟΧΕΣ</option>
-        <option value="Πόλη">ΠΟΛΗ</option>
-        <option value="Ιαλυσός">ΙΑΛΥΣΟΣ</option>
-        <option value="Φαληράκι">ΦΑΛΗΡΑΚΙ</option>
-        <option value="Κολύμπια">ΚΟΛΥΜΠΙΑ</option>
-        <option value="Νότια Ρόδος">ΝΟΤΙΑ ΡΟΔΟΣ</option>
-        <option value="Δυτική Ρόδος">ΔΥΤΙΚΗ ΡΟΔΟΣ</option>
+              class="flex-1 border border-gray-300 px-3 py-2 rounded-lg uppercase shadow focus:outline-none">
+        <option value="">Όλες οι περιοχές</option>
+        <option value="Πόλη">Πόλη</option>
+        <option value="Ιαλυσός">Ιαλυσός</option>
+        <option value="Φαληράκι">Φαληράκι</option>
+        <option value="Κολύμπια">Κολύμπια</option>
+        <option value="Νότια Ρόδος">Νότια Ρόδος</option>
+        <option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
       </select>
       <button id="routeBtn"
-              class="px-4 py-2 bg-green-600 text-white uppercase rounded">
-        ΔΡΟΜΟΛΟΓΙΟ ΠΕΡΙΟΧΗΣ
+              class="bg-success text-white px-6 py-2 rounded-lg uppercase shadow hover:bg-success/90 transition">
+        Δρομολόγιο Περιοχής
       </button>
     </div>
 
-    <!-- Points List -->
-    <div id="pointsContainer" class="space-y-6"></div>
+    <!-- Points Grid -->
+    <div id="pointsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
   </main>
 
-  <!-- Στρογγυλό κουμπί κάτω δεξιά -->
-  <button id="openModalBtn"
-          class="fixed bottom-8 right-8 bg-blue-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg hover:bg-blue-700 transition"
-          title="Καταχώριση Νέου Σημείου">+</button>
-
-  <!-- Modal Overlay -->
+  <!-- Modal -->
   <div id="modal"
-       class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center">
-    <div class="bg-white rounded-xl p-6 w-full max-w-xs mx-4">
-      <h2 class="text-center uppercase mb-4">Καταχώριση Σημείου</h2>
+       class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center opacity-0 pointer-events-none transition-opacity">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-lg transform scale-95 transition-transform">
+      <h2 class="text-center text-2xl font-bold uppercase mb-4">Καταχώριση Σημείου</h2>
       <form id="pointForm" class="space-y-4">
         <div>
-          <label class="block uppercase">Όνομα Σημείου</label>
-          <input id="pointName" class="w-full border px-2 py-1 uppercase" required />
+          <label class="block uppercase font-medium mb-1">Όνομα Σημείου</label>
+          <input id="pointName" class="w-full border px-3 py-2 rounded-lg uppercase focus:outline-none focus:ring-2 focus:ring-primary" required />
         </div>
         <div>
-          <label class="block uppercase">Περιοχή</label>
-          <select id="areaSelect" class="w-full border px-2 py-1 uppercase" required>
-            <option value="">ΕΠΙΛΕΞΤΕ...</option>
-            <option value="Πόλη">ΠΟΛΗ</option>
-            <option value="Ιαλυσός">ΙΑΛΥΣΟΣ</option>
-            <option value="Φαληράκι">ΦΑΛΗΡΑΚΙ</option>
-            <option value="Κολύμπια">ΚΟΛΥΜΠΙΑ</option>
-            <option value="Νότια Ρόδος">ΝΟΤΙΑ ΡΟΔΟΣ</option>
-            <option value="Δυτική Ρόδος">ΔΥΤΙΚΗ ΡΟΔΟΣ</option>
+          <label class="block uppercase font-medium mb-1">Περιοχή</label>
+          <select id="areaSelect" class="w-full border px-3 py-2 rounded-lg uppercase focus:outline-none focus:ring-2 focus:ring-primary" required>
+            <option value="">Επιλέξτε...</option>
+            <option value="Πόλη">Πόλη</option>
+            <option value="Ιαλυσός">Ιαλυσός</option>
+            <option value="Φαληράκι">Φαληράκι</option>
+            <option value="Κολύμπια">Κολύμπια</option>
+            <option value="Νότια Ρόδος">Νότια Ρόδος</option>
+            <option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
           </select>
         </div>
         <div class="flex justify-end gap-2">
-          <button type="button" id="cancelBtn" class="px-4 py-2 bg-gray-300 uppercase rounded">Ακύρωση</button>
-          <button type="submit" class="px-4 py-2 bg-blue-600 text-white uppercase rounded">Καταχώριση</button>
+          <button type="button" id="cancelBtn" class="px-4 py-2 bg-gray-300 rounded-lg uppercase">Ακύρωση</button>
+          <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg uppercase">Καταχώριση</button>
         </div>
       </form>
     </div>
   </div>
+
 </body>
 </html>
