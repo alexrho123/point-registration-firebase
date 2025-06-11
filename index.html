@@ -16,7 +16,7 @@
             accent:   '#FACC15',
             danger:   '#DC2626',
             success:  '#16A34A',
-            region:   '#8B5CF6',    /* νέο χρώμα για το κουτάκι περιοχής */
+            region:   '#8B5CF6',
             softbg:   '#f0f8ff',
             darktext: '#1f2937'
           },
@@ -180,7 +180,7 @@
         render();
       };
       cancelGen.onclick = e => {
-        e.stopPropagation();  // αποτρέπει το click να φτάσει στο κουμπί διαδρομής
+        e.stopPropagation();  // αποτρέπει το click να φτάσει στο κουμπί κάτω
         selectionMode = false;
         genBtn.classList.add("hidden");
         cancelGen.classList.add("hidden");
@@ -222,7 +222,7 @@
 
       function card(pt){
         const c = document.createElement("div");
-        c.className = "relative bg-white rounded-xl p-6 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition";
+        c.className = "relative bg-white rounded-xl p-6 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition overflow-hidden";
 
         // area banner top-center
         const areaBanner = document.createElement("div");
@@ -242,6 +242,7 @@
         // content wrapper
         const wrapper = document.createElement("div");
         wrapper.className = "mt-6 flex flex-col md:flex-row justify-between items-center gap-4";
+
         // left block
         const left = document.createElement("div");
         left.className = "flex flex-col items-center gap-2 min-w-0";
@@ -257,7 +258,7 @@
                           : Math.floor(age)===1 ? "1 ημέρα"
                                                 : `${Math.floor(age)} ημέρες`;
         const title = document.createElement("h3");
-        title.className = "text-xl font-bold uppercase text-darktext break-words text-center";
+        title.className = "text-xl font-bold uppercase text-darktext text-center break-words whitespace-normal";
         title.textContent = pt.name;
         left.append(dot, lbl, title);
 
@@ -345,7 +346,7 @@
         <button id="customRouteBtn" class="bg-teal-500 text-white px-6 py-2 rounded-xl uppercase shadow hover:bg-teal-600 transition">Κάνε το Δικό Σου Δρομολόγιο</button>
       </div>
     </div>
-    <div id="pointsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    <div id="pointsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
     <button id="generateCustomRouteBtn" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white px-6 py-3 rounded-xl uppercase font-semibold shadow-lg hover:bg-indigo-700 transition z-50">
       <span id="cancelCustomBtn" class="absolute top-2 right-4 text-white text-xl font-bold cursor-pointer hover:text-gray-200">✕</span>
       Δημιούργησε Διαδρομή
