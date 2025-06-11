@@ -38,11 +38,14 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      let userLat, userLng, allPoints = [];
+      let userLat, userLng, allPoints = [], editId = null;
       const openBtn   = document.getElementById("openModalBtn"),
             modal     = document.getElementById("modal"),
             cancelBtn = document.getElementById("cancelBtn"),
             form      = document.getElementById("pointForm"),
+            editModal = document.getElementById("editModal"),
+            editCancel= document.getElementById("editCancel"),
+            editForm  = document.getElementById("editForm"),
             container = document.getElementById("pointsContainer"),
             regionF   = document.getElementById("regionFilter"),
             visitedF  = document.getElementById("visitedFilter"),
@@ -66,6 +69,16 @@
           timestamp:firebase.firestore.FieldValue.serverTimestamp()
         });
         cancelBtn.click();
+      };
+
+      editCancel.onclick = ()=> { editModal.classList.add("opacity-0","pointer-events-none"); editForm.reset(); };
+      editForm.onsubmit = async e => {
+        e.preventDefault();
+        const n = editForm.editName.value.trim(), a = editForm.editArea.value;
+        if (!n||!a) return alert("Συμπληρώστε όλα τα πεδία.");
+        await db.collection("points").doc(editId)
+          .update({ name:n, area:a });
+        editCancel.click();
       };
 
       db.collection("points").orderBy("timestamp","desc")
@@ -110,7 +123,6 @@
         const h = document.createElement("div");
         h.className = "flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2";
 
-        // Dot + exact days + title
         const left = document.createElement("div");
         left.className = "flex items-center gap-4";
 
@@ -136,21 +148,27 @@
 
         const title = document.createElement("h3");
         title.className = "text-xl font-bold uppercase text-primary tracking-wide";
-        title.textContent = `${pt.name} (${pt.area})`;
+        title.textContent = pt.name;
+
+        // area badge
+        const badge = document.createElement("span");
+        badge.className = "ml-2 bg-primary text-white px-2 py-1 rounded-full text-sm uppercase";
+        badge.textContent = pt.area;
 
         left.appendChild(dot);
         left.appendChild(lbl);
         left.appendChild(title);
+        left.appendChild(badge);
         h.appendChild(left);
 
-        // Buttons
         const grp = document.createElement("div");
-        grp.className = "flex gap-2 flex-wrap";
+        grp.className = "flex gap-2";
+
         const vbtn = document.createElement("button");
         vbtn.className = "px-4 py-1 bg-accent text-white rounded-full uppercase text-sm shadow";
         vbtn.textContent = "Επίσκεψη";
         const ageDays = daysSince(pt.lastVisit);
-        if (ageDays < 1) {               // απενεργοποίηση για 24 ώρες
+        if (ageDays < 1) {
           vbtn.disabled = true;
           vbtn.classList.add("opacity-50");
         }
@@ -159,6 +177,17 @@
             .update({ lastVisit: firebase.firestore.FieldValue.serverTimestamp() });
         };
         grp.appendChild(vbtn);
+
+        const editBtn = document.createElement("button");
+        editBtn.className = "px-4 py-1 bg-primary text-white rounded-full uppercase text-sm shadow";
+        editBtn.textContent = "Αλλαγή";
+        editBtn.onclick = () => {
+          editId = pt.id;
+          editForm.editName.value = pt.name;
+          editForm.editArea.value = pt.area;
+          editModal.classList.remove("opacity-0","pointer-events-none");
+        };
+        grp.appendChild(editBtn);
 
         const dbtn = document.createElement("button");
         dbtn.className = "px-4 py-1 bg-danger text-white rounded-full uppercase text-sm shadow";
@@ -196,16 +225,23 @@
   <header class="w-full bg-white shadow-md py-4 mb-8">
     <div class="max-w-3xl mx-auto px-6 flex justify-between items-center">
       <h1 class="text-3xl font-extrabold text-primary uppercase">Καταχώριση Σημείου</h1>
-      <button id="openModalBtn" class="bg-primary text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-lg hover:bg-primary/90 transition transform hover:scale-110">+</button>
+      <button id="openModalBtn"
+              class="bg-primary text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-lg hover:bg-primary/90 transition transform hover:scale-110">
+        +
+      </button>
     </div>
   </header>
 
   <main class="w-full max-w-3xl px-4 space-y-6 mb-10">
     <div class="flex justify-center">
-      <a href="http://treno2025.unaux.com/" target="_blank" class="px-6 py-2 bg-primary text-white rounded-full uppercase font-semibold shadow hover:bg-primary/90 transition">Μετάβαση στις Παραγγελίες</a>
+      <a href="http://treno2025.unaux.com/" target="_blank"
+         class="px-6 py-2 bg-primary text-white rounded-full uppercase font-semibold shadow hover:bg-primary/90 transition">
+        Μετάβαση στις Παραγγελίες
+      </a>
     </div>
     <div class="flex flex-col sm:flex-row gap-4 justify-between items-center">
-      <select id="regionFilter" class="flex-1 border border-gray-300 px-3 py-2 rounded-lg uppercase shadow focus:outline-none">
+      <select id="regionFilter"
+              class="flex-1 border border-gray-300 px-3 py-2 rounded-lg uppercase shadow focus:outline-none">
         <option value="">Όλες οι περιοχές</option>
         <option value="Πόλη">Πόλη</option>
         <option value="Ιαλυσός">Ιαλυσός</option>
@@ -214,17 +250,21 @@
         <option value="Νότια Ρόδος">Νότια Ρόδος</option>
         <option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
       </select>
-      <select id="visitedFilter" class="border border-gray-300 px-3 py-2 rounded-lg uppercase shadow focus:outline-none">
+      <select id="visitedFilter"
+              class="border border-gray-300 px-3 py-2 rounded-lg uppercase shadow focus:outline-none">
         <option value="all">Όλες</option>
         <option value="visited">Επισκεφθείσες</option>
         <option value="unvisited">Μη Επισκεφθείσες</option>
       </select>
-      <button id="routeBtn" class="bg-success text-white px-6 py-2 rounded-lg uppercase shadow hover:bg-success/90 transition">Δρομολόγιο Περιοχής</button>
+      <button id="routeBtn"
+              class="bg-success text-white px-6 py-2 rounded-lg uppercase shadow hover:bg-success/90 transition">
+        Δρομολόγιο Περιοχής
+      </button>
     </div>
     <div id="pointsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
   </main>
 
-  <!-- Modal -->
+  <!-- Add Modal -->
   <div id="modal" class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center transition-opacity">
     <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-lg transform scale-95 transition-transform">
       <h2 class="text-center uppercase mb-4">Καταχώριση Σημείου</h2>
@@ -248,6 +288,35 @@
         <div class="flex justify-end gap-2">
           <button type="button" id="cancelBtn" class="px-4 py-2 bg-gray-300 uppercase rounded-lg">Ακύρωση</button>
           <button type="submit" class="px-4 py-2 bg-primary text-white uppercase rounded-lg">Καταχώριση</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center transition-opacity">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-lg transform scale-95 transition-transform">
+      <h2 class="text-center uppercase mb-4">Επεξεργασία Σημείου</h2>
+      <form id="editForm" class="space-y-4">
+        <div>
+          <label class="block uppercase font-medium mb-1">Όνομα Σημείου</label>
+          <input name="editName" class="w-full border px-3 py-2 rounded-lg uppercase focus:outline-none focus:ring-2 focus:ring-primary" required />
+        </div>
+        <div>
+          <label class="block uppercase font-medium mb-1">Περιοχή</label>
+          <select name="editArea" class="w-full border px-3 py-2 rounded-lg uppercase focus:outline-none focus:ring-2 focus:ring-primary" required>
+            <option value="">Επιλέξτε...</option>
+            <option value="Πόλη">Πόλη</option>
+            <option value="Ιαλυσός">Ιαλυσός</option>
+            <option value="Φαληράκι">Φαληράκι</option>
+            <option value="Κολύμπια">Κολύμπια</option>
+            <option value="Νότια Ρόδος">Νότια Ρόδος</option>
+            <option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" id="editCancel" class="px-4 py-2 bg-gray-300 uppercase rounded-lg">Ακύρωση</button>
+          <button type="submit" class="px-4 py-2 bg-primary text-white uppercase rounded-lg">Αποθήκευση</button>
         </div>
       </form>
     </div>
