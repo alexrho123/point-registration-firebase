@@ -40,6 +40,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 </head>
+
 <body class="bg-softbg text-darktext min-h-screen flex flex-col items-center py-8 font-sans">
 
   <!-- Header -->
@@ -78,8 +79,7 @@
   <!-- Add Point Modal -->
   <div id="modal" class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center p-4">
     <div class="bg-white rounded p-4 w-full max-w-sm relative">
-      <button class="absolute top-2 right-2 text-gray-600 text-xl"
-              onclick="document.getElementById('modal').classList.add('opacity-0','pointer-events-none')">✕</button>
+      <button class="absolute top-2 right-2 text-gray-600 text-xl" onclick="modal.classList.add('opacity-0','pointer-events-none')">✕</button>
       <h2 class="text-center uppercase mb-4 text-primary text-xl font-semibold">Καταχώριση Σημείου</h2>
       <form id="pointForm" class="space-y-4">
         <div>
@@ -104,8 +104,7 @@
   <!-- Edit Point Modal -->
   <div id="editModal" class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center p-4">
     <div class="bg-white rounded p-4 w-full max-w-sm relative">
-      <button class="absolute top-2 right-2 text-gray-600 text-xl"
-              onclick="document.getElementById('editModal').classList.add('opacity-0','pointer-events-none')">✕</button>
+      <button class="absolute top-2 right-2 text-gray-600 text-xl" onclick="editModal.classList.add('opacity-0','pointer-events-none')">✕</button>
       <h2 class="text-center uppercase mb-4 text-primary text-xl font-semibold">Επεξεργασία Σημείου</h2>
       <form id="editForm" class="space-y-4">
         <div>
@@ -130,8 +129,7 @@
   <!-- Route Modal -->
   <div id="routeModal" class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center p-4">
     <div class="bg-white rounded p-4 w-full max-w-sm relative">
-      <button class="absolute top-2 right-2 text-gray-600 text-xl"
-              onclick="document.getElementById('routeModal').classList.add('opacity-0','pointer-events-none')">✕</button>
+      <button class="absolute top-2 right-2 text-gray-600 text-xl" onclick="routeModal.classList.add('opacity-0','pointer-events-none')">✕</button>
       <h2 class="text-center uppercase mb-4 text-primary text-xl font-semibold">Δρομολόγιο Περιοχής</h2>
       <form id="routeForm" class="space-y-4">
         <div>
@@ -188,15 +186,9 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore(), storage = firebase.storage();
 
-    function daysSince(ts) {
-      if (!ts) return Infinity;
-      return (new Date() - ts.toDate())/(1000*60*60*24);
-    }
-
     document.addEventListener("DOMContentLoaded", () => {
       let userLat, userLng, allPoints = [], editId, selectionMode = false, currentPhotoId, cameraStream;
 
-      // Element refs
       const openBtn       = document.getElementById("openModalBtn"),
             addModal      = document.getElementById("modal"),
             cancelBtn     = document.getElementById("cancelBtn"),
@@ -233,7 +225,7 @@
           userLat = pos.coords.latitude;
           userLng = pos.coords.longitude;
           addModal.classList.remove("opacity-0","pointer-events-none");
-        }, ()=> alert("Άδεια τοποθεσίας απαραίτητη."));
+        }, () => alert("Άδεια τοποθεσίας απαραίτητη."));
       };
       cancelBtn.onclick = () => {
         addModal.classList.add("opacity-0","pointer-events-none");
@@ -243,10 +235,11 @@
         e.preventDefault();
         const name = form.pointName.value.trim(),
               area = form.areaSelect.value;
-        if(!name||!area) return alert("Συμπληρώστε όλα τα πεδία.");
+        if (!name || !area) return alert("Συμπληρώστε όλα τα πεδία.");
         await db.collection("points").add({
           name, area,
-          latitude: userLat, longitude: userLng,
+          latitude: userLat,
+          longitude: userLng,
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
         cancelBtn.click();
@@ -261,7 +254,7 @@
         e.preventDefault();
         const name = editForm.editName.value.trim(),
               area = editForm.editArea.value;
-        if(!name||!area) return alert("Συμπληρώστε όλα τα πεδία.");
+        if (!name || !area) return alert("Συμπληρώστε όλα τα πεδία.");
         await db.collection("points").doc(editId).update({ name, area });
         editCancel.click();
       };
@@ -273,34 +266,36 @@
       };
       routeCancel.onclick = () => {
         routeModal.classList.add("opacity-0","pointer-events-none");
-        routeForm.reset(); routeCount.textContent="";
+        routeForm.reset();
+        routeCount.textContent = "";
       };
       routeForm.onsubmit = e => {
         e.preventDefault();
         const sel  = routeRegion.value,
               days = routeDays.value;
-        if(!sel) return alert("Επιλέξτε περιοχή.");
-        let pts = allPoints.filter(p=>sel==='all'||p.area===sel)
-          .filter(p=>{
-            const age=daysSince(p.lastVisit||0);
-            return ({ lt3:age<3,'3to7':age>=3&&age<=7,gt7:age>7,never:!p.lastVisit}[days]||false);
+        if (!sel) return alert("Επιλέξτε περιοχή.");
+        let pts = allPoints.filter(p => sel==='all'||p.area===sel)
+          .filter(p => {
+            const age = daysSince(p.lastVisit || 0);
+            return ({ lt3:age<3,'3to7':age>=3&&age<=7,gt7:age>7,never:!p.lastVisit }[days]||false);
           });
-        if(pts.length<2) return alert("Δεν υπάρχουν αρκετά σημεία.");
+        if (pts.length < 2) return alert("Δεν υπάρχουν αρκετά σημεία.");
         pts.sort((a,b)=>a.timestamp.seconds-b.timestamp.seconds);
         const coords=pts.map(p=>`${p.latitude},${p.longitude}`),
               o=coords.shift(), d=coords.pop(), w=coords.join("|");
         let url=`https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}`;
         if(w) url+=`&waypoints=${w}`;
-        window.open(url,"_blank"); routeCancel.click();
+        window.open(url,"_blank");
+        routeCancel.click();
       };
       function updateRouteCount(){
         const sel  = routeRegion.value,
               days = routeDays.value;
-        if(!sel) return routeCount.textContent="";
+        if (!sel) return routeCount.textContent="";
         const cnt=allPoints.filter(p=>sel==='all'||p.area===sel)
           .filter(p=>{
-            const age=daysSince(p.lastVisit||0);
-            return ({ lt3:age<3,'3to7':age>=3&&age<=7,gt7:age>7,never:!p.lastVisit}[days]||false);
+            const age = daysSince(p.lastVisit || 0);
+            return ({ lt3:age<3,'3to7':age>=3&&age<=7,gt7:age>7,never:!p.lastVisit }[days]||false);
           }).length;
         routeCount.textContent=`Βρέθηκαν ${cnt} σημεία`;
       }
@@ -321,57 +316,65 @@
       };
       genBtn.onclick = () => {
         const checked=[...container.querySelectorAll("input[type=checkbox]:checked")];
-        if(!checked.length) return alert("Επιλέξτε σημεία.");
-        const coords=checked.map(cb=>{const p=allPoints.find(x=>x.id===cb.dataset.id);return`${p.latitude},${p.longitude}`});
+        if (!checked.length) return alert("Επιλέξτε σημεία.");
+        const coords=checked.map(cb=>{
+          const p=allPoints.find(x=>x.id===cb.dataset.id);
+          return `${p.latitude},${p.longitude}`;
+        });
         const o=coords.shift(), d=coords.pop(), w=coords.join("|");
         let url=`https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}`;
         if(w) url+=`&waypoints=${w}`;
-        window.open(url,"_blank"); cancelGen.click();
+        window.open(url,"_blank");
+        cancelGen.click();
       };
 
       // Show Photo or Camera
       function showPhoto(id){
-        currentPhotoId=id;
+        currentPhotoId = id;
         db.collection("points").doc(id).get().then(doc=>{
-          const d=doc.data()||{};
-          if(!d.photoURL){
+          const d = doc.data()||{};
+          if (!d.photoURL) {
             cameraModal.classList.remove("opacity-0","pointer-events-none");
             navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
               .then(stream=>{cameraStream=stream;cameraVideo.srcObject=stream;})
               .catch(err=>{alert("Δε βρέθηκε κάμερα: "+err.message);cameraModal.classList.add("opacity-0","pointer-events-none");});
           } else {
-            photoImg.src=d.photoURL;
-            photoDate.textContent=new Date(d.photoTimestamp.toDate()).toLocaleString();
+            photoImg.src = d.photoURL;
+            photoDate.textContent = new Date(d.photoTimestamp.toDate()).toLocaleString();
             photoModal.classList.remove("opacity-0","pointer-events-none");
           }
         });
       }
 
-      // Capture Button
+      // Capture Button with confirm
       captureBtn.onclick = ()=>{
         const canvas=document.createElement('canvas');
         canvas.width=cameraVideo.videoWidth; canvas.height=cameraVideo.videoHeight;
         canvas.getContext('2d').drawImage(cameraVideo,0,0);
         cameraStream.getTracks().forEach(t=>t.stop());
         cameraModal.classList.add("opacity-0","pointer-events-none");
+
+        // Ask user
+        if (!confirm("Θες να αποθηκεύσεις τη φωτογραφία;")) {
+          return;
+        }
+
         canvas.toBlob(async blob=>{
-          const ref=storage.ref(`points/${currentPhotoId}.jpg`);
+          const ref = storage.ref(`points/${currentPhotoId}.jpg`);
           await ref.put(blob);
-          const url=await ref.getDownloadURL();
-          const ts=firebase.firestore.FieldValue.serverTimestamp();
+          const url = await ref.getDownloadURL();
+          const ts  = firebase.firestore.FieldValue.serverTimestamp();
           await db.collection("points").doc(currentPhotoId).update({ photoURL:url, photoTimestamp:ts });
           showPhoto(currentPhotoId);
         },'image/jpeg',0.7);
       };
 
-      // Cancel Capture
       cancelCapture.onclick = ()=>{
         if(cameraStream) cameraStream.getTracks().forEach(t=>t.stop());
         cameraModal.classList.add("opacity-0","pointer-events-none");
       };
 
-      // Delete / Close Photo
-      deletePhoto.onclick=async ()=>{
+      deletePhoto.onclick = async ()=>{
         await storage.ref(`points/${currentPhotoId}.jpg`).delete();
         await db.collection("points").doc(currentPhotoId).update({
           photoURL:firebase.firestore.FieldValue.delete(),
@@ -379,11 +382,11 @@
         });
         photoModal.classList.add("opacity-0","pointer-events-none");
       };
-      closePhoto.onclick=()=>photoModal.classList.add("opacity-0","pointer-events-none");
+      closePhoto.onclick = ()=> photoModal.classList.add("opacity-0","pointer-events-none");
 
       // Firestore listener
       db.collection("points").orderBy("timestamp","desc")
-        .onSnapshot(snap=>{allPoints=snap.docs.map(d=>({id:d.id,...d.data()}));render();});
+        .onSnapshot(snap=>{ allPoints=snap.docs.map(d=>({id:d.id,...d.data()})); render(); });
       regionF.onchange=render; visitedF.onchange=render;
 
       function render(){
@@ -428,27 +431,22 @@
         btns.className='flex gap-1';
         ['Επίσκεψη','Αλλαγή','Διαγραφή','Προβολή'].forEach(lbl=>{
           const b=document.createElement('button');
-          b.className='px-2 py-1 text-xs rounded uppercase text-white';
-          b.classList.add(lbl==='Επίσκεψη'? 'bg-success' :
-                         lbl==='Αλλαγή'?   'bg-accent' :
-                         lbl==='Διαγραφή'? 'bg-danger' : 'bg-region');
+          b.className='px-2 py-1 text-xs rounded text-white';
+          b.classList.add(lbl==='Επίσκεψη'?'bg-success':
+                         lbl==='Αλλαγή'?'bg-accent':
+                         lbl==='Διαγραφή'?'bg-danger':'bg-region');
           b.textContent=lbl;
           b.onclick={
             'Επίσκεψη':async()=>{
               const now=new Date();
-              await db.collection('points').doc(pt.id)
-                       .update({ lastVisit:firebase.firestore.FieldValue.serverTimestamp() });
+              await db.collection('points').doc(pt.id).update({ lastVisit:firebase.firestore.FieldValue.serverTimestamp() });
               pt.lastVisit={toDate:()=>now}; render();
             },
             'Αλλαγή':()=>{
-              editId=pt.id;
-              editForm.editName.value=pt.name;
-              editForm.editArea.value=pt.area;
+              editId=pt.id; editForm.editName.value=pt.name; editForm.editArea.value=pt.area;
               editModal.classList.remove('opacity-0','pointer-events-none');
             },
-            'Διαγραφή':async()=>{
-              if(confirm('Διαγραφή;')) await db.collection('points').doc(pt.id).delete();
-            },
+            'Διαγραφή':async()=>{ if(confirm('Διαγραφή;')) await db.collection('points').doc(pt.id).delete(); },
             'Προβολή':()=>showPhoto(pt.id)
           }[lbl];
           btns.append(b);
@@ -456,7 +454,7 @@
         row.append(btns);
         c.append(row);
 
-        // lastVisit
+        // last visit
         if(pt.lastVisit){
           const p=document.createElement('p');
           p.className='text-xs text-gray-500 italic mt-2 text-center';
@@ -464,7 +462,7 @@
           c.append(p);
         }
 
-        // map link
+        // map
         const m=document.createElement('a');
         m.href=`https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}`;
         m.target='_blank';
