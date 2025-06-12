@@ -25,7 +25,17 @@
     }
   </script>
 
-  <!-- Firebase compat SDKs -->
+  <!-- Ensure 2-column grid in landscape -->
+  <style>
+    @media (orientation: landscape) {
+      #pointsContainer {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+      }
+    }
+  </style>
+
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
@@ -71,7 +81,7 @@
     document.addEventListener("DOMContentLoaded", () => {
       let userLat, userLng, allPoints = [], editId = null, selectionMode = false, currentPhotoId = null;
 
-      // Element refs
+      // Refs
       const openBtn       = document.getElementById("openModalBtn"),
             addModal      = document.getElementById("modal"),
             cancelBtn     = document.getElementById("cancelBtn"),
@@ -103,8 +113,7 @@
       openBtn.onclick = () => {
         if (!navigator.geolocation) { alert("Δεν υποστηρίζεται γεωεντοπισμός."); return; }
         navigator.geolocation.getCurrentPosition(pos => {
-          userLat = pos.coords.latitude;
-          userLng = pos.coords.longitude;
+          userLat = pos.coords.latitude; userLng = pos.coords.longitude;
           addModal.classList.remove("opacity-0","pointer-events-none");
         }, ()=> alert("Άδεια τοποθεσίας απαραίτητη."));
       };
@@ -147,8 +156,7 @@
       };
       routeCancel.onclick = () => {
         routeModal.classList.add("opacity-0","pointer-events-none");
-        routeForm.reset();
-        routeCount.textContent = "";
+        routeForm.reset(); routeCount.textContent="";
       };
       routeRegion.onchange = updateRouteCount;
       routeDays.onchange   = updateRouteCount;
@@ -157,13 +165,11 @@
         const sel = routeRegion.value, daysOpt = routeDays.value;
         if (!sel) { alert("Επιλέξτε περιοχή."); return; }
         let pts = allPoints.filter(p=> sel==='all'||p.area===sel)
-                           .filter(p=>{
+                           .filter(p=> {
                              const age = daysSince(p.lastVisit);
                              return ({
-                               lt3:   age<3,
-                               '3to7':age>=3&&age<=7,
-                               gt7:   age>7,
-                               never: !p.lastVisit
+                               lt3:   age<3, '3to7':age>=3&&age<=7,
+                               gt7:   age>7, never: !p.lastVisit
                              }[daysOpt] ?? true);
                            });
         if (pts.length < 2) { alert("Δεν υπάρχουν αρκετά σημεία."); return; }
@@ -174,20 +180,17 @@
               waypoints = coords.join("|");
         let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}`;
         if (waypoints) url += `&waypoints=${waypoints}`;
-        window.open(url, "_blank");
-        routeCancel.click();
+        window.open(url, "_blank"); routeCancel.click();
       };
       function updateRouteCount(){
-        const sel=routeRegion.value, daysOpt=routeDays.value;
+        const sel = routeRegion.value, daysOpt = routeDays.value;
         if (!sel) return void(routeCount.textContent="");
         const cnt = allPoints.filter(p=> sel==='all'||p.area===sel)
                              .filter(p=>{
                                const age = daysSince(p.lastVisit);
                                return ({
-                                 lt3:   age<3,
-                                 '3to7':age>=3&&age<=7,
-                                 gt7:   age>7,
-                                 never: !p.lastVisit
+                                 lt3:   age<3, '3to7':age>=3&&age<=7,
+                                 gt7:   age>7, never: !p.lastVisit
                                }[daysOpt] ?? true);
                              }).length;
         routeCount.textContent = `Βρέθηκαν ${cnt} σημεία`;
@@ -210,20 +213,19 @@
       genBtn.onclick = () => {
         const checked = container.querySelectorAll("input[type=checkbox]:checked");
         if (!checked.length) { alert("Επιλέξτε σημεία."); return; }
-        const coords = [...checked].map(cb=>{
+        const coords = [...checked].map(cb => {
           const p = allPoints.find(x=>x.id===cb.dataset.id);
           return `${p.latitude},${p.longitude}`;
         });
-        const origin    = coords.shift(),
+        const origin      = coords.shift(),
               destination = coords.pop(),
               waypoints   = coords.join("|");
         let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
         if (waypoints) url += `&waypoints=${waypoints}`;
-        window.open(url, "_blank");
-        cancelGen.click();
+        window.open(url, "_blank"); cancelGen.click();
       };
 
-      // Photo capture
+      // Photo capture & preview
       photoInput.onchange = e => {
         const file = e.target.files[0];
         if (!file) return;
@@ -251,7 +253,7 @@
         photoModal.classList.add("opacity-0","pointer-events-none");
       };
 
-      // Firestore listener + rendering
+      // Firestore listener
       db.collection("points").orderBy("timestamp","desc")
         .onSnapshot(snap => { allPoints = snap.docs.map(d=>({id:d.id,...d.data()})); render(); });
       regionF.onchange  = render;
@@ -271,15 +273,15 @@
 
       function showPhotoModal(id){
         currentPhotoId = id;
-        db.collection('points').doc(id).get().then(doc=>{
-          const data = doc.data();
+        db.collection('points').doc(id).get().then(doc => {
+          const data = doc.data() || {};
           if (!data.photoURL) {
             photoInput.click();
-          } else {
-            photoImg.src = data.photoURL;
-            photoDate.textContent = new Date(data.photoTimestamp.toDate()).toLocaleString();
-            photoModal.classList.remove("opacity-0","pointer-events-none");
+            return;
           }
+          photoImg.src = data.photoURL;
+          photoDate.textContent = new Date(data.photoTimestamp.toDate()).toLocaleString();
+          photoModal.classList.remove("opacity-0","pointer-events-none");
         });
       }
 
@@ -287,43 +289,41 @@
         const c = document.createElement("div");
         c.className = "relative bg-white rounded-xl p-4 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition overflow-hidden";
 
-        // Area banner
+        // area banner
         const areaBanner = document.createElement("div");
         areaBanner.className = "absolute top-2 left-1/2 transform -translate-x-1/2 bg-region text-white px-2 py-0.5 rounded-full text-xs uppercase font-semibold";
-        areaBanner.textContent = pt.area;
-        c.append(areaBanner);
+        areaBanner.textContent = pt.area; c.append(areaBanner);
 
-        // Checkbox
+        // checkbox
         if (selectionMode){
           const cb = document.createElement("input");
-          cb.type = "checkbox";
-          cb.className = "absolute top-2 right-2 form-checkbox h-4 w-4 text-primary";
-          cb.dataset.id = pt.id;
-          c.append(cb);
+          cb.type = "checkbox"; cb.className = "absolute top-2 right-2 form-checkbox h-4 w-4 text-primary";
+          cb.dataset.id = pt.id; c.append(cb);
         }
 
-        // Content wrapper
+        // wrapper
         const wrapper = document.createElement("div");
         wrapper.className = "mt-6 flex flex-col md:flex-row justify-between items-center gap-2";
 
-        // Left block
+        // left block
         const left = document.createElement("div");
         left.className = "flex flex-col items-center gap-1 min-w-0";
         const age = daysSince(pt.lastVisit);
-        const dotClass = age===Infinity||age>7 ? "bg-danger animate-pulse" :
-                         age>3 ? "bg-accent animate-ping" : "bg-success";
+        const dotClass = (age===Infinity||age>7) ? "bg-danger animate-pulse" :
+                         (age>3)           ? "bg-accent animate-ping" :
+                                             "bg-success";
         const dot = document.createElement("span");
         dot.className = `w-2 h-2 ${dotClass} rounded-full`;
         const lbl = document.createElement("span");
         lbl.className = "text-xs text-gray-500 uppercase";
-        lbl.textContent = age===Infinity ? "Ποτέ" :
-                          Math.floor(age)===1 ? "1 ημέρα" : `${Math.floor(age)} ημέρες`;
+        lbl.textContent = age===Infinity?"Ποτέ":
+                          Math.floor(age)===1?"1 ημέρα":`${Math.floor(age)} ημέρες`;
         const title = document.createElement("h3");
         title.className = "text-lg font-bold uppercase text-darktext text-center break-words whitespace-normal";
         title.textContent = pt.name;
         left.append(dot, lbl, title);
 
-        // Right block (buttons)
+        // right block (buttons)
         const right = document.createElement("div");
         right.className = "flex items-center gap-1 flex-shrink-0";
         ['Επίσκεψη','Αλλαγή','Διαγραφή','Προβολή'].forEach(label=>{
@@ -335,16 +335,16 @@
           btn.textContent = label;
           btn.onclick = {
             'Επίσκεψη': async ()=>{
-              const now=new Date();
+              const now = new Date();
               await db.collection("points").doc(pt.id)
                        .update({ lastVisit: firebase.firestore.FieldValue.serverTimestamp() });
               pt.lastVisit = { toDate:()=>now };
               render();
             },
             'Αλλαγή': ()=>{
-              editId=pt.id;
-              editForm.editName.value=pt.name;
-              editForm.editArea.value=pt.area;
+              editId = pt.id;
+              editForm.editName.value = pt.name;
+              editForm.editArea.value = pt.area;
               editModal.classList.remove("opacity-0","pointer-events-none");
             },
             'Διαγραφή': async ()=>{
@@ -354,11 +354,10 @@
           }[label];
           right.append(btn);
         });
-
         wrapper.append(left, right);
         c.append(wrapper);
 
-        // Last visit info
+        // last visit info
         if (pt.lastVisit){
           const info = document.createElement("p");
           info.className = "text-xs text-gray-500 italic mt-1 text-center";
@@ -366,7 +365,7 @@
           c.append(info);
         }
 
-        // Map link
+        // map link
         const m = document.createElement("a");
         m.href = `https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}`;
         m.target = "_blank";
