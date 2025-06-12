@@ -62,8 +62,12 @@
     <div class="flex flex-col md:flex-row gap-2 justify-between items-center">
       <select id="regionFilter" class="flex-1 border px-2 py-1 rounded uppercase text-sm">
         <option value="">Όλες οι περιοχές</option>
-        <option>Πόλη</option><option>Ιαλυσός</option><option>Φαληράκι</option>
-        <option>Κολύμπια</option><option>Νότια Ρόδος</option><option>Δυτική Ρόδος</option>
+        <option value="Πόλη">Πόλη</option>
+        <option value="Ιαλυσός">Ιαλυσός</option>
+        <option value="Φαληράκι">Φαληράκι</option>
+        <option value="Κολύμπια">Κολύμπια</option>
+        <option value="Νότια Ρόδος">Νότια Ρόδος</option>
+        <option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
       </select>
       <select id="visitedFilter" class="border px-2 py-1 rounded uppercase text-sm">
         <option value="all">Όλες</option>
@@ -97,8 +101,12 @@
           <label class="block uppercase font-medium mb-1">Περιοχή</label>
           <select id="areaSelect" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region" required>
             <option value="">Επιλέξτε...</option>
-            <option>Πόλη</option><option>Ιαλυσός</option><option>Φαληράκι</option>
-            <option>Κολύμπια</option><option>Νότια Ρόδος</option><option>Δυτική Ρόδος</option>
+            <option value="Πόλη">Πόλη</option>
+            <option value="Ιαλυσός">Ιαλυσός</option>
+            <option value="Φαληράκι">Φαληράκι</option>
+            <option value="Κολύμπια">Κολύμπια</option>
+            <option value="Νότια Ρόδος">Νότια Ρόδος</option>
+            <option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
           </select>
         </div>
         <div class="flex justify-end gap-2">
@@ -124,8 +132,12 @@
           <label class="block uppercase font-medium mb-1">Περιοχή</label>
           <select name="editArea" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region" required>
             <option value="">Επιλέξτε...</option>
-            <option>Πόλη</option><option>Ιαλυσός</option><option>Φαληράκι</option>
-            <option>Κολύμπια</option><option>Νότια Ρόδος</option><option>Δυτική Ρόδος</option>
+            <option value="Πόλη">Πόλη</option>
+            <option value="Ιαλυσός">Ιαλυσός</option>
+            <option value="Φαληράκι">Φαληράκι</option>
+            <option value="Κολύμπια">Κολύμπια</option>
+            <option value="Νότια Ρόδος">Νότια Ρόδος</option>
+            <option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
           </select>
         </div>
         <div class="flex justify-end gap-2">
@@ -147,13 +159,22 @@
           <label class="block uppercase font-medium mb-1">Περιοχή</label>
           <select id="routeRegion" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region" required>
             <option value="all">Όλες οι περιοχές</option>
-            <option>Πόλη</option><option>Ιαλυσός</option><option>Φαληράκι</option><option>Κολύμπια</option><option>Νότια Ρόδος</option><option>Δυτική Ρόδος</option>
+            <option value="Πόλη">Πόλη</option>
+            <option value="Ιαλυσός">Ιαλυσός</option>
+            <option value="Φαληράκι">Φαληράκι</option>
+            <option value="Κολύμπια">Κολύμπια</option>
+            <option value="Νότια Ρόδος">Νότια Ρόδος</option>
+            <option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
           </select>
         </div>
         <div>
           <label class="block uppercase font-medium mb-1">Εύρος Ημερών</label>
           <select id="routeDays" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary">
-            <option value="all">Όλες</option><option value="lt3">Λιγότερο από 3</option><option value="3to7">3–7</option><option value="gt7">Πάνω από 7</option><option value="never">Ποτέ</option>
+            <option value="all">Όλες</option>
+            <option value="lt3">Λιγότερο από 3</option>
+            <option value="3to7">3–7</option>
+            <option value="gt7">Πάνω από 7</option>
+            <option value="never">Ποτέ</option>
           </select>
         </div>
         <p id="routeCount" class="text-center text-gray-700 text-sm"></p>
@@ -191,7 +212,7 @@
     // Initialize Firebase με σωστό storageBucket
     const firebaseConfig = {
       apiKey:    "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
-      authDomain:"pointregistrationapp.firebasestorage.app",
+      authDomain:"pointregistrationapp.firebaseapp.com",
       projectId: "pointregistrationapp",
       storageBucket:"pointregistrationapp.firebasestorage.app",  // Σωστό bucket όπως στο Console
       messagingSenderId:"925139386507",
@@ -282,40 +303,69 @@
         }
       };
 
-      // --- Route by area ---
+      // --- Route by area (διορθωμένη λογική) ---
       routeBtn.onclick=()=>{
-        routeModal.classList.remove("opacity-0","pointer-events-none"); updateRouteCount();
+        routeModal.classList.remove("opacity-0","pointer-events-none");
+        updateRouteCount();
       };
       routeCancel.onclick=()=>{
-        routeModal.classList.add("opacity-0","pointer-events-none"); routeForm.reset(); routeCount.textContent="";
+        routeModal.classList.add("opacity-0","pointer-events-none");
+        routeForm.reset(); routeCount.textContent="";
       };
       routeForm.onsubmit=e=>{
         e.preventDefault();
         const sel=routeRegion.value, days=routeDays.value;
-        if(!sel){ alert("Επιλέξτε περιοχή."); return; }
-        let pts=allPoints.filter(p=>sel==='all'||p.area===sel)
-          .filter(p=>{
-            const age=daysSince(p.lastVisit||0);
-            return ({ lt3:age<3,'3to7':age>=3&&age<=7,gt7:age>7,never:!p.lastVisit }[days]||false);
+        if(!sel){
+          alert("Επιλέξτε περιοχή.");
+          return;
+        }
+        // Φιλτράρισμα με έλεγχο για 'all'
+        let pts = allPoints.filter(p => sel==='all' || p.area===sel)
+          .filter(p => {
+            if(days==='all') return true;
+            const age = daysSince(p.lastVisit||0);
+            switch(days){
+              case 'lt3':   return age<3;
+              case '3to7':  return age>=3 && age<=7;
+              case 'gt7':   return age>7;
+              case 'never': return !p.lastVisit;
+              default:      return true;
+            }
           });
-        if(pts.length<2){ alert("Δεν υπάρχουν αρκετά σημεία."); return; }
-        pts.sort((a,b)=>a.timestamp.seconds-b.timestamp.seconds);
-        const coords=pts.map(p=>`${p.latitude},${p.longitude}`),
-              o=coords.shift(), d=coords.pop(), w=coords.join("|");
-        let url=`https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}`;
-        if(w) url+=`&waypoints=${w}`;
-        window.open(url,"_blank"); routeCancel.click();
+        if(pts.length<2){
+          alert("Δεν υπάρχουν αρκετά σημεία.");
+          return;
+        }
+        pts.sort((a,b)=>a.timestamp.seconds - b.timestamp.seconds);
+        const coords = pts.map(p=>`${p.latitude},${p.longitude}`);
+        const o = coords.shift(), d = coords.pop(), w = coords.join("|");
+        let url = `https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}`;
+        if(w) url += `&waypoints=${w}`;
+        window.open(url, "_blank");
+        routeCancel.click();
       };
       function updateRouteCount(){
         const sel=routeRegion.value, days=routeDays.value;
-        if(!sel){ routeCount.textContent=""; return; }
-        const cnt=allPoints.filter(p=>sel==='all'||p.area===sel)
-          .filter(p=>{
-            const age=daysSince(p.lastVisit||0);
-            return ({ lt3:age<3,'3to7':age>=3&&age<=7,gt7:age>7,never:!p.lastVisit }[days]||false);
+        if(!sel){
+          routeCount.textContent="";
+          return;
+        }
+        const cnt = allPoints.filter(p => sel==='all' || p.area===sel)
+          .filter(p => {
+            if(days==='all') return true;
+            const age = daysSince(p.lastVisit||0);
+            switch(days){
+              case 'lt3':   return age<3;
+              case '3to7':  return age>=3 && age<=7;
+              case 'gt7':   return age>7;
+              case 'never': return !p.lastVisit;
+              default:      return true;
+            }
           }).length;
-        routeCount.textContent=`Βρέθηκαν ${cnt} σημεία`;
+        routeCount.textContent = `Βρέθηκαν ${cnt} σημεία`;
       }
+      routeRegion.onchange = updateRouteCount;
+      routeDays.onchange   = updateRouteCount;
 
       // --- Custom Route ---
       customBtn.onclick=()=>{
@@ -336,30 +386,25 @@
       // --- Show Photo / Camera logic ---
       function showPhoto(id){
         currentPhotoId=id;
-        // Πρώτα ελέγχουμε αν υπάρχει ήδη photoURL
         db.collection("points").doc(id).get().then(doc=>{
           const data=doc.data()||{};
           if(data.photoURL){
-            // υπάρχει ήδη φωτογραφία: άνοιγμα preview
             photoImg.src=data.photoURL;
             photoDate.textContent=new Date(data.photoTimestamp.toDate()).toLocaleString();
             photoModal.classList.remove("opacity-0","pointer-events-none");
           } else {
-            // δεν υπάρχει: προσπαθούμε με getUserMedia
             if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
               cameraModal.classList.remove("opacity-0","pointer-events-none");
-              navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+              navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } })
                 .then(stream=>{
                   cameraStream=stream;
                   cameraVideo.srcObject=stream;
                 })
                 .catch(err=>{
                   console.warn("getUserMedia error, fallback to file input:", err);
-                  // Fallback σε file input
                   photoInput.click();
                 });
             } else {
-              // fallback σε file input
               photoInput.click();
             }
           }
@@ -369,20 +414,15 @@
         });
       }
 
-      // Capture from camera
       captureBtn.onclick=()=>{
-        if(!cameraVideo || !cameraStream) return;
+        if(!cameraVideo||!cameraStream) return;
         const canvas=document.createElement('canvas');
         canvas.width=cameraVideo.videoWidth;
         canvas.height=cameraVideo.videoHeight;
         canvas.getContext('2d').drawImage(cameraVideo,0,0);
-        // σταματάμε stream
         cameraStream.getTracks().forEach(t=>t.stop());
         cameraModal.classList.add("opacity-0","pointer-events-none");
-
-        // Confirm upload
         if(!confirm("Θέλεις να αποθηκεύσεις τη φωτογραφία;")) return;
-
         canvas.toBlob(async blob=>{
           try{
             const ref=storage.ref(`points/${currentPhotoId}.jpg`);
@@ -393,7 +433,6 @@
             const ts=firebase.firestore.FieldValue.serverTimestamp();
             await db.collection("points").doc(currentPhotoId).update({ photoURL:url, photoTimestamp:ts });
             console.log("Firestore updated with photo");
-            // show preview
             photoImg.src=url;
             photoDate.textContent=new Date().toLocaleString();
             photoModal.classList.remove("opacity-0","pointer-events-none");
@@ -409,10 +448,9 @@
         cameraModal.classList.add("opacity-0","pointer-events-none");
       };
 
-      // Fallback file input onchange
       photoInput.onchange=async ()=>{
         const file=photoInput.files[0];
-        if(!file || !currentPhotoId) return;
+        if(!file||!currentPhotoId) return;
         if(!confirm("Θέλεις να αποθηκεύσεις τη φωτογραφία;")) return;
         try{
           const ref=storage.ref(`points/${currentPhotoId}.jpg`);
@@ -423,7 +461,6 @@
           const ts=firebase.firestore.FieldValue.serverTimestamp();
           await db.collection("points").doc(currentPhotoId).update({ photoURL:url, photoTimestamp:ts });
           console.log("Firestore updated with photo (fallback)");
-          // show preview
           photoImg.src=url;
           photoDate.textContent=new Date().toLocaleString();
           photoModal.classList.remove("opacity-0","pointer-events-none");
@@ -433,7 +470,6 @@
         }
       };
 
-      // Delete / close preview
       deletePhoto.onclick=async()=>{
         if(!currentPhotoId) return;
         if(!confirm("Θέλεις να διαγράψεις τη φωτογραφία;")) return;
