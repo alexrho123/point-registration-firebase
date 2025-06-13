@@ -172,11 +172,11 @@
       <div class="mt-6 flex justify-between">
         <button id="executeOrderBtn"
                 class="bg-success text-white px-6 py-2 rounded-lg hover:bg-success/90">
-          Εκτέλεση Παραγγελίας
+          Εκτέλεση
         </button>
         <button id="cancelOrderBtn"
                 class="bg-danger text-white px-6 py-2 rounded-lg hover:bg-danger/90">
-          Ακύρωση Παραγγελίας
+          Ακύρωση
         </button>
       </div>
     </div>
@@ -195,7 +195,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Login handling
+    // Login
     document.getElementById('loginForm').onsubmit = async e => {
       e.preventDefault();
       const user = document.getElementById('username').value.trim();
@@ -203,73 +203,59 @@
       const docRef = db.collection('users').doc(user);
       const doc = await docRef.get();
       if (!doc.exists) {
-        if (user === 'admin' && pass === '123') {
-          await docRef.set({ password: '123' });
-        } else {
-          return alert('Σφάλμα σύνδεσης');
-        }
+        if (user==='admin' && pass==='123') await docRef.set({ password:'123' });
+        else return alert('Σφάλμα σύνδεσης');
       }
       const data = (await docRef.get()).data();
-      if (data.password === pass) {
+      if (data.password===pass) {
         document.getElementById('loginContainer').classList.add('hidden');
         document.getElementById('adminPanel').classList.remove('hidden');
         initAdmin();
-      } else {
-        alert('Σφάλμα σύνδεσης');
-      }
+      } else alert('Σφάλμα σύνδεσης');
     };
 
-    // Προϊόντα modal controls
-    const addProductModal = document.getElementById('addProductModal');
-    window.openAddProductModal = () => addProductModal.classList.remove('opacity-0','pointer-events-none');
-    window.closeAddProductModal = () => {
+    // Modal controls
+    const addProductModal     = document.getElementById('addProductModal'),
+          liveOrdersModal     = document.getElementById('liveOrdersModal'),
+          executedOrdersModal = document.getElementById('executedOrdersModal'),
+          orderDetailModal    = document.getElementById('orderDetailModal');
+
+    // Add Products
+    window.openAddProductModal = ()=> addProductModal.classList.remove('opacity-0','pointer-events-none');
+    window.closeAddProductModal= ()=> {
       addProductModal.classList.add('opacity-0','pointer-events-none');
       document.getElementById('productForm').reset();
       document.getElementById('productRows').innerHTML = `
         <div class="flex gap-3">
-          <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region"/>
-          <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region"/>
-          <button type="button" onclick="removeRow(this)" class="text-danger hover:text-red-700 text-3xl leading-none">&minus;</button>
+          <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region"/>
+          <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region"/>
+          <button type="button" onclick="removeRow(this)" class="text-danger text-3xl leading-none">&minus;</button>
         </div>`;
     };
     document.getElementById('addProductsCard').onclick = openAddProductModal;
-    function addRow() {
-      const rows = document.getElementById('productRows');
-      const div = document.createElement('div');
-      div.className = 'flex gap-3';
+    function addRow(){
+      const rows=document.getElementById('productRows');
+      const div=document.createElement('div');
+      div.className='flex gap-3';
       div.innerHTML = `
-        <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region"/>
-        <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region"/>
-        <button type="button" onclick="removeRow(this)" class="text-danger hover:text-red-700 text-3xl leading-none">&minus;</button>`;
+        <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region"/>
+        <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region"/>
+        <button type="button" onclick="removeRow(this)" class="text-danger text-3xl leading-none">&minus;</button>`;
       rows.appendChild(div);
     }
-    function removeRow(btn) { btn.closest('div').remove(); }
-    document.getElementById('productForm').onsubmit = async e => {
+    function removeRow(btn){ btn.closest('div').remove(); }
+    document.getElementById('productForm').onsubmit = async e=>{
       e.preventDefault();
-      const rows = [...document.getElementById('productRows').children];
-      for (let row of rows) {
-        const name = row.querySelector('input[type=text]').value.trim();
-        const price = parseFloat(row.querySelector('input[type=number]').value);
-        if (name && !isNaN(price)) {
-          await db.collection('products').add({ name, price });
-        }
+      for (let row of [...document.getElementById('productRows').children]) {
+        const name=row.querySelector('input[type=text]').value.trim();
+        const price=parseFloat(row.querySelector('input[type=number]').value);
+        if (name && !isNaN(price)) await db.collection('products').add({ name, price });
       }
       alert('Προϊόντα αποθηκεύτηκαν');
       closeAddProductModal();
     };
 
     // Live Orders
-    const liveOrdersModal     = document.getElementById('liveOrdersModal'),
-          ordersList          = document.getElementById('ordersList'),
-          executedOrdersModal = document.getElementById('executedOrdersModal'),
-          executedList        = document.getElementById('executedList'),
-          orderDetailModal    = document.getElementById('orderDetailModal'),
-          detailTitle         = document.getElementById('detailTitle'),
-          detailContent       = document.getElementById('detailContent'),
-          cancelOrderBtn      = document.getElementById('cancelOrderBtn'),
-          executeOrderBtn     = document.getElementById('executeOrderBtn');
-    let currentOrderRef = null;
-
     document.getElementById('liveOrdersCard').onclick = openLiveOrdersModal;
     function openLiveOrdersModal(){
       ordersList.innerHTML = '<p class="text-center text-gray-500">Φόρτωση…</p>';
@@ -278,17 +264,25 @@
         .orderBy('timestamp','desc')
         .onSnapshot(async snap=>{
           ordersList.innerHTML = '';
+          const today = new Date().toDateString();
           if (snap.empty) {
             ordersList.innerHTML = '<p class="text-center text-gray-500">Δεν υπάρχουν ενεργές.</p>';
             return;
           }
           for (let doc of snap.docs) {
             const od = doc.data();
-            if (od.executed) continue;         // μόνο όσα ΔΕΝ έχουν εκτελεστεί
-            const pointDoc = await doc.ref.parent.parent.get();
-            const pname = pointDoc.exists ? pointDoc.data().name : '—';
+            if (od.executed) continue;
+            const ts = od.timestamp?.toDate();
+            if (!ts || ts.toDateString()!==today) continue;
+            // υπολόγισε qty από subcollection items
             const itemsSnap = await doc.ref.collection('items').get();
-            let qty = 0; itemsSnap.docs.forEach(i => qty += i.data().quantity);
+            let qty = 0;
+            itemsSnap.docs.forEach(i=> qty += i.data().quantity);
+            if (qty===0) continue;  // παράλειψη παραγγελιών χωρίς τεμάχια
+            // όνομα σημείου
+            const ptDoc = await doc.ref.parent.parent.get();
+            const pname = ptDoc.exists? ptDoc.data().name : '—';
+            // κουμπί
             const btn = document.createElement('button');
             btn.className = 'w-full flex justify-between p-4 bg-white border-l-4 border-primary rounded-lg shadow-lg hover:shadow-xl transition';
             btn.innerHTML = `
@@ -297,10 +291,10 @@
                 <div class="text-sm text-gray-500">${qty} τεμ.</div>
               </div>
               <div class="font-bold text-primary">€${od.total.toFixed(2)}</div>`;
-            btn.onclick = () => openOrderDetail(doc.ref, pname);
+            btn.onclick = ()=> openOrderDetail(doc.ref, pname);
             ordersList.appendChild(btn);
           }
-        }, err =>{
+        }, err=>{
           ordersList.innerHTML = `<p class="text-red-500 text-center">Σφάλμα: ${err.message}</p>`;
         });
     }
@@ -317,6 +311,7 @@
         .orderBy('timestamp','desc')
         .onSnapshot(async snap=>{
           executedList.innerHTML = '';
+          const today = new Date().toDateString();
           if (snap.empty) {
             executedList.innerHTML = '<p class="text-center text-gray-500">Δεν υπάρχουν εκτελεσμένες.</p>';
             return;
@@ -324,9 +319,11 @@
           for (let doc of snap.docs) {
             const od = doc.data();
             if (!od.executed) continue;
-            const pointDoc = await doc.ref.parent.parent.get();
-            const pname = pointDoc.exists ? pointDoc.data().name : '—';
-            const execAt = od.executedAt ? new Date(od.executedAt.toDate()).toLocaleString() : '—';
+            const ts = od.timestamp?.toDate();
+            if (!ts || ts.toDateString()!==today) continue;
+            const ptDoc = await doc.ref.parent.parent.get();
+            const pname = ptDoc.exists? ptDoc.data().name : '—';
+            const execAt = od.executedAt? new Date(od.executedAt.toDate()).toLocaleString() : '—';
             const div = document.createElement('div');
             div.className = 'w-full flex justify-between p-4 bg-gray-50 border-l-4 border-success rounded-lg shadow-inner';
             div.innerHTML = `
@@ -353,10 +350,10 @@
         detailContent.innerHTML = '';
         const od = odoc.data();
         const itemsSnap = await ref.collection('items').get();
-        for (let it of itemsSnap.docs) {
+        for (let it of itemsSnap.docs){
           const itm = it.data();
           const psnap = await itm.productId.get();
-          const prodName = psnap.exists ? psnap.data().name : itm.productId.id;
+          const prodName = psnap.exists? psnap.data().name : itm.productId.id;
           const row = document.createElement('div');
           row.className = 'flex justify-between';
           row.innerHTML = `<span>${itm.quantity}× ${prodName}</span><span>€${itm.subtotal.toFixed(2)}</span>`;
@@ -373,7 +370,7 @@
     }
 
     // Εκτέλεση Παραγγελίας
-    executeOrderBtn.onclick = async () => {
+    document.getElementById('executeOrderBtn').onclick = async ()=>{
       if (!currentOrderRef) return;
       if (!confirm('Εκτέλεση παραγγελίας;')) return;
       await currentOrderRef.update({
@@ -385,7 +382,7 @@
     };
 
     // Ακύρωση Παραγγελίας
-    cancelOrderBtn.onclick = async () => {
+    document.getElementById('cancelOrderBtn').onclick = async ()=>{
       if (!currentOrderRef) return;
       if (!confirm('Διαγραφή παραγγελίας;')) return;
       const itemsSnap = await currentOrderRef.collection('items').get();
@@ -395,7 +392,7 @@
       closeLiveOrdersModal();
     };
 
-    function initAdmin(){ /* nothing to init */ }
+    function initAdmin(){ /* δεν χρειάζεται άλλο init */ }
   </script>
 </body>
 </html>
