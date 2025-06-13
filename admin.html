@@ -26,8 +26,10 @@
   </script>
 
   <style>
-    /* Center modals, add transition */
-    #addProductModal, #liveOrdersModal, #orderDetailModal {
+    /* smooth modal transitions & backdrop blur */
+    #addProductModal,
+    #liveOrdersModal,
+    #orderDetailModal {
       transition: opacity 0.2s ease;
     }
   </style>
@@ -38,41 +40,31 @@
 </head>
 <body class="bg-softbg text-darktext min-h-screen flex flex-col">
 
-  <!-- Responsive Header & Nav -->
+  <!-- Header & Nav -->
   <header class="w-full bg-white shadow">
     <div class="max-w-3xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between">
       <h1 class="text-2xl font-extrabold text-primary uppercase">Admin Panel</h1>
       <nav class="mt-2 sm:mt-0 flex space-x-2">
-        <a href="index.html"
-           class="px-3 py-1 bg-region text-white rounded uppercase text-sm hover:bg-region/90">
-          Αρχική
-        </a>
-        <a href="admin.html"
-           class="px-3 py-1 bg-accent text-white rounded uppercase text-sm hover:bg-accent/90">
-          Admin
-        </a>
+        <a href="index.html" class="px-3 py-1 bg-region text-white rounded uppercase text-sm hover:bg-region/90">Αρχική</a>
+        <a href="admin.html" class="px-3 py-1 bg-accent text-white rounded uppercase text-sm hover:bg-accent/90">Admin</a>
       </nav>
     </div>
   </header>
 
-  <!-- Login Screen -->
+  <!-- Login -->
   <div id="loginContainer" class="flex-1 flex items-center justify-center">
-    <div class="bg-white p-8 rounded shadow-md w-full max-w-sm">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
       <h2 class="text-2xl font-bold text-center mb-6">Admin Login</h2>
       <form id="loginForm" class="space-y-4">
         <div>
           <label class="block mb-1">Όνομα χρήστη</label>
-          <input id="username" type="text" required
-                 class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"/>
+          <input id="username" type="text" required class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"/>
         </div>
         <div>
           <label class="block mb-1">Κωδικός</label>
-          <input id="password" type="password" required
-                 class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"/>
+          <input id="password" type="password" required class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"/>
         </div>
-        <button type="submit" class="w-full bg-primary text-white py-2 rounded hover:bg-primary/90">
-          Σύνδεση
-        </button>
+        <button type="submit" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary/90">Σύνδεση</button>
       </form>
     </div>
   </div>
@@ -80,19 +72,19 @@
   <!-- Admin Panel -->
   <div id="adminPanel" class="hidden flex-1 w-full max-w-3xl mx-auto p-6 flex flex-col gap-8">
     <h1 class="text-3xl font-bold text-primary mb-4 text-center">Πίνακας Διαχείρισης</h1>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <!-- Card: Προσθήκη Προϊόντων -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <!-- Προσθήκη Προϊόντων -->
       <div id="addProductsCard"
-           class="bg-white rounded-lg shadow hover:shadow-lg cursor-pointer p-6 flex flex-col items-center justify-center">
+           class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 cursor-pointer flex flex-col items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-accent mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M3 7h18M3 12h18M3 17h18" />
         </svg>
         <h2 class="text-xl font-semibold">Προσθήκη Προϊόντων</h2>
       </div>
-      <!-- Card: Live Παραγγελίες -->
+      <!-- Live Παραγγελίες -->
       <div id="liveOrdersCard"
-           class="bg-white rounded-lg shadow hover:shadow-lg cursor-pointer p-6 flex flex-col items-center justify-center">
+           class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 cursor-pointer flex flex-col items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-primary mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M3 10h18M3 6h18M3 14h18M3 18h18" />
@@ -104,33 +96,33 @@
 
   <!-- Add Products Modal -->
   <div id="addProductModal"
-       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 pointer-events-none">
-    <div class="bg-white rounded-lg w-full max-w-lg p-6 relative">
+       class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none">
+    <div class="bg-white rounded-2xl w-full max-w-lg p-8 relative shadow-2xl">
       <button onclick="closeAddProductModal()"
-              class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
-      <h2 class="text-2xl font-bold text-primary mb-4 text-center">Προσθήκη Προϊόντων</h2>
+              class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-3xl">&times;</button>
+      <h2 class="text-2xl font-bold text-primary mb-6 text-center">Προσθήκη Προϊόντων</h2>
       <form id="productForm" class="space-y-4">
-        <div id="productRows" class="space-y-2">
-          <div class="flex gap-2">
+        <div id="productRows" class="space-y-3">
+          <div class="flex gap-3">
             <input type="text" placeholder="Όνομα προϊόντος" required
-                   class="flex-1 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
+                   class="flex-1 border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region"/>
             <input type="number" placeholder="Τιμή" step="0.01" required
-                   class="w-24 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
+                   class="w-24 border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region"/>
             <button type="button" onclick="removeRow(this)"
-                    class="text-danger hover:text-red-700 text-2xl leading-none">&minus;</button>
+                    class="text-danger hover:text-red-700 text-3xl leading-none">&minus;</button>
           </div>
         </div>
-        <div class="flex justify-between">
+        <div class="flex justify-between items-center">
           <button type="button" onclick="addRow()"
-                  class="bg-accent text-white px-4 py-2 rounded hover:bg-accent/90">
+                  class="bg-accent text-white px-5 py-2 rounded-lg hover:bg-accent/90">
             + Νέα Γραμμή
           </button>
-          <div class="space-x-2">
+          <div class="space-x-3">
             <button type="button" onclick="closeAddProductModal()"
-                    class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+                    class="px-5 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">
               Ακύρωση
             </button>
-            <button type="submit" class="bg-success text-white px-4 py-2 rounded hover:bg-success/90">
+            <button type="submit" class="bg-success text-white px-5 py-2 rounded-lg hover:bg-success/90">
               Αποθήκευση
             </button>
           </div>
@@ -141,30 +133,30 @@
 
   <!-- Live Orders Modal -->
   <div id="liveOrdersModal"
-       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 pointer-events-none">
-    <div class="bg-white rounded-lg w-full max-w-2xl p-6 relative">
+       class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none">
+    <div class="bg-white rounded-2xl w-full max-w-2xl p-8 relative shadow-2xl">
       <button onclick="closeLiveOrdersModal()"
-              class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
-      <h2 class="text-2xl font-bold text-primary mb-4 text-center">Ζωντανές Παραγγελίες</h2>
-      <div id="ordersList" class="space-y-3 max-h-80 overflow-auto">
-        <!-- Εδώ θα φορτώνει η λίστα παραγγελιών -->
+              class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-3xl">&times;</button>
+      <h2 class="text-2xl font-bold text-primary mb-6 text-center">Ζωντανές Παραγγελίες</h2>
+      <div id="ordersList" class="space-y-4 max-h-96 overflow-auto">
+        <!-- Εδώ θα φορτώνονται οι παραγγελίες -->
       </div>
     </div>
   </div>
 
   <!-- Order Detail Modal -->
   <div id="orderDetailModal"
-       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 pointer-events-none">
-    <div class="bg-white rounded-lg w-full max-w-lg p-6 relative">
+       class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none">
+    <div class="bg-white rounded-2xl w-full max-w-lg p-8 relative shadow-2xl">
       <button onclick="closeOrderDetailModal()"
-              class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
-      <h2 id="detailTitle" class="text-2xl font-bold text-primary mb-4 text-center">Λεπτομέρειες Παραγγελίας</h2>
-      <div id="detailContent" class="space-y-2 max-h-64 overflow-auto">
-        <!-- Εδώ θα εμφανίζονται τα είδη της παραγγελίας -->
+              class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-3xl">&times;</button>
+      <h2 id="detailTitle" class="text-2xl font-bold text-primary mb-6 text-center">Λεπτομέρειες Παραγγελίας</h2>
+      <div id="detailContent" class="space-y-3 max-h-72 overflow-auto px-2">
+        <!-- Εδώ τα είδη της παραγγελίας -->
       </div>
-      <div class="text-center mt-4">
+      <div class="text-center mt-6">
         <button id="cancelOrderBtn"
-                class="bg-danger text-white px-6 py-2 rounded hover:bg-danger/90">
+                class="bg-danger text-white px-8 py-2 rounded-lg hover:bg-danger/90">
           Ακύρωση Παραγγελίας
         </button>
       </div>
@@ -172,7 +164,7 @@
   </div>
 
   <script>
-    // Initialize Firebase
+    // Firebase init
     const firebaseConfig = {
       apiKey:    "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
       authDomain:"pointregistrationapp.firebaseapp.com",
@@ -184,7 +176,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Login handling
+    // Login
     document.getElementById('loginForm').onsubmit = async e => {
       e.preventDefault();
       const user = document.getElementById('username').value.trim();
@@ -208,33 +200,31 @@
       }
     };
 
-    // Modal controls για Προϊόντα
+    // Προϊόντα
     const addProductModal = document.getElementById('addProductModal');
     window.openAddProductModal  = () => addProductModal.classList.remove('opacity-0','pointer-events-none');
     window.closeAddProductModal = () => {
       addProductModal.classList.add('opacity-0','pointer-events-none');
       document.getElementById('productForm').reset();
       document.getElementById('productRows').innerHTML = `
-        <div class="flex gap-2">
-          <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
-          <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
-          <button type="button" onclick="removeRow(this)" class="text-danger hover:text-red-700 text-2xl leading-none">&minus;</button>
+        <div class="flex gap-3">
+          <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region"/>
+          <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region"/>
+          <button type="button" onclick="removeRow(this)" class="text-danger hover:text-red-700 text-3xl leading-none">&minus;</button>
         </div>`;
     };
     document.getElementById('addProductsCard').onclick = openAddProductModal;
-
     function addRow() {
       const rows = document.getElementById('productRows');
       const div  = document.createElement('div');
-      div.className = 'flex gap-2';
+      div.className = 'flex gap-3';
       div.innerHTML = `
-        <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
-        <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
-        <button type="button" onclick="removeRow(this)" class="text-danger hover:text-red-700 text-2xl leading-none">&minus;</button>`;
+        <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region"/>
+        <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region"/>
+        <button type="button" onclick="removeRow(this)" class="text-danger hover:text-red-700 text-3xl leading-none">&minus;</button>`;
       rows.appendChild(div);
     }
     function removeRow(btn) { btn.closest('div').remove(); }
-
     document.getElementById('productForm').onsubmit = async e => {
       e.preventDefault();
       const rows = [...document.getElementById('productRows').children];
@@ -249,8 +239,7 @@
       closeAddProductModal();
     };
 
-
-    // Live orders
+    // Live Παραγγελίες
     const liveOrdersModal  = document.getElementById('liveOrdersModal'),
           ordersList       = document.getElementById('ordersList'),
           orderDetailModal = document.getElementById('orderDetailModal'),
@@ -281,13 +270,16 @@
           const pointName = pointDoc.exists ? pointDoc.data().name : '—';
           const itemsSnap = await doc.ref.collection('items').get();
           let totalQty = 0;
-          itemsSnap.docs.forEach(it=> totalQty += it.data().quantity);
+          itemsSnap.docs.forEach(it => totalQty += it.data().quantity);
 
           const btn = document.createElement('button');
-          btn.className = 'w-full text-left p-3 bg-white hover:bg-gray-100 rounded mb-2 flex justify-between';
+          btn.className = 'w-full flex justify-between items-center p-4 bg-white border-l-4 border-primary rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300';
           btn.innerHTML = `
-            <span><strong>${pointName}</strong> — ${totalQty} τεμ.</span>
-            <span class="font-semibold">€${orderData.total.toFixed(2)}</span>
+            <div class="flex flex-col">
+              <span class="text-lg font-semibold">${pointName}</span>
+              <span class="text-sm text-gray-500">${totalQty} τεμ.</span>
+            </div>
+            <span class="text-xl font-bold text-primary">€${orderData.total.toFixed(2)}</span>
           `;
           btn.addEventListener('click', () => openOrderDetail(doc.ref, pointName));
           ordersList.appendChild(btn);
@@ -302,6 +294,7 @@
       liveOrdersModal.classList.add('opacity-0','pointer-events-none');
     }
 
+    // Λεπτομέρειες Παραγγελίας
     function openOrderDetail(ref, pointName) {
       currentOrderRef = ref;
       detailTitle.textContent = `Παραγγελία @ ${pointName}`;
@@ -345,6 +338,5 @@
       // Όποια επιπλέον αρχικοποίηση μετά το login
     }
   </script>
-
 </body>
 </html>
