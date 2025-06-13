@@ -154,15 +154,42 @@
     </div>
   </div>
 
-  <!-- Order Detail Modal -->
-  <div id="orderDetailModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center opacity-0 pointer-events-none">
-    <div class="bg-white rounded-lg w-full max-w-lg p-6 relative">
-      <button onclick="closeOrderDetailModal()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
-      <h2 id="detailTitle" class="text-2xl font-bold text-primary mb-4 text-center uppercase">Λεπτομέρειες Παραγγελίας</h2>
-      <div id="detailContent" class="space-y-2 max-h-64 overflow-auto"></div>
-      <div class="text-center mt-4">
-        <button id="executeOrderBtn" class="bg-success text-white px-6 py-2 rounded hover:bg-success/90">Εκτέλεση Παραγγελίας</button>
-        <button id="cancelOrderBtn"  class="bg-danger  text-white px-6 py-2 rounded hover:bg-danger/90">Ακύρωση Παραγγελίας</button>
+  <!-- Order Detail Modal (νέο στυλ “πίνακα”) -->
+  <div id="orderDetailModal"
+       class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none">
+    <div class="bg-white rounded-2xl w-full max-w-lg p-8 relative shadow-xl">
+      <button onclick="closeOrderDetailModal()"
+              class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-3xl">&times;</button>
+      <h2 id="detailTitle"
+          class="text-2xl font-bold text-primary mb-6 text-center uppercase">
+        Λεπτομέρειες Παραγγελίας
+      </h2>
+      <!-- Header row -->
+      <div class="flex font-semibold uppercase text-gray-700 border-b pb-2 mb-4">
+        <div class="flex-1">Προϊόν</div>
+        <div class="w-16 text-right">Ποσ.</div>
+        <div class="w-24 text-right">€</div>
+      </div>
+      <!-- Περιεχόμενο -->
+      <div id="detailContent"
+           class="grid grid-cols-[1fr_auto_auto] gap-y-2 max-h-64 overflow-auto px-2">
+        <!-- οι γραμμές φορτώνονται δυναμικά -->
+      </div>
+      <!-- Σύνολο -->
+      <div class="mt-6 flex justify-between font-bold text-lg uppercase">
+        <span>Σύνολο:</span>
+        <span id="detailTotal" class="text-primary">€0.00</span>
+      </div>
+      <!-- Κουμπιά -->
+      <div class="mt-6 flex justify-between">
+        <button id="executeOrderBtn"
+                class="bg-success text-white px-6 py-2 rounded-lg hover:bg-success/90">
+          Εκτέλεση Παραγγελίας
+        </button>
+        <button id="cancelOrderBtn"
+                class="bg-danger text-white px-6 py-2 rounded-lg hover:bg-danger/90">
+          Ακύρωση Παραγγελίας
+        </button>
       </div>
     </div>
   </div>
@@ -187,7 +214,7 @@
         </div>
         <div>
           <label class="block mb-1">Ρόλος</label>
-          <select id="sellerRole" required class="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region">
+          <select id="sellerRole" required class="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region">  
             <option value="admin">Admin</option>
             <option value="seller">Πωλητής</option>
           </select>
@@ -232,7 +259,7 @@
       } else alert('Σφάλμα σύνδεσης');
     };
 
-    // Продукти modal controls
+    // Add Product modal controls
     const addProductModal = document.getElementById('addProductModal');
     window.openAddProductModal  = ()=> addProductModal.classList.remove('opacity-0','pointer-events-none');
     window.closeAddProductModal = ()=> {
@@ -268,7 +295,7 @@
       closeAddProductModal();
     };
 
-    // Live Orders
+    // Live Orders  
     const liveOrdersModal     = document.getElementById('liveOrdersModal'),
           ordersList          = document.getElementById('ordersList'),
           executedOrdersModal = document.getElementById('executedOrdersModal'),
@@ -300,7 +327,12 @@
             const pname = pt.exists ? pt.data().name : '—';
             const btn = document.createElement('button');
             btn.className = 'w-full flex justify-between p-4 bg-white border-l-4 border-primary rounded-lg shadow-lg hover:shadow-xl transition';
-            btn.innerHTML = `<div class="text-left"><div class="font-semibold">${pname}</div><div class="text-sm text-gray-500">${qty} τεμ.</div></div><div class="font-bold text-primary">€${od.total.toFixed(2)}</div>`;
+            btn.innerHTML = `
+              <div class="text-left">
+                <div class="font-semibold">${pname}</div>
+                <div class="text-sm text-gray-500">${qty} τεμ.</div>
+              </div>
+              <div class="font-bold text-primary">€${od.total.toFixed(2)}</div>`;
             btn.onclick = ()=> openOrderDetail(doc.ref, pname);
             ordersList.appendChild(btn);
           }
@@ -331,7 +363,12 @@
             const execAt = od.executedAt ? new Date(od.executedAt.toDate()).toLocaleString() : '—';
             const div = document.createElement('div');
             div.className = 'w-full flex justify-between p-4 bg-gray-50 border-l-4 border-success rounded-lg shadow-inner';
-            div.innerHTML = `<div><div class="font-semibold">${pname}</div><div class="text-sm text-gray-500">${execAt}</div></div><div class="font-bold text-success">€${od.total.toFixed(2)}</div>`;
+            div.innerHTML = `
+              <div>
+                <div class="font-semibold">${pname}</div>
+                <div class="text-sm text-gray-500">${execAt}</div>
+              </div>
+              <div class="font-bold text-success">€${od.total.toFixed(2)}</div>`;
             executedList.appendChild(div);
           }
         });
@@ -340,37 +377,46 @@
       executedOrdersModal.classList.add('opacity-0','pointer-events-none');
     }
 
-    // Order Detail
-    function openOrderDetail(ref, pname){
+    // Order Detail (νέο πίνακας)
+    async function openOrderDetail(ref, pname){
       currentOrderRef = ref;
-      detailTitle.textContent = `Παραγγελία @ ${pname}`.toUpperCase().replace(/Ά/g,'Α').replace(/Έ/g,'Ε').replace(/Ή/g,'Η').replace(/Ί/g,'Ι').replace(/Ό/g,'Ο').replace(/Ύ/g,'Υ').replace(/Ώ/g,'Ω');
-      detailContent.innerHTML = '<p class="text-gray-500">Φόρτωση…</p>';
+      detailTitle.textContent = (`Παραγγελία @ ${pname}`)
+        .toUpperCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      detailContent.innerHTML = '';
+      document.getElementById('detailTotal').textContent = '€0.00';
+
+      const odoc = await ref.get();
+      const od = odoc.data();
+      let total = 0;
+
+      // παρατηρήσεις
+      if(od.remarks){
+        const rem = document.createElement('div');
+        rem.className = 'italic text-sm mb-2';
+        rem.textContent = od.remarks;
+        detailContent.appendChild(rem);
+      }
+
+      const itemsSnap = await ref.collection('items').get();
+      for(let it of itemsSnap.docs){
+        const data = it.data();
+        const ps = await data.productId.get();
+        const name = (ps.exists ? ps.data().name : data.productId.id)
+                       .toUpperCase()
+                       .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        const row = document.createElement('div');
+        row.className = 'flex items-center';
+        row.innerHTML = `
+          <div class="flex-1">${name}</div>
+          <div class="w-16 text-right">${data.quantity}</div>
+          <div class="w-24 text-right">€${data.subtotal.toFixed(2)}</div>`;
+        detailContent.appendChild(row);
+        total += data.subtotal;
+      }
+
+      document.getElementById('detailTotal').textContent = `€${total.toFixed(2)}`;
       orderDetailModal.classList.remove('opacity-0','pointer-events-none');
-      ref.get().then(async odoc=>{
-        detailContent.innerHTML = '';
-        const od = odoc.data();
-        if(od.remarks){
-          const rem = document.createElement('div');
-          rem.className = 'italic text-sm mb-2';
-          rem.textContent = od.remarks;
-          detailContent.appendChild(rem);
-        }
-        const itemsSnap = await ref.collection('items').get();
-        for(let it of itemsSnap.docs){
-          const itm = it.data();
-          const ps = await itm.productId.get();
-          const prodName = (ps.exists ? ps.data().name : itm.productId.id)
-                             .toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-          const row = document.createElement('div');
-          row.className = 'flex justify-between';
-          row.innerHTML = `<span>${itm.quantity}× ${prodName}</span><span>€${itm.subtotal.toFixed(2)}</span>`;
-          detailContent.appendChild(row);
-        }
-        const totDiv = document.createElement('div');
-        totDiv.className = 'mt-4 flex justify-between font-bold text-lg';
-        totDiv.innerHTML = `<span>ΣΥΝΟΛΟ:</span><span>€${od.total.toFixed(2)}</span>`;
-        detailContent.appendChild(totDiv);
-      });
     }
     function closeOrderDetailModal(){
       orderDetailModal.classList.add('opacity-0','pointer-events-none');
@@ -396,16 +442,16 @@
       closeLiveOrdersModal();
     };
 
-    // Προσθήκη Πωλητή modal controls
+    // Add Seller modal controls
     const addSellerModal = document.getElementById('addSellerModal');
-    document.getElementById('addSellerCard').onclick = ()=> {
+    document.getElementById('addSellerCard').onclick = ()=>{
       addSellerModal.classList.remove('opacity-0','pointer-events-none');
     };
     function closeAddSellerModal(){
       addSellerModal.classList.add('opacity-0','pointer-events-none');
       document.getElementById('sellerForm').reset();
     }
-    document.getElementById('sellerForm').onsubmit = async e => {
+    document.getElementById('sellerForm').onsubmit = async e=>{
       e.preventDefault();
       const name     = document.getElementById('sellerName').value.trim();
       const username = document.getElementById('sellerUsername').value.trim();
@@ -418,7 +464,7 @@
     };
 
     function initAdmin(){
-      // any post-login init if needed
+      // τίποτα επιπλέον προς το παρόν
     }
   </script>
 </body>
