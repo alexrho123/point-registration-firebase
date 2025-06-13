@@ -27,7 +27,7 @@
 
   <style>
     /* Center modals, add transition */
-    #addProductModal, #orderModal {
+    #addProductModal, #liveOrdersModal, #orderDetailModal {
       transition: opacity 0.2s ease;
     }
   </style>
@@ -78,8 +78,8 @@
   </div>
 
   <!-- Admin Panel -->
-  <div id="adminPanel" class="hidden flex-1 w-full max-w-3xl mx-auto p-6">
-    <h1 class="text-3xl font-bold text-primary mb-6 text-center">Πίνακας Διαχείρισης</h1>
+  <div id="adminPanel" class="hidden flex-1 w-full max-w-3xl mx-auto p-6 flex flex-col gap-8">
+    <h1 class="text-3xl font-bold text-primary mb-4 text-center">Πίνακας Διαχείρισης</h1>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <!-- Card: Προσθήκη Προϊόντων -->
       <div id="addProductsCard"
@@ -90,7 +90,15 @@
         </svg>
         <h2 class="text-xl font-semibold">Προσθήκη Προϊόντων</h2>
       </div>
-      <!-- Μελλοντικά περισσότερα κουτάκια... -->
+      <!-- Card: Live Παραγγελίες -->
+      <div id="liveOrdersCard"
+           class="bg-white rounded-lg shadow hover:shadow-lg cursor-pointer p-6 flex flex-col items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-primary mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 10h18M3 6h18M3 14h18M3 18h18" />
+        </svg>
+        <h2 class="text-xl font-semibold">Live Παραγγελίες</h2>
+      </div>
     </div>
   </div>
 
@@ -103,7 +111,6 @@
       <h2 class="text-2xl font-bold text-primary mb-4 text-center">Προσθήκη Προϊόντων</h2>
       <form id="productForm" class="space-y-4">
         <div id="productRows" class="space-y-2">
-          <!-- Αρχική γραμμή -->
           <div class="flex gap-2">
             <input type="text" placeholder="Όνομα προϊόντος" required
                    class="flex-1 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
@@ -129,6 +136,38 @@
           </div>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Live Orders Modal -->
+  <div id="liveOrdersModal"
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 pointer-events-none">
+    <div class="bg-white rounded-lg w-full max-w-2xl p-6 relative">
+      <button onclick="closeLiveOrdersModal()"
+              class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
+      <h2 class="text-2xl font-bold text-primary mb-4 text-center">Ζωντανές Παραγγελίες</h2>
+      <div id="ordersList" class="space-y-3 max-h-80 overflow-auto">
+        <!-- Παραγγελίες θα προστεθούν εδώ -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Detail Modal -->
+  <div id="orderDetailModal"
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 pointer-events-none">
+    <div class="bg-white rounded-lg w-full max-w-lg p-6 relative">
+      <button onclick="closeOrderDetailModal()"
+              class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
+      <h2 id="detailTitle" class="text-2xl font-bold text-primary mb-4 text-center">Λεπτομέρειες Παραγγελίας</h2>
+      <div id="detailContent" class="space-y-2 max-h-64 overflow-auto">
+        <!-- Στοιχεία παραγγελίας -->
+      </div>
+      <div class="text-center mt-4">
+        <button id="cancelOrderBtn"
+                class="bg-danger text-white px-6 py-2 rounded hover:bg-danger/90">
+          Ακύρωση Παραγγελίας
+        </button>
+      </div>
     </div>
   </div>
 
@@ -163,6 +202,7 @@
       if (data.password === pass) {
         document.getElementById('loginContainer').classList.add('hidden');
         document.getElementById('adminPanel').classList.remove('hidden');
+        initAdmin();
       } else {
         alert('Σφάλμα σύνδεσης');
       }
@@ -175,7 +215,6 @@
     };
     window.closeAddProductModal = () => {
       addProductModal.classList.add('opacity-0','pointer-events-none');
-      // Reset form
       document.getElementById('productForm').reset();
       document.getElementById('productRows').innerHTML = `
         <div class="flex gap-2">
@@ -216,6 +255,103 @@
       alert('Προϊόντα αποθηκεύτηκαν');
       closeAddProductModal();
     };
+
+    // Live orders
+    const liveOrdersModal = document.getElementById('liveOrdersModal'),
+          ordersList = document.getElementById('ordersList'),
+          orderDetailModal = document.getElementById('orderDetailModal'),
+          detailTitle = document.getElementById('detailTitle'),
+          detailContent = document.getElementById('detailContent'),
+          cancelOrderBtn = document.getElementById('cancelOrderBtn');
+    let liveOrders = [];  // store loaded orders
+
+    document.getElementById('liveOrdersCard').onclick = openLiveOrdersModal;
+    function openLiveOrdersModal() {
+      ordersList.innerHTML = '<p class="text-center text-gray-500">Φόρτωση...</p>';
+      liveOrdersModal.classList.remove('opacity-0','pointer-events-none');
+      // fetch all orders group across points
+      db.collectionGroup('orders').orderBy('timestamp','desc').get().then(async snap=>{
+        liveOrders = [];
+        if (snap.empty) {
+          ordersList.innerHTML = '<p class="text-center">Δεν υπάρχουν ενεργές παραγγελίες.</p>';
+          return;
+        }
+        ordersList.innerHTML = '';
+        for (let doc of snap.docs) {
+          const orderData = doc.data();
+          const orderId = doc.id;
+          const pointRef = doc.ref.parent.parent;  // points/{pointId}
+          const pointDoc = await pointRef.get();
+          const pointName = pointDoc.exists ? pointDoc.data().name : '—';
+          // count items
+          const itemsSnap = await doc.ref.collection('items').get();
+          let totalQty = 0;
+          itemsSnap.docs.forEach(it=> totalQty += it.data().quantity );
+          const summaryBtn = document.createElement('button');
+          summaryBtn.className = 'w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded flex justify-between';
+          summaryBtn.innerHTML = `
+            <span><strong>${pointName}</strong> — ${totalQty} τεμ.</span>
+            <span class="font-semibold">€${orderData.total.toFixed(2)}</span>
+          `;
+          summaryBtn.addEventListener('click', ()=> openOrderDetail(orderId, pointName, doc.ref));
+          ordersList.appendChild(summaryBtn);
+        }
+      });
+    }
+    function closeLiveOrdersModal() {
+      liveOrdersModal.classList.add('opacity-0','pointer-events-none');
+    }
+
+    // Order detail
+    let currentOrderRef = null;
+    function openOrderDetail(orderId, pointName, ref) {
+      currentOrderRef = ref;
+      detailTitle.textContent = `Παραγγελία @ ${pointName}`;
+      detailContent.innerHTML = '<p class="text-gray-500">Φόρτωση...</p>';
+      orderDetailModal.classList.remove('opacity-0','pointer-events-none');
+      ref.get().then(orderDoc=>{
+        const data = orderDoc.data();
+        ref.collection('items').get().then(itemsSnap=>{
+          detailContent.innerHTML = '';
+          itemsSnap.docs.forEach(it=>{
+            const itm = it.data();
+            const div = document.createElement('div');
+            div.className = 'flex justify-between';
+            div.innerHTML = `
+              <span>${itm.quantity}× ${itm.productId.id}</span>
+              <span>€${itm.subtotal.toFixed(2)}</span>
+            `;
+            detailContent.appendChild(div);
+          });
+          const totalDiv = document.createElement('div');
+          totalDiv.className = 'mt-4 flex justify-between font-bold text-lg';
+          totalDiv.innerHTML = `<span>Σύνολο:</span><span>€${data.total.toFixed(2)}</span>`;
+          detailContent.appendChild(totalDiv);
+        });
+      });
+    }
+    function closeOrderDetailModal() {
+      orderDetailModal.classList.add('opacity-0','pointer-events-none');
+    }
+    cancelOrderBtn.onclick = async () => {
+      if (!currentOrderRef) return;
+      if (!confirm('Θέλεις σίγουρα να ακυρώσεις αυτή την παραγγελία;')) return;
+      // delete items subcollection
+      const itemsSnap = await currentOrderRef.collection('items').get();
+      for (let it of itemsSnap.docs) {
+        await it.ref.delete();
+      }
+      // delete order doc
+      await currentOrderRef.delete();
+      alert('Η παραγγελία ακυρώθηκε.');
+      closeOrderDetailModal();
+      closeLiveOrdersModal();
+    };
+
+    // Initialize after login
+    function initAdmin(){
+      // nothing else for now
+    }
   </script>
 </body>
 </html>
