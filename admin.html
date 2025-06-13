@@ -26,7 +26,7 @@
   </script>
 
   <style>
-    /* Center modals, add transition & backdrop blur */
+    /* Transition & backdrop blur */
     #addProductModal,
     #liveOrdersModal,
     #executedOrdersModal,
@@ -171,13 +171,9 @@
       <div id="detailContent" class="space-y-3 max-h-72 overflow-auto px-2"></div>
       <div class="mt-6 flex justify-between">
         <button id="executeOrderBtn"
-                class="bg-success text-white px-6 py-2 rounded-lg hover:bg-success/90">
-          Εκτέλεση
-        </button>
+                class="bg-success text-white px-6 py-2 rounded-lg hover:bg-success/90">Εκτέλεση</button>
         <button id="cancelOrderBtn"
-                class="bg-danger text-white px-6 py-2 rounded-lg hover:bg-danger/90">
-          Ακύρωση
-        </button>
+                class="bg-danger text-white px-6 py-2 rounded-lg hover:bg-danger/90">Ακύρωση</button>
       </div>
     </div>
   </div>
@@ -195,7 +191,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Login
+    // Login handling
     document.getElementById('loginForm').onsubmit = async e => {
       e.preventDefault();
       const user = document.getElementById('username').value.trim();
@@ -218,11 +214,19 @@
     const addProductModal     = document.getElementById('addProductModal'),
           liveOrdersModal     = document.getElementById('liveOrdersModal'),
           executedOrdersModal = document.getElementById('executedOrdersModal'),
-          orderDetailModal    = document.getElementById('orderDetailModal');
+          orderDetailModal    = document.getElementById('orderDetailModal'),
+          ordersList          = document.getElementById('ordersList'),
+          executedList        = document.getElementById('executedList'),
+          detailTitle         = document.getElementById('detailTitle'),
+          detailContent       = document.getElementById('detailContent'),
+          executeOrderBtn     = document.getElementById('executeOrderBtn'),
+          cancelOrderBtn      = document.getElementById('cancelOrderBtn');
+
+    let currentOrderRef = null;
 
     // Add Products
-    window.openAddProductModal = ()=> addProductModal.classList.remove('opacity-0','pointer-events-none');
-    window.closeAddProductModal= ()=> {
+    window.openAddProductModal  = ()=> addProductModal.classList.remove('opacity-0','pointer-events-none');
+    window.closeAddProductModal = ()=> {
       addProductModal.classList.add('opacity-0','pointer-events-none');
       document.getElementById('productForm').reset();
       document.getElementById('productRows').innerHTML = `
@@ -233,6 +237,7 @@
         </div>`;
     };
     document.getElementById('addProductsCard').onclick = openAddProductModal;
+
     function addRow(){
       const rows=document.getElementById('productRows');
       const div=document.createElement('div');
@@ -271,18 +276,15 @@
           }
           for (let doc of snap.docs) {
             const od = doc.data();
-            if (od.executed) continue;
+            if (od.executed) continue;                // skip executed
             const ts = od.timestamp?.toDate();
-            if (!ts || ts.toDateString()!==today) continue;
-            // υπολόγισε qty από subcollection items
+            if (ts && ts.toDateString()!==today) continue;  // skip not-today
+            // compute qty
             const itemsSnap = await doc.ref.collection('items').get();
-            let qty = 0;
-            itemsSnap.docs.forEach(i=> qty += i.data().quantity);
-            if (qty===0) continue;  // παράλειψη παραγγελιών χωρίς τεμάχια
-            // όνομα σημείου
-            const ptDoc = await doc.ref.parent.parent.get();
-            const pname = ptDoc.exists? ptDoc.data().name : '—';
-            // κουμπί
+            let qty = 0; itemsSnap.docs.forEach(i=> qty += i.data().quantity);
+            if (qty===0) continue;                    // skip zero-items
+            const pt = await doc.ref.parent.parent.get();
+            const pname = pt.exists ? pt.data().name : '—';
             const btn = document.createElement('button');
             btn.className = 'w-full flex justify-between p-4 bg-white border-l-4 border-primary rounded-lg shadow-lg hover:shadow-xl transition';
             btn.innerHTML = `
@@ -318,12 +320,12 @@
           }
           for (let doc of snap.docs) {
             const od = doc.data();
-            if (!od.executed) continue;
+            if (!od.executed) continue;                // skip non-executed
             const ts = od.timestamp?.toDate();
-            if (!ts || ts.toDateString()!==today) continue;
-            const ptDoc = await doc.ref.parent.parent.get();
-            const pname = ptDoc.exists? ptDoc.data().name : '—';
-            const execAt = od.executedAt? new Date(od.executedAt.toDate()).toLocaleString() : '—';
+            if (ts && ts.toDateString()!==today) continue;
+            const pt = await doc.ref.parent.parent.get();
+            const pname = pt.exists ? pt.data().name : '—';
+            const execAt = od.executedAt ? new Date(od.executedAt.toDate()).toLocaleString() : '—';
             const div = document.createElement('div');
             div.className = 'w-full flex justify-between p-4 bg-gray-50 border-l-4 border-success rounded-lg shadow-inner';
             div.innerHTML = `
@@ -352,8 +354,8 @@
         const itemsSnap = await ref.collection('items').get();
         for (let it of itemsSnap.docs){
           const itm = it.data();
-          const psnap = await itm.productId.get();
-          const prodName = psnap.exists? psnap.data().name : itm.productId.id;
+          const ps = await itm.productId.get();
+          const prodName = ps.exists ? ps.data().name : itm.productId.id;
           const row = document.createElement('div');
           row.className = 'flex justify-between';
           row.innerHTML = `<span>${itm.quantity}× ${prodName}</span><span>€${itm.subtotal.toFixed(2)}</span>`;
@@ -392,7 +394,7 @@
       closeLiveOrdersModal();
     };
 
-    function initAdmin(){ /* δεν χρειάζεται άλλο init */ }
+    function initAdmin(){ /* δεν χρειάζεται επιπλέον init */ }
   </script>
 </body>
 </html>
