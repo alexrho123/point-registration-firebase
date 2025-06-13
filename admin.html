@@ -153,13 +153,15 @@
     </div>
   </div>
 
-  <!-- Order Detail Modal (ανανεωμένο responsive style) -->
+  <!-- Order Detail Modal (responsive + styled) -->
   <div id="orderDetailModal"
        class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none">
     <div class="bg-white rounded-2xl w-full max-w-xl p-8 relative shadow-2xl">
       <button onclick="closeOrderDetailModal()"
               class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-3xl">&times;</button>
-      <h2 id="detailTitle" class="text-2xl font-bold text-primary mb-6 text-center uppercase">ΛΕΠΤΟΜΕΡΕΙΕΣ ΠΑΡΑΓΓΕΛΙΑΣ</h2>
+      <h2 id="detailTitle" class="text-2xl font-bold text-primary mb-6 text-center uppercase">
+        ΛΕΠΤΟΜΕΡΕΙΕΣ ΠΑΡΑΓΓΕΛΙΑΣ
+      </h2>
 
       <!-- Responsive table -->
       <div class="overflow-x-auto">
@@ -178,7 +180,12 @@
       </div>
 
       <!-- Παρατηρήσεις -->
-      <div id="detailRemarks" class="mt-4 italic text-gray-600 text-sm"></div>
+      <div class="mt-6">
+        <h3 class="text-lg font-semibold text-darktext mb-2">Παρατηρήσεις</h3>
+        <div id="detailRemarks" class="border border-gray-200 rounded-lg p-4 bg-gray-50 italic text-gray-700 text-sm min-h-[3rem]">
+          <!-- δυναμικά -->
+        </div>
+      </div>
 
       <!-- Σύνολο -->
       <div class="mt-6 flex justify-between font-bold text-lg uppercase">
@@ -265,7 +272,7 @@
       } else alert('Σφάλμα σύνδεσης');
     };
 
-    // Προϊόντα modal controls
+    // Product modal controls
     const addProductModal = document.getElementById('addProductModal');
     window.openAddProductModal  = ()=> addProductModal.classList.remove('opacity-0','pointer-events-none');
     window.closeAddProductModal = ()=> {
@@ -323,11 +330,12 @@
         .orderBy('timestamp','desc')
         .onSnapshot(async snap=>{
           ordersList.innerHTML = '';
+          const today = new Date().toDateString();
           for(let doc of snap.docs){
             const od = doc.data();
             if(od.executed) continue;
             const ts = od.timestamp?.toDate();
-            if(ts && ts.toDateString()!==new Date().toDateString()) continue;
+            if(ts && ts.toDateString()!==today) continue;
             const itemsSnap = await doc.ref.collection('items').get();
             let qty=0; itemsSnap.docs.forEach(i=> qty+=i.data().quantity);
             if(qty===0) continue;
@@ -356,11 +364,12 @@
         .orderBy('timestamp','desc')
         .onSnapshot(async snap=>{
           executedList.innerHTML = '';
+          const today = new Date().toDateString();
           for(let doc of snap.docs){
             const od = doc.data();
             if(!od.executed) continue;
             const ts = od.timestamp?.toDate();
-            if(ts && ts.toDateString()!==new Date().toDateString()) continue;
+            if(ts && ts.toDateString()!==today) continue;
             const pt = await doc.ref.parent.parent.get();
             const pname = pt.exists ? pt.data().name : '—';
             const execAt = od.executedAt ? new Date(od.executedAt.toDate()).toLocaleString() : '—';
@@ -375,53 +384,47 @@
       executedOrdersModal.classList.add('opacity-0','pointer-events-none');
     }
 
-    // Order Detail – ανανεωμένο responsive
+    // Order Detail
     async function openOrderDetail(ref, pname){
       currentOrderRef = ref;
-      detailTitle.textContent = (`Παραγγελία @ ${pname}`)
-        .toUpperCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      detailTitle.textContent = `ΠΑΡΑΓΓΕΛΙΑ @ ${pname}`.replace(/Ά/g,'Α').replace(/Έ/g,'Ε').replace(/Ή/g,'Η').replace(/Ί/g,'Ι').replace(/Ό/g,'Ο').replace(/Ύ/g,'Υ').replace(/Ώ/g,'Ω');
+      // clear previous
       detailContent.innerHTML = '';
       detailRemarks.textContent = '';
-      detailTotal.textContent   = '€0.00';
+      detailTotal.textContent = '€0.00';
+      orderDetailModal.classList.remove('opacity-0','pointer-events-none');
 
+      // fetch order + items
       const odoc = await ref.get();
       const od = odoc.data();
-      let total = 0;
-
-      // παρατηρήσεις
+      // remarks
       if(od.remarks){
         detailRemarks.textContent = od.remarks;
       }
-
-      // είδη
+      // items
       const itemsSnap = await ref.collection('items').get();
-      for(const it of itemsSnap.docs){
+      let total = 0;
+      for(let it of itemsSnap.docs){
         const itm = it.data();
-        const ps  = await itm.productId.get();
-        const name = (ps.exists ? ps.data().name : itm.productId.id)
-                       .toUpperCase()
-                       .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        const ps = await itm.productId.get();
+        const prodName = ps.exists ? ps.data().name : itm.productId.id;
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-50';
         tr.innerHTML = `
-          <td class="px-4 py-2 text-sm">${name}</td>
-          <td class="px-4 py-2 text-sm text-right">${itm.quantity}</td>
-          <td class="px-4 py-2 text-sm text-right">€${itm.subtotal.toFixed(2)}</td>
+          <td class="px-4 py-2 text-sm">${itm.quantity}× ${prodName}</td>
+          <td class="px-4 py-2 text-right text-sm">${itm.quantity}</td>
+          <td class="px-4 py-2 text-right text-sm">€${itm.subtotal.toFixed(2)}</td>
         `;
         detailContent.appendChild(tr);
         total += itm.subtotal;
       }
-
       detailTotal.textContent = `€${total.toFixed(2)}`;
-      orderDetailModal.classList.remove('opacity-0','pointer-events-none');
     }
     function closeOrderDetailModal(){
       orderDetailModal.classList.add('opacity-0','pointer-events-none');
     }
 
-    // Εκτέλεση Παραγγελίας
-    executeOrderBtn.onclick = async ()=>{
+    // Execute order
+    executeOrderBtn.onclick = async()=>{
       if(!currentOrderRef) return;
       if(!confirm('Εκτέλεση παραγγελίας;')) return;
       await currentOrderRef.update({ executed:true, executedAt: firebase.firestore.FieldValue.serverTimestamp() });
@@ -429,8 +432,8 @@
       closeLiveOrdersModal();
     };
 
-    // Ακύρωση Παραγγελίας
-    cancelOrderBtn.onclick = async ()=>{
+    // Cancel order
+    cancelOrderBtn.onclick = async()=>{
       if(!currentOrderRef) return;
       if(!confirm('Διαγραφή παραγγελίας;')) return;
       const itemsSnap = await currentOrderRef.collection('items').get();
@@ -440,16 +443,14 @@
       closeLiveOrdersModal();
     };
 
-    // Προσθήκη Πωλητή modal controls
+    // Add Seller modal
     const addSellerModal = document.getElementById('addSellerModal');
-    document.getElementById('addSellerCard').onclick = ()=>{
-      addSellerModal.classList.remove('opacity-0','pointer-events-none');
-    };
+    document.getElementById('addSellerCard').onclick = ()=> addSellerModal.classList.remove('opacity-0','pointer-events-none');
     function closeAddSellerModal(){
       addSellerModal.classList.add('opacity-0','pointer-events-none');
       document.getElementById('sellerForm').reset();
     }
-    document.getElementById('sellerForm').onsubmit = async e =>{
+    document.getElementById('sellerForm').onsubmit = async e=>{
       e.preventDefault();
       const name     = document.getElementById('sellerName').value.trim();
       const username = document.getElementById('sellerUsername').value.trim();
@@ -462,7 +463,7 @@
     };
 
     function initAdmin(){
-      // any post-login init if needed
+      // όποια αρχικοποίηση χρειάζεται μετά το login
     }
   </script>
 </body>
