@@ -24,8 +24,9 @@
       }
     }
   </script>
+
   <style>
-    /* Center modals & transitions */
+    /* Όλα τα modals με fade */
     #addProductModal,
     #liveOrdersModal,
     #executedOrdersModal,
@@ -35,7 +36,7 @@
     }
   </style>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
@@ -52,59 +53,53 @@
     </div>
   </header>
 
-  <!-- Login Screen -->
+  <!-- Login -->
   <div id="loginContainer" class="flex-1 flex items-center justify-center">
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
       <h2 class="text-2xl font-bold text-center mb-6">Admin Login</h2>
       <form id="loginForm" class="space-y-4">
         <div>
           <label class="block mb-1">Όνομα χρήστη</label>
-          <input id="username" type="text" required class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"/>
+          <input id="username" type="text" required class="w-full border px-3 py-2 rounded focus:ring-2 focus:ring-primary"/>
         </div>
         <div>
           <label class="block mb-1">Κωδικός</label>
-          <input id="password" type="password" required class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"/>
+          <input id="password" type="password" required class="w-full border px-3 py-2 rounded focus:ring-2 focus:ring-primary"/>
         </div>
         <button type="submit" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary/90">Σύνδεση</button>
       </form>
     </div>
   </div>
 
-  <!-- Admin Panel -->
+  <!-- Main Panel -->
   <div id="adminPanel" class="hidden flex-1 w-full max-w-3xl mx-auto p-6 flex flex-col gap-8">
     <h1 class="text-3xl font-bold text-primary mb-4 text-center">Πίνακας Διαχείρισης</h1>
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-6">
       <!-- Προσθήκη Προϊόντων -->
-      <div id="addProductsCard"
-           class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 cursor-pointer flex flex-col items-center">
+      <div id="addProductsCard" class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 cursor-pointer flex flex-col items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-accent mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18" />
         </svg>
         <h2 class="text-xl font-semibold">Προσθήκη Προϊόντων</h2>
       </div>
       <!-- Live Παραγγελίες -->
-      <div id="liveOrdersCard"
-           class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 cursor-pointer flex flex-col items-center">
+      <div id="liveOrdersCard" class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 cursor-pointer flex flex-col items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-primary mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M3 10h18M3 6h18M3 14h18M3 18h18" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6h18M3 14h18M3 18h18" />
         </svg>
         <h2 class="text-xl font-semibold">Live Παραγγελίες</h2>
       </div>
       <!-- Εκτελεσμένες Παραγγελίες -->
-      <div id="executedOrdersCard"
-           class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 cursor-pointer flex flex-col items-center">
+      <div id="executedOrdersCard" class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 cursor-pointer flex flex-col items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-success mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
         </svg>
         <h2 class="text-xl font-semibold">Εκτελεσμένες Παραγγελίες</h2>
       </div>
       <!-- Προσθήκη Πωλητή -->
-      <div id="addSellerCard"
-           class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 cursor-pointer flex flex-col items-center">
+      <div id="addSellerCard" class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 cursor-pointer flex flex-col items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-indigo-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M5.121 17.804A13.937 13.937 0 0112 15c2.89 0 5.557.93 7.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.89 0 5.557.93 7.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
         <h2 class="text-xl font-semibold">Προσθήκη Πωλητή</h2>
       </div>
@@ -119,8 +114,8 @@
       <form id="productForm" class="space-y-4">
         <div id="productRows" class="space-y-2">
           <div class="flex gap-2">
-            <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
-            <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
+            <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded focus:ring-2 focus:ring-region"/>
+            <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded focus:ring-2 focus:ring-region"/>
             <button type="button" onclick="removeRow(this)" class="text-danger hover:text-red-700 text-2xl leading-none">&minus;</button>
           </div>
         </div>
@@ -153,17 +148,13 @@
     </div>
   </div>
 
-  <!-- Order Detail Modal (responsive + styled) -->
-  <div id="orderDetailModal"
-       class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none">
+  <!-- Order Detail Modal -->
+  <div id="orderDetailModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none">
     <div class="bg-white rounded-2xl w-full max-w-xl p-8 relative shadow-2xl">
-      <button onclick="closeOrderDetailModal()"
-              class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-3xl">&times;</button>
-      <h2 id="detailTitle" class="text-2xl font-bold text-primary mb-6 text-center uppercase">
-        ΛΕΠΤΟΜΕΡΕΙΕΣ ΠΑΡΑΓΓΕΛΙΑΣ
-      </h2>
+      <button onclick="closeOrderDetailModal()" class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-3xl">&times;</button>
+      <h2 id="detailTitle" class="text-2xl font-bold text-primary mb-6 text-center uppercase">ΛΕΠΤΟΜΕΡΕΙΕΣ ΠΑΡΑΓΓΕΛΙΑΣ</h2>
 
-      <!-- Responsive table -->
+      <!-- Πίνακας Προϊόντων -->
       <div class="overflow-x-auto">
         <table class="min-w-full border divide-y divide-gray-200">
           <thead class="bg-accent/20">
@@ -173,18 +164,14 @@
               <th class="px-4 py-2 text-right text-sm font-semibold uppercase">€</th>
             </tr>
           </thead>
-          <tbody id="detailContent" class="divide-y divide-gray-100 bg-white">
-            <!-- δυναμικά -->
-          </tbody>
+          <tbody id="detailContent" class="divide-y divide-gray-100 bg-white"></tbody>
         </table>
       </div>
 
       <!-- Παρατηρήσεις -->
       <div class="mt-6">
-        <h3 class="text-lg font-semibold text-darktext mb-2">Παρατηρήσεις</h3>
-        <div id="detailRemarks" class="border border-gray-200 rounded-lg p-4 bg-gray-50 italic text-gray-700 text-sm min-h-[3rem]">
-          <!-- δυναμικά -->
-        </div>
+        <h3 class="text-lg font-semibold mb-2">Παρατηρήσεις</h3>
+        <div id="detailRemarks" class="border border-gray-200 rounded-lg p-4 bg-gray-50 italic text-gray-700 text-sm min-h-[3rem]"></div>
       </div>
 
       <!-- Σύνολο -->
@@ -193,16 +180,10 @@
         <span id="detailTotal" class="text-primary">€0.00</span>
       </div>
 
-      <!-- Ενέργειες -->
+      <!-- Κουμπιά -->
       <div class="mt-6 flex flex-col sm:flex-row justify-between gap-3">
-        <button id="executeOrderBtn"
-                class="w-full sm:w-auto bg-success text-white px-6 py-2 rounded-lg hover:bg-success/90">
-          Εκτέλεση
-        </button>
-        <button id="cancelOrderBtn"
-                class="w-full sm:w-auto bg-danger text-white px-6 py-2 rounded-lg hover:bg-danger/90">
-          Ακύρωση Παραγγελίας
-        </button>
+        <button id="executeOrderBtn" class="w-full sm:w-auto bg-success text-white px-6 py-2 rounded-lg hover:bg-success/90">Εκτέλεση</button>
+        <button id="cancelOrderBtn"  class="w-full sm:w-auto bg-danger  text-white px-6 py-2 rounded-lg hover:bg-danger/90">Ακύρωση Παραγγελίας</button>
       </div>
     </div>
   </div>
@@ -215,19 +196,19 @@
       <form id="sellerForm" class="space-y-4">
         <div>
           <label class="block mb-1">Ονοματεπώνυμο</label>
-          <input id="sellerName" type="text" required class="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region"/>
+          <input id="sellerName"     type="text"     required class="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region"/>
         </div>
         <div>
           <label class="block mb-1">Username</label>
-          <input id="sellerUsername" type="text" required class="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region"/>
+          <input id="sellerUsername" type="text"     required class="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region"/>
         </div>
         <div>
           <label class="block mb-1">Password</label>
-          <input id="sellerPassword" type="password" required class="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region"/>
+          <input id="sellerPassword" type="password" required class="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region"/>
         </div>
         <div>
           <label class="block mb-1">Ρόλος</label>
-          <select id="sellerRole" required class="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region">
+          <select id="sellerRole" required class="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region">
             <option value="admin">Admin</option>
             <option value="seller">Πωλητής</option>
           </select>
@@ -240,8 +221,10 @@
     </div>
   </div>
 
+
+  <!-- JS -->
   <script>
-    // Initialize Firebase
+    // Firebase init
     const firebaseConfig = {
       apiKey:    "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
       authDomain:"pointregistrationapp.firebaseapp.com",
@@ -253,26 +236,25 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Login handling
+    // Login
     document.getElementById('loginForm').onsubmit = async e => {
       e.preventDefault();
-      const user = document.getElementById('username').value.trim();
-      const pass = document.getElementById('password').value;
-      const docRef = db.collection('users').doc(user);
-      const doc = await docRef.get();
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value;
+      const doc = await db.collection('users').doc(u).get();
       if (!doc.exists) {
-        if (user==='admin' && pass==='123') await docRef.set({ password:'123', role:'admin' });
+        if (u==='admin'&&p==='123') await db.collection('users').doc(u).set({password:'123',role:'admin'});
         else return alert('Σφάλμα σύνδεσης');
       }
-      const data = (await docRef.get()).data();
-      if (data.password===pass) {
+      const data = (await db.collection('users').doc(u).get()).data();
+      if (data.password===p) {
         document.getElementById('loginContainer').classList.add('hidden');
         document.getElementById('adminPanel').classList.remove('hidden');
         initAdmin();
       } else alert('Σφάλμα σύνδεσης');
     };
 
-    // Product modal controls
+    // Add Product Modal
     const addProductModal = document.getElementById('addProductModal');
     window.openAddProductModal  = ()=> addProductModal.classList.remove('opacity-0','pointer-events-none');
     window.closeAddProductModal = ()=> {
@@ -290,19 +272,19 @@
       const rows = document.getElementById('productRows');
       const div = document.createElement('div');
       div.className = 'flex gap-2';
-      div.innerHTML = `
+      div.innerHTML=`
         <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded focus:ring-2 focus:ring-region"/>
-        <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded focus:ring-2 focus:ring-region"/>
+        <input type="number" placeholder="Τιμή"      step="0.01" required class="w-24 border px-3 py-2 rounded focus:ring-2 focus:ring-region"/>
         <button type="button" onclick="removeRow(this)" class="text-danger text-2xl leading-none">&minus;</button>`;
       rows.appendChild(div);
     }
     function removeRow(btn){ btn.closest('div').remove(); }
     document.getElementById('productForm').onsubmit = async e=>{
       e.preventDefault();
-      for(let row of [...document.getElementById('productRows').children]){
+      for (let row of [...document.getElementById('productRows').children]) {
         const name = row.querySelector('input[type=text]').value.trim();
         const price= parseFloat(row.querySelector('input[type=number]').value);
-        if(name && !isNaN(price)) await db.collection('products').add({ name, price });
+        if (name&&!isNaN(price)) await db.collection('products').add({name,price});
       }
       alert('Προϊόντα αποθηκεύτηκαν');
       closeAddProductModal();
@@ -315,9 +297,9 @@
           executedList        = document.getElementById('executedList'),
           orderDetailModal    = document.getElementById('orderDetailModal'),
           detailTitle         = document.getElementById('detailTitle'),
-          detailContent       = document.getElementById('detailContent'),
-          detailRemarks       = document.getElementById('detailRemarks'),
           detailTotal         = document.getElementById('detailTotal'),
+          detailRemarks       = document.getElementById('detailRemarks'),
+          detailContent       = document.getElementById('detailContent'),
           executeOrderBtn     = document.getElementById('executeOrderBtn'),
           cancelOrderBtn      = document.getElementById('cancelOrderBtn');
     let currentOrderRef = null;
@@ -326,27 +308,33 @@
     function openLiveOrdersModal(){
       ordersList.innerHTML = '<p class="text-center text-gray-500">Φόρτωση…</p>';
       liveOrdersModal.classList.remove('opacity-0','pointer-events-none');
-      db.collectionGroup('orders')
-        .orderBy('timestamp','desc')
+      db.collectionGroup('orders').orderBy('timestamp','desc')
         .onSnapshot(async snap=>{
           ordersList.innerHTML = '';
           const today = new Date().toDateString();
-          for(let doc of snap.docs){
+          for (let doc of snap.docs) {
             const od = doc.data();
-            if(od.executed) continue;
+            if (od.executed) continue;
             const ts = od.timestamp?.toDate();
-            if(ts && ts.toDateString()!==today) continue;
+            if (ts && ts.toDateString()!==today) continue;
             const itemsSnap = await doc.ref.collection('items').get();
             let qty=0; itemsSnap.docs.forEach(i=> qty+=i.data().quantity);
-            if(qty===0) continue;
+            if (qty===0) continue;
             const pt = await doc.ref.parent.parent.get();
             const pname = pt.exists ? pt.data().name : '—';
             const btn = document.createElement('button');
             btn.className = 'w-full flex justify-between p-4 bg-white border-l-4 border-primary rounded-lg shadow-lg hover:shadow-xl transition';
-            btn.innerHTML = `<div class="text-left"><div class="font-semibold">${pname}</div><div class="text-sm text-gray-500">${qty} τεμ.</div></div><div class="font-bold text-primary">€${od.total.toFixed(2)}</div>`;
-            btn.onclick = ()=> openOrderDetail(doc.ref, pname);
+            btn.innerHTML = `
+              <div class="text-left">
+                <div class="font-semibold">${pname}</div>
+                <div class="text-sm text-gray-500">${qty} τεμ.</div>
+              </div>
+              <div class="font-bold text-primary">€${od.total.toFixed(2)}</div>`;
+            btn.onclick = () => openOrderDetail(doc.ref, pname);
             ordersList.appendChild(btn);
           }
+          if (!ordersList.firstChild)
+            ordersList.innerHTML = '<p class="text-center text-gray-500">Δεν υπάρχουν ενεργές.</p>';
         }, err=>{
           ordersList.innerHTML = `<p class="text-red-500 text-center">Σφάλμα: ${err.message}</p>`;
         });
@@ -360,24 +348,30 @@
     function openExecutedOrdersModal(){
       executedList.innerHTML = '<p class="text-center text-gray-500">Φόρτωση…</p>';
       executedOrdersModal.classList.remove('opacity-0','pointer-events-none');
-      db.collectionGroup('orders')
-        .orderBy('timestamp','desc')
+      const today = new Date().toDateString();
+      db.collectionGroup('orders').orderBy('timestamp','desc')
         .onSnapshot(async snap=>{
           executedList.innerHTML = '';
-          const today = new Date().toDateString();
-          for(let doc of snap.docs){
+          for (let doc of snap.docs) {
             const od = doc.data();
-            if(!od.executed) continue;
+            if (!od.executed) continue;
             const ts = od.timestamp?.toDate();
-            if(ts && ts.toDateString()!==today) continue;
+            if (ts && ts.toDateString()!==today) continue;
             const pt = await doc.ref.parent.parent.get();
             const pname = pt.exists ? pt.data().name : '—';
             const execAt = od.executedAt ? new Date(od.executedAt.toDate()).toLocaleString() : '—';
             const div = document.createElement('div');
             div.className = 'w-full flex justify-between p-4 bg-gray-50 border-l-4 border-success rounded-lg shadow-inner';
-            div.innerHTML = `<div><div class="font-semibold">${pname}</div><div class="text-sm text-gray-500">${execAt}</div></div><div class="font-bold text-success">€${od.total.toFixed(2)}</div>`;
+            div.innerHTML = `
+              <div>
+                <div class="font-semibold">${pname}</div>
+                <div class="text-sm text-gray-500">${execAt}</div>
+              </div>
+              <div class="font-bold text-success">€${od.total.toFixed(2)}</div>`;
             executedList.appendChild(div);
           }
+          if (!executedList.firstChild)
+            executedList.innerHTML = '<p class="text-center text-gray-500">Δεν υπάρχουν εκτελεσμένες.</p>';
         });
     }
     function closeExecutedOrdersModal(){
@@ -385,65 +379,60 @@
     }
 
     // Order Detail
-    async function openOrderDetail(ref, pname){
+    function openOrderDetail(ref, pname){
       currentOrderRef = ref;
-      detailTitle.textContent = `ΠΑΡΑΓΓΕΛΙΑ @ ${pname}`.replace(/Ά/g,'Α').replace(/Έ/g,'Ε').replace(/Ή/g,'Η').replace(/Ί/g,'Ι').replace(/Ό/g,'Ο').replace(/Ύ/g,'Υ').replace(/Ώ/g,'Ω');
-      // clear previous
-      detailContent.innerHTML = '';
+      detailTitle.textContent = `ΠΑΡΑΓΓΕΛΙΑ @ ${pname}`.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
       detailRemarks.textContent = '';
+      detailContent.innerHTML = '';
       detailTotal.textContent = '€0.00';
       orderDetailModal.classList.remove('opacity-0','pointer-events-none');
 
-      // fetch order + items
-      const odoc = await ref.get();
-      const od = odoc.data();
-      // remarks
-      if(od.remarks){
-        detailRemarks.textContent = od.remarks;
-      }
-      // items
-      const itemsSnap = await ref.collection('items').get();
-      let total = 0;
-      for(let it of itemsSnap.docs){
-        const itm = it.data();
-        const ps = await itm.productId.get();
-        const prodName = ps.exists ? ps.data().name : itm.productId.id;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="px-4 py-2 text-sm">${itm.quantity}× ${prodName}</td>
-          <td class="px-4 py-2 text-right text-sm">${itm.quantity}</td>
-          <td class="px-4 py-2 text-right text-sm">€${itm.subtotal.toFixed(2)}</td>
-        `;
-        detailContent.appendChild(tr);
-        total += itm.subtotal;
-      }
-      detailTotal.textContent = `€${total.toFixed(2)}`;
+      ref.get().then(async odoc=>{
+        const od = odoc.data();
+        // remarks
+        detailRemarks.textContent = od.remarks || '';
+        // items
+        let sum = 0;
+        const itemsSnap = await ref.collection('items').get();
+        for (let it of itemsSnap.docs) {
+          const itm = it.data();
+          const ps = await itm.productId.get();
+          const name = (ps.exists ? ps.data().name : itm.productId.id)
+                         .toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+          const qty = itm.quantity;
+          const sub = itm.subtotal;
+          sum += sub;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="px-4 py-2">${qty}× ${name}</td>
+            <td class="px-4 py-2 text-right">${qty}</td>
+            <td class="px-4 py-2 text-right">€${sub.toFixed(2)}</td>`;
+          detailContent.appendChild(tr);
+        }
+        detailTotal.textContent = `€${sum.toFixed(2)}`;
+      });
     }
     function closeOrderDetailModal(){
       orderDetailModal.classList.add('opacity-0','pointer-events-none');
     }
 
-    // Execute order
-    executeOrderBtn.onclick = async()=>{
-      if(!currentOrderRef) return;
-      if(!confirm('Εκτέλεση παραγγελίας;')) return;
-      await currentOrderRef.update({ executed:true, executedAt: firebase.firestore.FieldValue.serverTimestamp() });
-      closeOrderDetailModal();
-      closeLiveOrdersModal();
+    // Execute / Cancel
+    executeOrderBtn.onclick = async ()=>{
+      if (!currentOrderRef) return;
+      if (!confirm('Εκτέλεση παραγγελίας;')) return;
+      await currentOrderRef.update({executed:true,executedAt:firebase.firestore.FieldValue.serverTimestamp()});
+      closeOrderDetailModal(); closeLiveOrdersModal();
     };
-
-    // Cancel order
-    cancelOrderBtn.onclick = async()=>{
-      if(!currentOrderRef) return;
-      if(!confirm('Διαγραφή παραγγελίας;')) return;
+    cancelOrderBtn.onclick = async ()=>{
+      if (!currentOrderRef) return;
+      if (!confirm('Διαγραφή παραγγελίας;')) return;
       const itemsSnap = await currentOrderRef.collection('items').get();
-      for(let it of itemsSnap.docs) await it.ref.delete();
+      for (let it of itemsSnap.docs) await it.ref.delete();
       await currentOrderRef.delete();
-      closeOrderDetailModal();
-      closeLiveOrdersModal();
+      closeOrderDetailModal(); closeLiveOrdersModal();
     };
 
-    // Add Seller modal
+    // Add Seller Modal
     const addSellerModal = document.getElementById('addSellerModal');
     document.getElementById('addSellerCard').onclick = ()=> addSellerModal.classList.remove('opacity-0','pointer-events-none');
     function closeAddSellerModal(){
@@ -453,18 +442,16 @@
     document.getElementById('sellerForm').onsubmit = async e=>{
       e.preventDefault();
       const name     = document.getElementById('sellerName').value.trim();
-      const username = document.getElementById('sellerUsername').value.trim();
-      const password = document.getElementById('sellerPassword').value;
+      const user     = document.getElementById('sellerUsername').value.trim();
+      const pass     = document.getElementById('sellerPassword').value;
       const role     = document.getElementById('sellerRole').value;
-      if(!name||!username||!password) return alert('Συμπληρώστε όλα τα πεδία.');
-      await db.collection('users').add({ name, username, password, role });
+      if(!name||!user||!pass) return alert('Συμπληρώστε όλα τα πεδία.');
+      await db.collection('users').add({displayName:name,username:user,password:pass,role});
       alert('Ο πωλητής καταχωρήθηκε.');
       closeAddSellerModal();
     };
 
-    function initAdmin(){
-      // όποια αρχικοποίηση χρειάζεται μετά το login
-    }
+    function initAdmin(){ /* nothing */ }
   </script>
 </body>
 </html>
