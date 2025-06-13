@@ -25,7 +25,6 @@
     }
   </script>
 
-  <!-- Landscape: δύο στήλες -->
   <style>
     @media (orientation: landscape) {
       #pointsContainer {
@@ -188,7 +187,7 @@
     </div>
   </div>
 
-  <!-- Camera Modal για getUserMedia -->
+  <!-- Camera Modal -->
   <div id="cameraModal" class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex flex-col items-center justify-center p-4">
     <video id="cameraVideo" class="w-full max-w-md rounded-lg mb-4" autoplay playsinline></video>
     <div class="flex gap-4">
@@ -216,9 +215,7 @@
       <button class="absolute top-3 right-3 text-gray-600 text-xl" onclick="closeOrderModal()">✕</button>
       <h2 class="text-2xl font-bold text-primary mb-4 text-center">Προσθήκη Παραγγελίας</h2>
       <form id="orderForm" class="space-y-4">
-        <div id="orderItemsContainer" class="space-y-2 max-h-60 overflow-auto">
-          <!-- JS θα ενθέσει εδώ τα προϊόντα -->
-        </div>
+        <div id="orderItemsContainer" class="space-y-2 max-h-60 overflow-auto"></div>
         <div class="flex justify-between items-center">
           <label class="font-medium">Σύνολο:</label>
           <span id="orderTotal" class="text-lg font-bold">€0.00</span>
@@ -235,7 +232,7 @@
   </div>
 
   <script>
-    // Firebase init
+    // Initialize Firebase
     const firebaseConfig = {
       apiKey:    "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
       authDomain:"pointregistrationapp.firebaseapp.com",
@@ -262,9 +259,16 @@
       let userLat, userLng, userLocationAllowed=false;
       let allPoints=[], editId, selectionMode=false, currentPhotoId, cameraStream;
       let currentPointId;
+
       // Elements
       const openBtn=document.getElementById("openModalBtn"),
-            addModal=document.getElementById("modal"),
+            container=document.getElementById("pointsContainer"),
+            refreshBtn=document.getElementById("refreshStigmaBtn"),
+            orderModal=document.getElementById("orderModal"),
+            orderForm=document.getElementById("orderForm"),
+            itemsCont=document.getElementById("orderItemsContainer"),
+            totalSpan=document.getElementById("orderTotal"),
+            remarksIn=document.getElementById("orderRemarks"),
             cancelBtn=document.getElementById("cancelBtn"),
             form=document.getElementById("pointForm"),
             editModal=document.getElementById("editModal"),
@@ -276,9 +280,6 @@
             routeRegion=document.getElementById("routeRegion"),
             routeDays=document.getElementById("routeDays"),
             routeCount=document.getElementById("routeCount"),
-            container=document.getElementById("pointsContainer"),
-            regionF=document.getElementById("regionFilter"),
-            visitedF=document.getElementById("visitedFilter"),
             routeBtn=document.getElementById("routeBtn"),
             customBtn=document.getElementById("customRouteBtn"),
             genBtn=document.getElementById("generateCustomRouteBtn"),
@@ -292,63 +293,104 @@
             photoDate=document.getElementById("photoDate"),
             deletePhoto=document.getElementById("deletePhotoBtn"),
             closePhoto=document.getElementById("closePhotoModal"),
-            photoInput=document.getElementById("photoInput"),
-            refreshBtn=document.getElementById("refreshStigmaBtn"),
-            orderModal=document.getElementById("orderModal"),
-            orderForm=document.getElementById("orderForm"),
-            itemsCont=document.getElementById("orderItemsContainer"),
-            totalSpan=document.getElementById("orderTotal"),
-            remarksIn=document.getElementById("orderRemarks");
+            photoInput=document.getElementById("photoInput");
 
-      // Geolocation on load
-      if(navigator.geolocation){
-        navigator.geolocation.getCurrentPosition(pos=>{
-          userLat=pos.coords.latitude; userLng=pos.coords.longitude; userLocationAllowed=true; render();
-        },()=>render(), { enableHighAccuracy:true, timeout:10000 });
-      } else render();
+      // Expose for onclick handlers
+      window.openOrderModal = openOrderModal;
+      window.closeOrderModal = closeOrderModal;
 
-      // Refresh stigma
-      refreshBtn.onclick=()=>{
-        if(navigator.geolocation){
-          navigator.geolocation.getCurrentPosition(pos=>{
-            userLat=pos.coords.latitude; userLng=pos.coords.longitude; userLocationAllowed=true; render();
-          },()=>alert("Δεν μπορούμε να ανανεώσουμε τη θέση."),{ enableHighAccuracy:true, timeout:10000 });
-        } else alert("Το Geolocation δεν υποστηρίζεται.");
+      // Order modal functions
+      function openOrderModal(pointId){
+        currentPointId = pointId;
+        itemsCont.innerHTML = '';
+        totalSpan.textContent = '€0.00';
+        remarksIn.value = '';
+        db.collection('products').get().then(snap=>{
+          snap.docs.forEach(doc=>{
+            const {name, price} = doc.data();
+            const row = document.createElement('div');
+            row.className = 'flex justify-between items-center';
+            row.innerHTML = `
+              <span class="flex-1">${name}</span>
+              <input type="number" min="0" value="0" data-id="${doc.id}" data-price="${price}"
+                     class="w-16 border rounded px-1 text-right" />
+              <span class="w-20 text-right">€${price.toFixed(2)}</span>
+              <span class="w-20 text-right item-subtotal">€0.00</span>
+            `;
+            row.querySelector('input').oninput = updateOrderTotal;
+            itemsCont.append(row);
+          });
+        });
+        orderModal.classList.remove('opacity-0','pointer-events-none');
+      }
+      function closeOrderModal(){
+        orderModal.classList.add('opacity-0','pointer-events-none');
+      }
+      function updateOrderTotal(){
+        let total = 0;
+        itemsCont.querySelectorAll('div').forEach(row=>{
+          const inp = row.querySelector('input'),
+                qty = parseInt(inp.value)||0,
+                price = parseFloat(inp.dataset.price),
+                st = qty*price;
+          row.querySelector('.item-subtotal').textContent = `€${st.toFixed(2)}`;
+          total += st;
+        });
+        totalSpan.textContent = `€${total.toFixed(2)}`;
+      }
+      orderForm.onsubmit = async e=>{
+        e.preventDefault();
+        const total = parseFloat(totalSpan.textContent.replace('€','')),
+              observations = remarksIn.value.trim();
+        const orderRef = await db.collection('points').doc(currentPointId)
+                                .collection('orders').add({
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          observations, total
+        });
+        itemsCont.querySelectorAll('div').forEach(async row=>{
+          const inp=row.querySelector('input'),
+                qty=parseInt(inp.value)||0;
+          if(qty>0){
+            const pid=inp.dataset.id, price=parseFloat(inp.dataset.price);
+            await orderRef.collection('items').add({
+              productId: db.doc(`products/${pid}`),
+              quantity: qty, price, subtotal: qty*price
+            });
+          }
+        });
+        closeOrderModal();
+        alert('Η παραγγελία καταχωρήθηκε!');
       };
 
-      // --- Add Point ---
+      // Add Point
       openBtn.onclick=()=>navigator.geolocation.getCurrentPosition(pos=>{
         window._tempLat=pos.coords.latitude; window._tempLng=pos.coords.longitude;
-        addModal.classList.remove("opacity-0","pointer-events-none");
+        document.getElementById('modal').classList.remove('opacity-0','pointer-events-none');
       },()=>alert("Άδεια τοποθεσίας απαραίτητη."));
-      cancelBtn.onclick=()=>{ addModal.classList.add("opacity-0","pointer-events-none"); form.reset(); };
+      cancelBtn.onclick=()=>{ document.getElementById('modal').classList.add('opacity-0','pointer-events-none'); form.reset(); };
       form.onsubmit=async e=>{
         e.preventDefault();
         const name=form.pointName.value.trim(), area=form.areaSelect.value;
         const lat=window._tempLat, lng=window._tempLng;
         if(!name||!area||lat===undefined||lng===undefined) return alert("Συμπληρώστε όλα τα πεδία.");
-        try{
-          await db.collection("points").add({
-            name, area, latitude:lat, longitude:lng,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          cancelBtn.click();
-        }catch(err){ alert("Σφάλμα: "+err.message); }
+        await db.collection("points").add({
+          name, area, latitude:lat, longitude:lng,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        cancelBtn.click();
       };
 
-      // --- Edit Point ---
+      // Edit Point
       editCancel.onclick=()=>{ editModal.classList.add("opacity-0","pointer-events-none"); editForm.reset(); };
       editForm.onsubmit=async e=>{
         e.preventDefault();
         const name=editForm.editName.value.trim(), area=editForm.editArea.value;
         if(!name||!area) return alert("Συμπληρώστε όλα τα πεδία.");
-        try{
-          await db.collection("points").doc(editId).update({ name, area });
-          editCancel.click();
-        }catch(err){ alert("Σφάλμα: "+err.message); }
+        await db.collection("points").doc(editId).update({ name, area });
+        editCancel.click();
       };
 
-      // --- Route by area ---
+      // Route by area
       routeBtn.onclick=()=>{ routeModal.classList.remove("opacity-0","pointer-events-none"); updateRouteCount(); };
       routeCancel.onclick=()=>{ routeModal.classList.add("opacity-0","pointer-events-none"); routeForm.reset(); routeCount.textContent=""; };
       routeForm.onsubmit=e=>{
@@ -356,29 +398,36 @@
         const sel=routeRegion.value, days=routeDays.value;
         let pts=allPoints.filter(p=>sel==='all'||p.area===sel)
           .filter(p=>{
-            if(days==='all') return true;
             const age=daysSince(p.lastVisit||0);
-            return days==='lt3'? age<3 : days==='3to7'? age>=3&&age<=7 : days==='gt7'? age>7 : days==='never'? !p.lastVisit : true;
+            if(days==='lt3') return age<3;
+            if(days==='3to7') return age>=3&&age<=7;
+            if(days==='gt7') return age>7;
+            if(days==='never') return !p.lastVisit;
+            return true;
           });
         if(pts.length<2) return alert("Ελάχιστα 2 σημεία.");
         pts.sort((a,b)=>a.timestamp.seconds-b.timestamp.seconds);
-        const coords=pts.map(p=>`${p.latitude},${p.longitude}`), o=coords.shift(), d=coords.pop(), w=coords.join("|");
+        const coords=pts.map(p=>`${p.latitude},${p.longitude}`);
+        const o=coords.shift(), d=coords.pop(), w=coords.join("|");
         let url=`https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}`+(w?`&waypoints=${w}`:"");
         window.open(url,"_blank"); routeCancel.click();
       };
+      routeRegion.onchange=updateRouteCount; routeDays.onchange=updateRouteCount;
       function updateRouteCount(){
         const sel=routeRegion.value, days=routeDays.value;
         const cnt=allPoints.filter(p=>sel==='all'||p.area===sel)
           .filter(p=>{
-            if(days==='all') return true;
             const age=daysSince(p.lastVisit||0);
-            return days==='lt3'? age<3 : days==='3to7'? age>=3&&age<=7 : days==='gt7'? age>7 : days==='never'? !p.lastVisit : true;
+            if(days==='lt3') return age<3;
+            if(days==='3to7') return age>=3&&age<=7;
+            if(days==='gt7') return age>7;
+            if(days==='never') return !p.lastVisit;
+            return true;
           }).length;
         routeCount.textContent=`Βρέθηκαν ${cnt} σημεία`;
       }
-      routeRegion.onchange=updateRouteCount; routeDays.onchange=updateRouteCount;
 
-      // --- Custom Route ---
+      // Custom Route
       customBtn.onclick=()=>{ selectionMode=true; genBtn.classList.remove("hidden"); cancelGen.classList.remove("hidden"); render(); };
       cancelGen.onclick=e=>{ e.stopPropagation(); selectionMode=false; genBtn.classList.add("hidden"); cancelGen.classList.add("hidden"); render(); };
       genBtn.onclick=()=>{
@@ -390,7 +439,7 @@
         window.open(url,"_blank"); cancelGen.click();
       };
 
-      // --- Photo / Camera logic ---
+      // Photo / Camera logic
       function showPhoto(id){
         currentPhotoId=id;
         db.collection("points").doc(id).get().then(doc=>{
@@ -407,7 +456,7 @@
                 .catch(()=>photoInput.click());
             } else photoInput.click();
           }
-        }).catch(()=>alert("Σφάλμα ανάκτησης."));
+        });
       }
       captureBtn.onclick=()=>{
         if(!cameraVideo?.videoWidth) return;
@@ -427,7 +476,10 @@
           photoModal.classList.remove("opacity-0","pointer-events-none");
         },'image/jpeg',0.8);
       };
-      cancelCapture.onclick=()=>{ cameraStream?.getTracks().forEach(t=>t.stop()); cameraModal.classList.add("opacity-0","pointer-events-none"); };
+      cancelCapture.onclick=()=>{
+        cameraStream?.getTracks().forEach(t=>t.stop());
+        cameraModal.classList.add("opacity-0","pointer-events-none");
+      };
       photoInput.onchange=async()=>{
         const file=photoInput.files[0];
         if(!file||!currentPhotoId||!confirm("Αποθήκευση φωτογραφίας;")) return;
@@ -450,32 +502,39 @@
       };
       closePhoto.onclick=()=>photoModal.classList.add("opacity-0","pointer-events-none");
 
-      // --- Firestore listener ---
+      // Initial geolocation
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(pos=>{
+          userLat=pos.coords.latitude; userLng=pos.coords.longitude;
+          userLocationAllowed=true; render();
+        },()=>render(),{enableHighAccuracy:true,timeout:10000});
+      } else render();
+
+      refreshBtn.onclick=()=>{
+        if(navigator.geolocation){
+          navigator.geolocation.getCurrentPosition(pos=>{
+            userLat=pos.coords.latitude; userLng=pos.coords.longitude;
+            userLocationAllowed=true; render();
+          },()=>alert("Δεν μπορούμε να ανανεώσουμε τη θέση."),{enableHighAccuracy:true,timeout:10000});
+        } else alert("Το Geolocation δεν υποστηρίζεται.");
+      };
+
+      // Firestore listener & render
       db.collection("points").orderBy("timestamp","desc")
         .onSnapshot(snap=>{ allPoints=snap.docs.map(d=>({id:d.id,...d.data()})); render(); });
 
-      regionF.onchange=render; visitedF.onchange=render;
-
-      // --- Render & Card ---
       function render(){
-        container.innerHTML="";
-        let pts=allPoints.filter(pt=>{
-          const visited=!!pt.lastVisit;
-          return ((regionF.value===""||pt.area===regionF.value) &&
-                  (visitedF.value==="all"||(visitedF.value==="visited"&&visited)||(visitedF.value==="unvisited"&&!visited)));
-        });
-        if(userLocationAllowed){
-          pts.sort((a,b)=>getDistanceFromLatLonInKm(userLat,userLng,a.latitude,a.longitude)
-                       - getDistanceFromLatLonInKm(userLat,userLng,b.latitude,b.longitude));
-        }
-        pts.forEach(pt=>container.append(card(pt)));
+        container.innerHTML='';
+        allPoints.forEach(pt=>container.append(card(pt)));
       }
       function card(pt){
         const c=document.createElement("div");
         c.className="relative bg-white rounded-xl p-4 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition overflow-hidden";
+
         const ab=document.createElement("div");
         ab.className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-region text-white px-2 py-0.5 rounded-full text-xs uppercase";
         ab.textContent=pt.area; c.append(ab);
+
         const h3=document.createElement("h3");
         h3.className="mt-6 text-center text-lg font-bold uppercase text-darktext break-words";
         h3.textContent=pt.name; c.append(h3);
@@ -483,8 +542,8 @@
         const row=document.createElement("div");
         row.className="mt-4 flex justify-between items-center";
         const ageDiv=document.createElement("div");
-        const age=daysSince(pt.lastVisit||0);
-        const dc=age===Infinity||age>7?"bg-danger animate-pulse":age>3?"bg-accent animate-ping":"bg-success";
+        const age=daysSince(pt.lastVisit||0),
+              dc=age===Infinity||age>7?"bg-danger animate-pulse":age>3?"bg-accent animate-ping":"bg-success";
         ageDiv.innerHTML=`<span class="${dc} inline-block w-2 h-2 rounded-full"></span>
                           <span class="text-xs text-gray-500 uppercase ml-1">
                             ${age===Infinity?"Ποτέ":Math.floor(age)===1?"1 ημέρα":`${Math.floor(age)} ημέρες`}
@@ -505,7 +564,9 @@
               pt.lastVisit={toDate:()=>now}; render();
             },
             "Αλλαγή":()=>{
-              editId=pt.id; editForm.editName.value=pt.name; editForm.editArea.value=pt.area;
+              editId=pt.id;
+              document.querySelector("#editForm input[name=editName]").value=pt.name;
+              document.querySelector("#editForm select[name=editArea]").value=pt.area;
               editModal.classList.remove("opacity-0","pointer-events-none");
             },
             "Διαγραφή":async()=>{ if(confirm("Διαγραφή;")) await db.collection("points").doc(pt.id).delete(); },
@@ -534,11 +595,6 @@
         a.className="block text-center bg-primary text-white py-1 rounded uppercase text-xs mt-2";
         a.textContent="Χάρτης"; c.append(a);
 
-        if(selectionMode){
-          const cb=document.createElement("input");
-          cb.type="checkbox"; cb.className="absolute top-2 right-2 form-checkbox h-4 w-4 text-primary";
-          cb.dataset.id=pt.id; c.append(cb);
-        }
         return c;
       }
     });
