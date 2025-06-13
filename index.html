@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Καταχώριση Σημείου (Firebase)</title>
+  <title>Καταχώριση Σημείου (Firebase) με ταξινόμηση ανά απόσταση</title>
 
   <!-- Tailwind CSS + custom colors -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -43,6 +43,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 </head>
 <body class="bg-softbg text-darktext min-h-screen flex flex-col items-center py-8 font-sans">
 
@@ -214,12 +215,25 @@
       apiKey:    "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
       authDomain:"pointregistrationapp.firebaseapp.com",
       projectId: "pointregistrationapp",
-      storageBucket:"pointregistrationapp.firebasestorage.app",  // Σωστό bucket όπως στο Console
+      storageBucket:"pointregistrationapp.appspot.com",  // ή ακριβώς ό,τι δείχνει το Console
       messagingSenderId:"925139386507",
       appId:     "1:925139386507:web:588ae991f39a7bab04548e"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore(), storage = firebase.storage();
+
+    // Haversine για υπολογισμό απόστασης (σε χιλιόμετρα)
+    function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+      const toRad = x => x * Math.PI / 180;
+      const R = 6371; // Γήινη ακτίνα km
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
 
     function daysSince(ts){
       if(!ts) return Infinity;
@@ -227,7 +241,11 @@
     }
 
     document.addEventListener("DOMContentLoaded", ()=>{
-      let userLat, userLng, allPoints=[], editId, selectionMode=false, currentPhotoId, cameraStream;
+      let userLat, userLng;
+      let userLocationAllowed = false;
+      let userLocationTried = false;
+
+      let allPoints = [], editId, selectionMode=false, currentPhotoId, cameraStream;
       const openBtn=document.getElementById("openModalBtn"),
             addModal=document.getElementById("modal"),
             cancelBtn=document.getElementById("cancelBtn"),
@@ -259,10 +277,34 @@
             closePhoto=document.getElementById("closePhotoModal"),
             photoInput=document.getElementById("photoInput");
 
+      // Ζητάμε τοποθεσία μια φορά κατά την εκκίνηση
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(pos=>{
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          userLocationAllowed = true;
+          userLocationTried = true;
+          console.log("Device location obtained:", userLat, userLng);
+          render(); // επανεκτέλεση για ταξινόμηση
+        }, err=>{
+          userLocationAllowed = false;
+          userLocationTried = true;
+          console.warn("Δεν επιτράπηκε τοποθεσία ή σφάλμα:", err);
+          // render χωρίς ταξινόμηση
+          render();
+        }, { enableHighAccuracy: true, timeout: 10000 });
+      } else {
+        console.warn("Το geolocation δεν υποστηρίζεται.");
+        userLocationTried = true;
+      }
+
       // --- Add Point ---
       openBtn.onclick=()=>{
         navigator.geolocation.getCurrentPosition(pos=>{
-          userLat=pos.coords.latitude; userLng=pos.coords.longitude;
+          const lat=pos.coords.latitude, lng=pos.coords.longitude;
+          // αποθηκεύουμε προσωρινά για την καταχώριση
+          window._tempLat = lat;
+          window._tempLng = lng;
           addModal.classList.remove("opacity-0","pointer-events-none");
         },()=>alert("Άδεια τοποθεσίας απαραίτητη."));
       };
@@ -272,12 +314,13 @@
       form.onsubmit=async e=>{
         e.preventDefault();
         const name=form.pointName.value.trim(), area=form.areaSelect.value;
-        if(!name||!area){ alert("Συμπληρώστε όλα τα πεδία."); return; }
+        const lat = window._tempLat, lng = window._tempLng;
+        if(!name||!area||lat===undefined||lng===undefined){ alert("Συμπληρώστε όλα τα πεδία και δώστε άδεια τοποθεσίας."); return; }
         try{
           await db.collection("points").add({
             name, area,
-            latitude:userLat, longitude:userLng,
-            timestamp:firebase.firestore.FieldValue.serverTimestamp()
+            latitude: lat, longitude: lng,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
           });
           cancelBtn.click();
         }catch(err){
@@ -315,11 +358,7 @@
       routeForm.onsubmit=e=>{
         e.preventDefault();
         const sel=routeRegion.value, days=routeDays.value;
-        if(!sel){
-          alert("Επιλέξτε περιοχή.");
-          return;
-        }
-        // Φιλτράρισμα με έλεγχο για 'all'
+        if(!sel){ alert("Επιλέξτε περιοχή."); return; }
         let pts = allPoints.filter(p => sel==='all' || p.area===sel)
           .filter(p => {
             if(days==='all') return true;
@@ -332,24 +371,17 @@
               default:      return true;
             }
           });
-        if(pts.length<2){
-          alert("Δεν υπάρχουν αρκετά σημεία.");
-          return;
-        }
+        if(pts.length<2){ alert("Δεν υπάρχουν αρκετά σημεία."); return; }
         pts.sort((a,b)=>a.timestamp.seconds - b.timestamp.seconds);
         const coords = pts.map(p=>`${p.latitude},${p.longitude}`);
         const o = coords.shift(), d = coords.pop(), w = coords.join("|");
         let url = `https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}`;
         if(w) url += `&waypoints=${w}`;
-        window.open(url, "_blank");
-        routeCancel.click();
+        window.open(url,"_blank"); routeCancel.click();
       };
       function updateRouteCount(){
         const sel=routeRegion.value, days=routeDays.value;
-        if(!sel){
-          routeCount.textContent="";
-          return;
-        }
+        if(!sel){ routeCount.textContent=""; return; }
         const cnt = allPoints.filter(p => sel==='all' || p.area===sel)
           .filter(p => {
             if(days==='all') return true;
@@ -425,6 +457,7 @@
         if(!confirm("Θέλεις να αποθηκεύσεις τη φωτογραφία;")) return;
         canvas.toBlob(async blob=>{
           try{
+            console.log("Attempting upload for document ID:", currentPhotoId);
             const ref=storage.ref(`points/${currentPhotoId}.jpg`);
             const snap=await ref.put(blob);
             console.log("Uploaded to", snap.metadata.fullPath);
@@ -453,6 +486,7 @@
         if(!file||!currentPhotoId) return;
         if(!confirm("Θέλεις να αποθηκεύσεις τη φωτογραφία;")) return;
         try{
+          console.log("Attempting fallback upload for document ID:", currentPhotoId);
           const ref=storage.ref(`points/${currentPhotoId}.jpg`);
           const snap=await ref.put(file);
           console.log("Uploaded to", snap.metadata.fullPath);
@@ -501,12 +535,24 @@
       function render(){
         container.innerHTML="";
         const sel=regionF.value, vis=visitedF.value;
-        allPoints.forEach(pt=>{
-          const visited=!!pt.lastVisit;
-          if((sel===""||pt.area===sel) &&
-             (vis==="all"||(vis==="visited"&&visited)||(vis==="unvisited"&&!visited))){
-            container.append(card(pt));
-          }
+        // Φιλτράρισμα
+        let pts = allPoints.filter(pt=>{
+          const visited = !!pt.lastVisit;
+          return ( (sel==="" || pt.area===sel) &&
+                   (vis==="all" || (vis==="visited"&&visited) || (vis==="unvisited"&&!visited)) );
+        });
+        // Αν έχουμε user location, ταξινόμηση βάσει απόστασης
+        if(userLocationAllowed && userLat!==undefined && userLng!==undefined){
+          pts.sort((a,b)=>{
+            // Υπολογισμός απόστασης
+            const da = getDistanceFromLatLonInKm(userLat, userLng, a.latitude, a.longitude);
+            const db = getDistanceFromLatLonInKm(userLat, userLng, b.latitude, b.longitude);
+            return da - db;
+          });
+        }
+        // Εμφάνιση
+        pts.forEach(pt=>{
+          container.append(card(pt));
         });
       }
 
@@ -599,11 +645,5 @@
       }
     });
   </script>
-<footer style="text-align: center; padding: 20px 0; font-size: 14px; color: #555;">
-    © 2025 Alexandros Charissis – All rights reserved.<br>
-    <a href="mailto:treno2025a@gmail.com" style="color: #007acc; text-decoration: none;">Contact</a> |
-    <a href="https://alexrho123.github.io/point-registration-firebase/LICENSE.txt" style="color: #007acc; text-decoration: none;">License</a>
-</footer>
-
 </body>
 </html>
