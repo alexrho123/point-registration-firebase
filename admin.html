@@ -24,7 +24,6 @@
       }
     }
   </script>
-
   <style>
     /* Center modals & transitions */
     #addProductModal,
@@ -154,40 +153,47 @@
     </div>
   </div>
 
-  <!-- Order Detail Modal (νέο στυλ “πίνακα”) -->
+  <!-- Order Detail Modal (ανανεωμένο responsive style) -->
   <div id="orderDetailModal"
        class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none">
-    <div class="bg-white rounded-2xl w-full max-w-lg p-8 relative shadow-xl">
+    <div class="bg-white rounded-2xl w-full max-w-xl p-8 relative shadow-2xl">
       <button onclick="closeOrderDetailModal()"
               class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-3xl">&times;</button>
-      <h2 id="detailTitle"
-          class="text-2xl font-bold text-primary mb-6 text-center uppercase">
-        Λεπτομέρειες Παραγγελίας
-      </h2>
-      <!-- Header row -->
-      <div class="flex font-semibold uppercase text-gray-700 border-b pb-2 mb-4">
-        <div class="flex-1">Προϊόν</div>
-        <div class="w-16 text-right">Ποσ.</div>
-        <div class="w-24 text-right">€</div>
+      <h2 id="detailTitle" class="text-2xl font-bold text-primary mb-6 text-center uppercase">ΛΕΠΤΟΜΕΡΕΙΕΣ ΠΑΡΑΓΓΕΛΙΑΣ</h2>
+
+      <!-- Responsive table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full border divide-y divide-gray-200">
+          <thead class="bg-accent/20">
+            <tr>
+              <th class="px-4 py-2 text-left text-sm font-semibold uppercase">Προϊόν</th>
+              <th class="px-4 py-2 text-right text-sm font-semibold uppercase">Ποσ.</th>
+              <th class="px-4 py-2 text-right text-sm font-semibold uppercase">€</th>
+            </tr>
+          </thead>
+          <tbody id="detailContent" class="divide-y divide-gray-100 bg-white">
+            <!-- δυναμικά -->
+          </tbody>
+        </table>
       </div>
-      <!-- Περιεχόμενο -->
-      <div id="detailContent"
-           class="grid grid-cols-[1fr_auto_auto] gap-y-2 max-h-64 overflow-auto px-2">
-        <!-- οι γραμμές φορτώνονται δυναμικά -->
-      </div>
+
+      <!-- Παρατηρήσεις -->
+      <div id="detailRemarks" class="mt-4 italic text-gray-600 text-sm"></div>
+
       <!-- Σύνολο -->
       <div class="mt-6 flex justify-between font-bold text-lg uppercase">
         <span>Σύνολο:</span>
         <span id="detailTotal" class="text-primary">€0.00</span>
       </div>
-      <!-- Κουμπιά -->
-      <div class="mt-6 flex justify-between">
+
+      <!-- Ενέργειες -->
+      <div class="mt-6 flex flex-col sm:flex-row justify-between gap-3">
         <button id="executeOrderBtn"
-                class="bg-success text-white px-6 py-2 rounded-lg hover:bg-success/90">
-          Εκτέλεση Παραγγελίας
+                class="w-full sm:w-auto bg-success text-white px-6 py-2 rounded-lg hover:bg-success/90">
+          Εκτέλεση
         </button>
         <button id="cancelOrderBtn"
-                class="bg-danger text-white px-6 py-2 rounded-lg hover:bg-danger/90">
+                class="w-full sm:w-auto bg-danger text-white px-6 py-2 rounded-lg hover:bg-danger/90">
           Ακύρωση Παραγγελίας
         </button>
       </div>
@@ -214,7 +220,7 @@
         </div>
         <div>
           <label class="block mb-1">Ρόλος</label>
-          <select id="sellerRole" required class="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region">  
+          <select id="sellerRole" required class="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-region">
             <option value="admin">Admin</option>
             <option value="seller">Πωλητής</option>
           </select>
@@ -259,7 +265,7 @@
       } else alert('Σφάλμα σύνδεσης');
     };
 
-    // Add Product modal controls
+    // Προϊόντα modal controls
     const addProductModal = document.getElementById('addProductModal');
     window.openAddProductModal  = ()=> addProductModal.classList.remove('opacity-0','pointer-events-none');
     window.closeAddProductModal = ()=> {
@@ -295,7 +301,7 @@
       closeAddProductModal();
     };
 
-    // Live Orders  
+    // Live Orders
     const liveOrdersModal     = document.getElementById('liveOrdersModal'),
           ordersList          = document.getElementById('ordersList'),
           executedOrdersModal = document.getElementById('executedOrdersModal'),
@@ -303,6 +309,8 @@
           orderDetailModal    = document.getElementById('orderDetailModal'),
           detailTitle         = document.getElementById('detailTitle'),
           detailContent       = document.getElementById('detailContent'),
+          detailRemarks       = document.getElementById('detailRemarks'),
+          detailTotal         = document.getElementById('detailTotal'),
           executeOrderBtn     = document.getElementById('executeOrderBtn'),
           cancelOrderBtn      = document.getElementById('cancelOrderBtn');
     let currentOrderRef = null;
@@ -327,12 +335,7 @@
             const pname = pt.exists ? pt.data().name : '—';
             const btn = document.createElement('button');
             btn.className = 'w-full flex justify-between p-4 bg-white border-l-4 border-primary rounded-lg shadow-lg hover:shadow-xl transition';
-            btn.innerHTML = `
-              <div class="text-left">
-                <div class="font-semibold">${pname}</div>
-                <div class="text-sm text-gray-500">${qty} τεμ.</div>
-              </div>
-              <div class="font-bold text-primary">€${od.total.toFixed(2)}</div>`;
+            btn.innerHTML = `<div class="text-left"><div class="font-semibold">${pname}</div><div class="text-sm text-gray-500">${qty} τεμ.</div></div><div class="font-bold text-primary">€${od.total.toFixed(2)}</div>`;
             btn.onclick = ()=> openOrderDetail(doc.ref, pname);
             ordersList.appendChild(btn);
           }
@@ -363,12 +366,7 @@
             const execAt = od.executedAt ? new Date(od.executedAt.toDate()).toLocaleString() : '—';
             const div = document.createElement('div');
             div.className = 'w-full flex justify-between p-4 bg-gray-50 border-l-4 border-success rounded-lg shadow-inner';
-            div.innerHTML = `
-              <div>
-                <div class="font-semibold">${pname}</div>
-                <div class="text-sm text-gray-500">${execAt}</div>
-              </div>
-              <div class="font-bold text-success">€${od.total.toFixed(2)}</div>`;
+            div.innerHTML = `<div><div class="font-semibold">${pname}</div><div class="text-sm text-gray-500">${execAt}</div></div><div class="font-bold text-success">€${od.total.toFixed(2)}</div>`;
             executedList.appendChild(div);
           }
         });
@@ -377,14 +375,15 @@
       executedOrdersModal.classList.add('opacity-0','pointer-events-none');
     }
 
-    // Order Detail (νέο πίνακας)
+    // Order Detail – ανανεωμένο responsive
     async function openOrderDetail(ref, pname){
       currentOrderRef = ref;
       detailTitle.textContent = (`Παραγγελία @ ${pname}`)
         .toUpperCase()
         .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
       detailContent.innerHTML = '';
-      document.getElementById('detailTotal').textContent = '€0.00';
+      detailRemarks.textContent = '';
+      detailTotal.textContent   = '€0.00';
 
       const odoc = await ref.get();
       const od = odoc.data();
@@ -392,30 +391,29 @@
 
       // παρατηρήσεις
       if(od.remarks){
-        const rem = document.createElement('div');
-        rem.className = 'italic text-sm mb-2';
-        rem.textContent = od.remarks;
-        detailContent.appendChild(rem);
+        detailRemarks.textContent = od.remarks;
       }
 
+      // είδη
       const itemsSnap = await ref.collection('items').get();
-      for(let it of itemsSnap.docs){
-        const data = it.data();
-        const ps = await data.productId.get();
-        const name = (ps.exists ? ps.data().name : data.productId.id)
+      for(const it of itemsSnap.docs){
+        const itm = it.data();
+        const ps  = await itm.productId.get();
+        const name = (ps.exists ? ps.data().name : itm.productId.id)
                        .toUpperCase()
                        .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        const row = document.createElement('div');
-        row.className = 'flex items-center';
-        row.innerHTML = `
-          <div class="flex-1">${name}</div>
-          <div class="w-16 text-right">${data.quantity}</div>
-          <div class="w-24 text-right">€${data.subtotal.toFixed(2)}</div>`;
-        detailContent.appendChild(row);
-        total += data.subtotal;
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50';
+        tr.innerHTML = `
+          <td class="px-4 py-2 text-sm">${name}</td>
+          <td class="px-4 py-2 text-sm text-right">${itm.quantity}</td>
+          <td class="px-4 py-2 text-sm text-right">€${itm.subtotal.toFixed(2)}</td>
+        `;
+        detailContent.appendChild(tr);
+        total += itm.subtotal;
       }
 
-      document.getElementById('detailTotal').textContent = `€${total.toFixed(2)}`;
+      detailTotal.textContent = `€${total.toFixed(2)}`;
       orderDetailModal.classList.remove('opacity-0','pointer-events-none');
     }
     function closeOrderDetailModal(){
@@ -442,7 +440,7 @@
       closeLiveOrdersModal();
     };
 
-    // Add Seller modal controls
+    // Προσθήκη Πωλητή modal controls
     const addSellerModal = document.getElementById('addSellerModal');
     document.getElementById('addSellerCard').onclick = ()=>{
       addSellerModal.classList.remove('opacity-0','pointer-events-none');
@@ -451,7 +449,7 @@
       addSellerModal.classList.add('opacity-0','pointer-events-none');
       document.getElementById('sellerForm').reset();
     }
-    document.getElementById('sellerForm').onsubmit = async e=>{
+    document.getElementById('sellerForm').onsubmit = async e =>{
       e.preventDefault();
       const name     = document.getElementById('sellerName').value.trim();
       const username = document.getElementById('sellerUsername').value.trim();
@@ -464,7 +462,7 @@
     };
 
     function initAdmin(){
-      // τίποτα επιπλέον προς το παρόν
+      // any post-login init if needed
     }
   </script>
 </body>
