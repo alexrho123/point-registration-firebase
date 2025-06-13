@@ -5,37 +5,80 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Admin Panel – Διαχείριση</title>
 
-  <!-- Tailwind CSS -->
+  <!-- Tailwind CSS + custom colors -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1D4ED8',
+            accent:  '#FACC15',
+            danger:  '#DC2626',
+            success: '#16A34A',
+            region:  '#8B5CF6',
+            softbg:  '#f0f8ff',
+            darktext:'#1f2937'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Center modals, add transition */
+    #addProductModal, #orderModal {
+      transition: opacity 0.2s ease;
+    }
+  </style>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
-<body class="bg-softbg text-darktext min-h-screen flex items-center justify-center">
+<body class="bg-softbg text-darktext min-h-screen flex flex-col">
+
+  <!-- Responsive Header & Nav -->
+  <header class="w-full bg-white shadow">
+    <div class="max-w-3xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between">
+      <h1 class="text-2xl font-extrabold text-primary uppercase">Admin Panel</h1>
+      <nav class="mt-2 sm:mt-0 flex space-x-2">
+        <a href="index.html"
+           class="px-3 py-1 bg-region text-white rounded uppercase text-sm hover:bg-region/90">
+          Αρχική
+        </a>
+        <a href="admin.html"
+           class="px-3 py-1 bg-accent text-white rounded uppercase text-sm hover:bg-accent/90">
+          Admin
+        </a>
+      </nav>
+    </div>
+  </header>
 
   <!-- Login Screen -->
-  <div id="loginContainer" class="bg-white p-8 rounded shadow-md w-full max-w-sm">
-    <h2 class="text-2xl font-bold text-center mb-6">Admin Login</h2>
-    <form id="loginForm" class="space-y-4">
-      <div>
-        <label class="block mb-1">Όνομα χρήστη</label>
-        <input id="username" type="text" required
-               class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"/>
-      </div>
-      <div>
-        <label class="block mb-1">Κωδικός</label>
-        <input id="password" type="password" required
-               class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"/>
-      </div>
-      <button type="submit" class="w-full bg-primary text-white py-2 rounded hover:bg-primary/90">
-        Σύνδεση
-      </button>
-    </form>
+  <div id="loginContainer" class="flex-1 flex items-center justify-center">
+    <div class="bg-white p-8 rounded shadow-md w-full max-w-sm">
+      <h2 class="text-2xl font-bold text-center mb-6">Admin Login</h2>
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block mb-1">Όνομα χρήστη</label>
+          <input id="username" type="text" required
+                 class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"/>
+        </div>
+        <div>
+          <label class="block mb-1">Κωδικός</label>
+          <input id="password" type="password" required
+                 class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"/>
+        </div>
+        <button type="submit" class="w-full bg-primary text-white py-2 rounded hover:bg-primary/90">
+          Σύνδεση
+        </button>
+      </form>
+    </div>
   </div>
 
   <!-- Admin Panel -->
-  <div id="adminPanel" class="hidden w-full max-w-3xl mx-auto p-6">
+  <div id="adminPanel" class="hidden flex-1 w-full max-w-3xl mx-auto p-6">
     <h1 class="text-3xl font-bold text-primary mb-6 text-center">Πίνακας Διαχείρισης</h1>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <!-- Card: Προσθήκη Προϊόντων -->
@@ -47,27 +90,27 @@
         </svg>
         <h2 class="text-xl font-semibold">Προσθήκη Προϊόντων</h2>
       </div>
-      <!-- μελλοντικά περισσότερα κουτάκια... -->
+      <!-- Μελλοντικά περισσότερα κουτάκια... -->
     </div>
   </div>
 
   <!-- Add Products Modal -->
   <div id="addProductModal"
-       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity">
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 pointer-events-none">
     <div class="bg-white rounded-lg w-full max-w-lg p-6 relative">
       <button onclick="closeAddProductModal()"
-              class="absolute top-3 right-3 text-gray-600 hover:text-gray-800">&times;</button>
+              class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
       <h2 class="text-2xl font-bold text-primary mb-4 text-center">Προσθήκη Προϊόντων</h2>
       <form id="productForm" class="space-y-4">
         <div id="productRows" class="space-y-2">
-          <!-- μία αρχική γραμμή -->
+          <!-- Αρχική γραμμή -->
           <div class="flex gap-2">
             <input type="text" placeholder="Όνομα προϊόντος" required
                    class="flex-1 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
             <input type="number" placeholder="Τιμή" step="0.01" required
                    class="w-24 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
             <button type="button" onclick="removeRow(this)"
-                    class="text-danger hover:text-red-700">&minus;</button>
+                    class="text-danger hover:text-red-700 text-2xl leading-none">&minus;</button>
           </div>
         </div>
         <div class="flex justify-between">
@@ -107,11 +150,9 @@
       e.preventDefault();
       const user = document.getElementById('username').value.trim();
       const pass = document.getElementById('password').value;
-      // Ensure admin user exists
       const docRef = db.collection('users').doc(user);
       const doc = await docRef.get();
       if (!doc.exists) {
-        // seed admin
         if (user === 'admin' && pass === '123') {
           await docRef.set({ password: '123' });
         } else {
@@ -128,23 +169,21 @@
     };
 
     // Modal controls
-    const modal = document.getElementById('addProductModal');
-    function openAddProductModal() {
-      modal.classList.remove('opacity-0','pointer-events-none');
-    }
-    function closeAddProductModal() {
-      modal.classList.add('opacity-0','pointer-events-none');
-      // reset form
+    const addProductModal = document.getElementById('addProductModal');
+    window.openAddProductModal = () => {
+      addProductModal.classList.remove('opacity-0','pointer-events-none');
+    };
+    window.closeAddProductModal = () => {
+      addProductModal.classList.add('opacity-0','pointer-events-none');
+      // Reset form
       document.getElementById('productForm').reset();
-      // leave single row
-      const rows = document.getElementById('productRows');
-      rows.innerHTML = `
+      document.getElementById('productRows').innerHTML = `
         <div class="flex gap-2">
           <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
           <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
-          <button type="button" onclick="removeRow(this)" class="text-danger hover:text-red-700">&minus;</button>
+          <button type="button" onclick="removeRow(this)" class="text-danger hover:text-red-700 text-2xl leading-none">&minus;</button>
         </div>`;
-    }
+    };
     document.getElementById('addProductsCard').onclick = openAddProductModal;
 
     // Dynamic rows
@@ -155,13 +194,12 @@
       div.innerHTML = `
         <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
         <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
-        <button type="button" onclick="removeRow(this)" class="text-danger hover:text-red-700">&minus;</button>
+        <button type="button" onclick="removeRow(this)" class="text-danger hover:text-red-700 text-2xl leading-none">&minus;</button>
       `;
       rows.appendChild(div);
     }
     function removeRow(btn) {
-      const row = btn.closest('div');
-      row.parentNode.removeChild(row);
+      btn.closest('div').remove();
     }
 
     // Submit products
