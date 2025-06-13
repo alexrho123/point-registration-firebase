@@ -285,7 +285,8 @@
             let qty = 0; itemsSnap.docs.forEach(i => qty += i.data().quantity);
             if (qty===0) continue;
             const pdoc = await doc.ref.parent.parent.get();
-            const pname = pdoc.exists ? pdoc.data().name.toUpperCase() : '—';
+            let rawName = pdoc.exists ? pdoc.data().name : '—';
+            let pname = rawName.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
             const btn = document.createElement('button');
             btn.className = 'w-full flex justify-between p-4 bg-white border-l-4 border-primary rounded-lg shadow-lg hover:shadow-xl transition';
             btn.innerHTML = `
@@ -324,7 +325,8 @@
             const ts = od.timestamp?.toDate();
             if (ts && ts.toDateString()!==today) continue;
             const pdoc = await doc.ref.parent.parent.get();
-            const pname = pdoc.exists ? pdoc.data().name.toUpperCase() : '—';
+            let rawName = pdoc.exists ? pdoc.data().name : '—';
+            let pname = rawName.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
             const execAt = od.executedAt ? new Date(od.executedAt.toDate()).toLocaleString() : '—';
             const div = document.createElement('div');
             div.className = 'w-full flex justify-between p-4 bg-gray-50 border-l-4 border-success rounded-lg shadow-inner';
@@ -348,20 +350,23 @@
     // Order Detail
     function openOrderDetail(ref, pname){
       currentOrderRef = ref;
-      detailTitle.textContent = `Παραγγελία @ ${pname.toUpperCase()}`;
+      detailTitle.textContent = `Παραγγελία @ ${pname}`;
       detailContent.innerHTML = '<p class="text-gray-500">Φόρτωση…</p>';
       orderDetailModal.classList.remove('opacity-0','pointer-events-none');
       ref.get().then(async odoc=>{
         detailContent.innerHTML = '';
         const od = odoc.data();
         const itemsSnap = await ref.collection('items').get();
-        itemsSnap.docs.forEach(it=>{
+        for (let it of itemsSnap.docs){
           const itm = it.data();
+          const ps = await itm.productId.get();
+          let rawProd = ps.exists ? ps.data().name : itm.productId.id;
+          let prodName = rawProd.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
           const row = document.createElement('div');
           row.className = 'flex justify-between';
-          row.innerHTML = `<span>${itm.quantity}× ${itm.productId.id}</span><span>€${itm.subtotal.toFixed(2)}</span>`;
+          row.innerHTML = `<span>${itm.quantity}× ${prodName}</span><span>€${itm.subtotal.toFixed(2)}</span>`;
           detailContent.appendChild(row);
-        });
+        }
         const totDiv = document.createElement('div');
         totDiv.className = 'mt-4 flex justify-between font-bold text-lg';
         totDiv.innerHTML = `<span>Σύνολο:</span><span>€${od.total.toFixed(2)}</span>`;
