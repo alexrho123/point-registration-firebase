@@ -623,61 +623,42 @@
         });
         totalSpan.textContent = `€${total.toFixed(2)}`;
       }
-     orderForm.onsubmit = async e => {
-  e.preventDefault();
-  // 1) έλεγχος αν υπάρχει τουλάχιστον 1 τεμάχιο
-  let totalQty = 0;
-  document.querySelectorAll('#orderItemsContainer input').forEach(inp=>{
-    totalQty += parseInt(inp.value) || 0;
-  });
-  if (totalQty === 0) {
-    return alert('Δεν μπορείτε να καταχωρήσετε παραγγελία χωρίς τεμάχια!');
-  }
-  // 2) κανονική αποστολή
-  const total   = parseFloat(totalSpan.textContent.replace('€',''));
-  const remarks = remarksIn.value.trim();
-  const orderRef = await db.collection('points').doc(currentPointId)
-                           .collection('orders').add({
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    total, remarks
-  });
-  // 3) περιεχόμενα
- // βρες όλες τις γραμμές
-const rows = Array.from(document.querySelectorAll('#orderItemsContainer > div'));
-// γράψε σειριακά και περίμενε κάθε add()
-for (let row of rows) {
-  const inp = row.querySelector('input'),
-        qty = parseInt(inp.value) || 0;
-  if (qty > 0) {
-    const pid   = inp.dataset.id,
-          price = parseFloat(inp.dataset.price);
-    await orderRef.collection('items').add({
-      productId: db.doc(`products/${pid}`),
-      quantity: qty,
-      price,
-      subtotal: qty * price
-    });
-  }
-}
-// Τώρα που όλα τα items είναι ήδη γραμμένα, κλείσε το modal
-closeOrderModal();
-alert('Η παραγγελία καταχωρήθηκε!');
+
+      // HERE is the FIX: use for…of + await instead of forEach
+      orderForm.onsubmit = async e=>{
+        e.preventDefault();
+        const total   = parseFloat(totalSpan.textContent.replace('€','')),
+              remarks = remarksIn.value.trim();
+        const orderRef = await db.collection('points').doc(currentPointId)
+                                .collection('orders').add({
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          total, remarks
+        });
+        const rows = Array.from(document.querySelectorAll('#orderItemsContainer > div'));
+        for (let row of rows) {
+          const inp = row.querySelector('input'),
+                qty = parseInt(inp.value) || 0;
+          if (qty > 0) {
+            const pid   = inp.dataset.id,
+                  price = parseFloat(inp.dataset.price);
+            await orderRef.collection('items').add({
+              productId: db.doc(`products/${pid}`),
+              quantity: qty,
+              price,
+              subtotal: qty * price
+            });
+          }
+        }
+        closeOrderModal();
+        alert('Η παραγγελία καταχωρήθηκε!');
+      };
 
       // Firestore listener & render
       db.collection("points").orderBy("timestamp","desc")
-  .onSnapshot(snap=>{
-    allPoints = snap.docs.map(d=>({id:d.id, ...d.data()}));
-    render();
-    // ΜΟΝΙΜΗ παρακολούθηση νέων παραγγελιών για αυτόματα reload
-    snap.docs.forEach(docPoint=>{
-      db.collection('points').doc(docPoint.id)
-        .collection('orders')
-        .onSnapshot(_=> {
-          // απλώς ξανα-βάζουμε το render αν αλλάξει κάτι
+        .onSnapshot(snap=>{
+          allPoints = snap.docs.map(d=>({id:d.id, ...d.data()}));
           render();
         });
-    });
-  });
 
       function render(){
         container.innerHTML = '';
