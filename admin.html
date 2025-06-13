@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Admin Panel – Διαχείριση</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-softbg text-darktext min-h-screen flex items-center justify-center">
+
+  <!-- Login Screen -->
+  <div id="loginContainer" class="bg-white p-8 rounded shadow-md w-full max-w-sm">
+    <h2 class="text-2xl font-bold text-center mb-6">Admin Login</h2>
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label class="block mb-1">Όνομα χρήστη</label>
+        <input id="username" type="text" required
+               class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"/>
+      </div>
+      <div>
+        <label class="block mb-1">Κωδικός</label>
+        <input id="password" type="password" required
+               class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"/>
+      </div>
+      <button type="submit" class="w-full bg-primary text-white py-2 rounded hover:bg-primary/90">
+        Σύνδεση
+      </button>
+    </form>
+  </div>
+
+  <!-- Admin Panel -->
+  <div id="adminPanel" class="hidden w-full max-w-3xl mx-auto p-6">
+    <h1 class="text-3xl font-bold text-primary mb-6 text-center">Πίνακας Διαχείρισης</h1>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Card: Προσθήκη Προϊόντων -->
+      <div id="addProductsCard"
+           class="bg-white rounded-lg shadow hover:shadow-lg cursor-pointer p-6 flex flex-col items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-accent mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 7h18M3 12h18M3 17h18" />
+        </svg>
+        <h2 class="text-xl font-semibold">Προσθήκη Προϊόντων</h2>
+      </div>
+      <!-- μελλοντικά περισσότερα κουτάκια... -->
+    </div>
+  </div>
+
+  <!-- Add Products Modal -->
+  <div id="addProductModal"
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity">
+    <div class="bg-white rounded-lg w-full max-w-lg p-6 relative">
+      <button onclick="closeAddProductModal()"
+              class="absolute top-3 right-3 text-gray-600 hover:text-gray-800">&times;</button>
+      <h2 class="text-2xl font-bold text-primary mb-4 text-center">Προσθήκη Προϊόντων</h2>
+      <form id="productForm" class="space-y-4">
+        <div id="productRows" class="space-y-2">
+          <!-- μία αρχική γραμμή -->
+          <div class="flex gap-2">
+            <input type="text" placeholder="Όνομα προϊόντος" required
+                   class="flex-1 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
+            <input type="number" placeholder="Τιμή" step="0.01" required
+                   class="w-24 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
+            <button type="button" onclick="removeRow(this)"
+                    class="text-danger hover:text-red-700">&minus;</button>
+          </div>
+        </div>
+        <div class="flex justify-between">
+          <button type="button" onclick="addRow()"
+                  class="bg-accent text-white px-4 py-2 rounded hover:bg-accent/90">
+            + Νέα Γραμμή
+          </button>
+          <div class="space-x-2">
+            <button type="button" onclick="closeAddProductModal()"
+                    class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+              Ακύρωση
+            </button>
+            <button type="submit" class="bg-success text-white px-4 py-2 rounded hover:bg-success/90">
+              Αποθήκευση
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey:    "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
+      authDomain:"pointregistrationapp.firebaseapp.com",
+      projectId: "pointregistrationapp",
+      storageBucket:"pointregistrationapp.appspot.com",
+      messagingSenderId:"925139386507",
+      appId:     "1:925139386507:web:588ae991f39a7bab04548e"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Login handling
+    document.getElementById('loginForm').onsubmit = async e => {
+      e.preventDefault();
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value;
+      // Ensure admin user exists
+      const docRef = db.collection('users').doc(user);
+      const doc = await docRef.get();
+      if (!doc.exists) {
+        // seed admin
+        if (user === 'admin' && pass === '123') {
+          await docRef.set({ password: '123' });
+        } else {
+          return alert('Σφάλμα σύνδεσης');
+        }
+      }
+      const data = (await docRef.get()).data();
+      if (data.password === pass) {
+        document.getElementById('loginContainer').classList.add('hidden');
+        document.getElementById('adminPanel').classList.remove('hidden');
+      } else {
+        alert('Σφάλμα σύνδεσης');
+      }
+    };
+
+    // Modal controls
+    const modal = document.getElementById('addProductModal');
+    function openAddProductModal() {
+      modal.classList.remove('opacity-0','pointer-events-none');
+    }
+    function closeAddProductModal() {
+      modal.classList.add('opacity-0','pointer-events-none');
+      // reset form
+      document.getElementById('productForm').reset();
+      // leave single row
+      const rows = document.getElementById('productRows');
+      rows.innerHTML = `
+        <div class="flex gap-2">
+          <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
+          <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
+          <button type="button" onclick="removeRow(this)" class="text-danger hover:text-red-700">&minus;</button>
+        </div>`;
+    }
+    document.getElementById('addProductsCard').onclick = openAddProductModal;
+
+    // Dynamic rows
+    function addRow() {
+      const rows = document.getElementById('productRows');
+      const div = document.createElement('div');
+      div.className = 'flex gap-2';
+      div.innerHTML = `
+        <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
+        <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region"/>
+        <button type="button" onclick="removeRow(this)" class="text-danger hover:text-red-700">&minus;</button>
+      `;
+      rows.appendChild(div);
+    }
+    function removeRow(btn) {
+      const row = btn.closest('div');
+      row.parentNode.removeChild(row);
+    }
+
+    // Submit products
+    document.getElementById('productForm').onsubmit = async e => {
+      e.preventDefault();
+      const rows = [...document.getElementById('productRows').children];
+      for (let row of rows) {
+        const name = row.querySelector('input[type=text]').value.trim();
+        const price = parseFloat(row.querySelector('input[type=number]').value);
+        if (name && !isNaN(price)) {
+          await db.collection('products').add({ name, price });
+        }
+      }
+      alert('Προϊόντα αποθηκεύτηκαν');
+      closeAddProductModal();
+    };
+  </script>
+</body>
+</html>
