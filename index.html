@@ -64,7 +64,7 @@
   <main class="w-full max-w-3xl px-4 space-y-4 mb-8">
     <div class="flex justify-center">
       <button id="refreshStigmaBtn"
-              class="px-4 py-1 bg-accent text-white rounded uppercase text-sm">
+              class="px-4 py-1 bg-accent text-white rounded uppercase text-sm hover:bg-accent/90">
         Ανανέωση Στίγματος
       </button>
     </div>
@@ -87,18 +87,18 @@
       </select>
       <div class="flex gap-2">
         <button id="routeBtn"
-                class="bg-indigo-500 text-white px-3 py-1 rounded uppercase text-xs">
+                class="bg-indigo-500 text-white px-3 py-1 rounded uppercase text-xs hover:bg-indigo-600">
           Δρομολ. Περιοχής
         </button>
         <button id="customRouteBtn"
-                class="bg-teal-500 text-white px-3 py-1 rounded uppercase text-xs">
+                class="bg-teal-500 text-white px-3 py-1 rounded uppercase text-xs hover:bg-teal-600">
           Προσαρμ. Διαδρομή
         </button>
       </div>
     </div>
     <div id="pointsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
     <button id="generateCustomRouteBtn"
-            class="hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white px-4 py-1 rounded uppercase text-sm z-50">
+            class="hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white px-4 py-1 rounded uppercase text-sm shadow-lg hover:bg-indigo-700 z-50">
       <span id="cancelCustomBtn" class="absolute top-1 right-2 text-white text-lg cursor-pointer">✕</span>
       Δημιούργησε Διαδρομή
     </button>
@@ -249,38 +249,25 @@
   <!-- Add Order Modal -->
   <div id="orderModal"
        class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg w-full max-w-lg modal-inner p-6 relative">
-      <button class="absolute top-4 right-4 text-gray-600 text-2xl"
+    <div class="bg-white rounded-xl w-full max-w-xl modal-inner p-6 relative shadow-2xl">
+      <button class="absolute top-4 right-4 text-gray-600 text-2xl hover:text-gray-800"
               onclick="closeOrderModal()">✕</button>
-      <h2 class="text-2xl font-bold text-primary mb-4 text-center">Προσθήκη Παραγγελίας</h2>
-      <form id="orderForm" class="space-y-4">
+      <h2 class="text-3xl font-bold text-primary mb-6 text-center">Προσθήκη Παραγγελίας</h2>
+      <form id="orderForm" class="space-y-6">
         <div id="orderItemsContainer" class="space-y-4"></div>
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <div class="flex gap-2">
-            <button type="button"
-                    class="bg-primary text-white px-3 py-1 rounded text-sm"
-                    onclick="bulkAdjust(1)">+1</button>
-            <button type="button"
-                    class="bg-primary text-white px-3 py-1 rounded text-sm"
-                    onclick="bulkAdjust(3)">+3</button>
-            <button type="button"
-                    class="bg-primary text-white px-3 py-1 rounded text-sm"
-                    onclick="bulkAdjust(5)">+5</button>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="font-medium">Σύνολο:</span>
-            <span id="orderTotal" class="text-lg font-bold">€0.00</span>
-          </div>
+        <div class="flex justify-between items-center">
+          <span class="text-xl font-medium">Σύνολο</span>
+          <span id="orderTotal" class="text-2xl font-extrabold">€0.00</span>
         </div>
         <div>
           <label class="block font-medium mb-1">Παρατηρήσεις (προαιρετικό)</label>
           <textarea id="orderRemarks" rows="3"
-                    class="w-full border rounded p-2"></textarea>
+                    class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary"></textarea>
         </div>
         <div class="text-center">
           <button type="submit"
-                  class="bg-success text-white px-6 py-2 rounded font-semibold hover:bg-success/90">
-            Αποστολή
+                  class="bg-success text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-success/90">
+            Αποστολή Παραγγελίας
           </button>
         </div>
       </form>
@@ -298,8 +285,7 @@
       appId:     "1:925139386507:web:588ae991f39a7bab04548e"
     };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const storage = firebase.storage();
+    const db = firebase.firestore(), storage = firebase.storage();
 
     // Helpers
     function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
@@ -507,8 +493,12 @@
               navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
                 .then(stream=>{ cameraStream=stream; cameraVideo.srcObject=stream; })
                 .catch(()=>photoInput.click());
-            } else photoInput.click();
+            } else {
+              photoInput.click();
+            }
           }
+        }).catch(err=>{
+          alert("Σφάλμα ανάκτησης φωτογραφίας: "+err.message);
         });
       }
       captureBtn.onclick = ()=>{
@@ -519,16 +509,20 @@
         canvas.getContext('2d').drawImage(cameraVideo,0,0);
         cameraStream.getTracks().forEach(t=>t.stop());
         cameraModal.classList.add("opacity-0","pointer-events-none");
-        if (!confirm("Αποθήκευση φωτογραφίας;")) return;
+        if (!confirm("Θέλεις να αποθηκεύσεις τη φωτογραφία;")) return;
         canvas.toBlob(async blob=>{
-          const ref = storage.ref(`points/${currentPhotoId}.jpg`);
-          await ref.put(blob);
-          const url = await ref.getDownloadURL();
-          const ts = firebase.firestore.FieldValue.serverTimestamp();
-          await db.collection("points").doc(currentPhotoId).update({ photoURL:url, photoTimestamp:ts });
-          photoImg.src = url;
-          photoDate.textContent = new Date().toLocaleString();
-          photoModal.classList.remove("opacity-0","pointer-events-none");
+          try{
+            const ref = storage.ref(`points/${currentPhotoId}.jpg`);
+            const snap = await ref.put(blob);
+            const url = await ref.getDownloadURL();
+            const ts = firebase.firestore.FieldValue.serverTimestamp();
+            await db.collection("points").doc(currentPhotoId).update({ photoURL:url, photoTimestamp:ts });
+            photoImg.src = url;
+            photoDate.textContent = new Date().toLocaleString();
+            photoModal.classList.remove("opacity-0","pointer-events-none");
+          } catch(err){
+            alert("Σφάλμα upload: "+err.message);
+          }
         }, 'image/jpeg', 0.8);
       };
       cancelCapture.onclick = ()=>{
@@ -537,24 +531,32 @@
       };
       photoInput.onchange = async ()=>{
         const file = photoInput.files[0];
-        if (!file || !currentPhotoId || !confirm("Αποθήκευση φωτογραφίας;")) return;
-        const ref = storage.ref(`points/${currentPhotoId}.jpg`);
-        await ref.put(file);
-        const url = await ref.getDownloadURL();
-        const ts = firebase.firestore.FieldValue.serverTimestamp();
-        await db.collection("points").doc(currentPhotoId).update({ photoURL:url, photoTimestamp:ts });
-        photoImg.src = url;
-        photoDate.textContent = new Date().toLocaleString();
-        photoModal.classList.remove("opacity-0","pointer-events-none");
+        if (!file || !currentPhotoId || !confirm("Θέλεις να αποθηκεύσεις τη φωτογραφία;")) return;
+        try{
+          const ref = storage.ref(`points/${currentPhotoId}.jpg`);
+          await ref.put(file);
+          const url = await ref.getDownloadURL();
+          const ts = firebase.firestore.FieldValue.serverTimestamp();
+          await db.collection("points").doc(currentPhotoId).update({ photoURL:url, photoTimestamp:ts });
+          photoImg.src = url;
+          photoDate.textContent = new Date().toLocaleString();
+          photoModal.classList.remove("opacity-0","pointer-events-none");
+        } catch(err){
+          alert("Σφάλμα upload (fallback): "+err.message);
+        }
       };
       deletePhoto.onclick = async ()=>{
-        if (!currentPhotoId || !confirm("Διαγραφή φωτογραφίας;")) return;
-        await storage.ref(`points/${currentPhotoId}.jpg`).delete();
-        await db.collection("points").doc(currentPhotoId).update({
-          photoURL: firebase.firestore.FieldValue.delete(),
-          photoTimestamp: firebase.firestore.FieldValue.delete()
-        });
-        photoModal.classList.add("opacity-0","pointer-events-none");
+        if (!currentPhotoId || !confirm("Θέλεις να διαγράψεις τη φωτογραφία;")) return;
+        try{
+          await storage.ref(`points/${currentPhotoId}.jpg`).delete();
+          await db.collection("points").doc(currentPhotoId).update({
+            photoURL: firebase.firestore.FieldValue.delete(),
+            photoTimestamp: firebase.firestore.FieldValue.delete()
+          });
+          photoModal.classList.add("opacity-0","pointer-events-none");
+        } catch(err){
+          alert("Σφάλμα διαγραφής: "+err.message);
+        }
       };
       closePhoto.onclick = ()=> photoModal.classList.add("opacity-0","pointer-events-none");
 
@@ -568,19 +570,39 @@
           snap.docs.forEach(doc=>{
             const {name, price} = doc.data();
             const row = document.createElement('div');
-            row.className = 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2';
-            row.innerHTML = `
-              <span class="flex-1">${name}</span>
-              <div class="flex items-center gap-2">
-                <input type="number" min="0" value="0"
-                       data-id="${doc.id}" data-price="${price}"
-                       class="w-16 border rounded px-2 py-1 text-right"/>
-                <span class="w-20 text-right">€${price.toFixed(2)}</span>
-                <span class="w-20 text-right item-subtotal">€0.00</span>
-              </div>
-            `;
-            const inp = row.querySelector('input');
-            inp.addEventListener('input', updateOrderTotal);
+            row.className = 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 bg-gray-50 rounded-lg shadow-inner';
+            const spanName = document.createElement('span');
+            spanName.className = 'flex-1 text-lg font-medium';
+            spanName.textContent = name;
+            row.appendChild(spanName);
+            const ctrl = document.createElement('div');
+            ctrl.className = 'flex items-center gap-2';
+            const input = document.createElement('input');
+            input.type = 'number'; input.min='0'; input.value='0';
+            input.dataset.id = doc.id; input.dataset.price = price;
+            input.className = 'w-16 border rounded-lg px-2 py-1 text-center focus:ring-2 focus:ring-accent';
+            input.addEventListener('input', updateOrderTotal);
+            [1,3,5].forEach(delta=>{
+              const btn = document.createElement('button');
+              btn.type='button';
+              btn.className = 'bg-primary text-white px-2 py-1 rounded-lg hover:bg-primary/90 text-sm';
+              btn.textContent = `+${delta}`;
+              btn.addEventListener('click', ()=>{
+                input.value = Math.max(0, (parseInt(input.value)||0) + delta);
+                updateOrderTotal();
+              });
+              ctrl.appendChild(btn);
+            });
+            ctrl.appendChild(input);
+            const spanPrice = document.createElement('span');
+            spanPrice.className = 'w-20 text-right text-sm text-gray-600';
+            spanPrice.textContent = `€${price.toFixed(2)}`;
+            ctrl.appendChild(spanPrice);
+            const spanSub = document.createElement('span');
+            spanSub.className = 'w-24 text-right font-semibold item-subtotal';
+            spanSub.textContent = '€0.00';
+            ctrl.appendChild(spanSub);
+            row.appendChild(ctrl);
             itemsCont.appendChild(row);
           });
         });
@@ -601,12 +623,6 @@
         });
         totalSpan.textContent = `€${total.toFixed(2)}`;
       }
-      window.bulkAdjust = delta=>{
-        document.querySelectorAll('#orderItemsContainer input').forEach(inp=>{
-          inp.value = Math.max(0, (parseInt(inp.value)||0) + delta);
-        });
-        updateOrderTotal();
-      };
       orderForm.onsubmit = async e=>{
         e.preventDefault();
         const total = parseFloat(totalSpan.textContent.replace('€','')),
@@ -708,14 +724,14 @@
 
         const addOrderBtn = document.createElement("button");
         addOrderBtn.textContent = "Προσθήκη Παραγγελίας";
-        addOrderBtn.className = "block w-full mt-2 bg-accent text-white py-1 rounded uppercase text-xs";
+        addOrderBtn.className = "block w-full mt-2 bg-accent text-white py-1 rounded uppercase text-xs hover:bg-accent/90";
         addOrderBtn.onclick = ()=> openOrderModal(pt.id);
         c.append(addOrderBtn);
 
         const a = document.createElement("a");
         a.href = `https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}`;
         a.target = "_blank";
-        a.className = "block text-center bg-primary text-white py-1 rounded uppercase text-xs mt-2";
+        a.className = "block text-center bg-primary text-white py-1 rounded uppercase text-xs mt-2 hover:bg-primary/90";
         a.textContent = "Χάρτης";
         c.append(a);
 
