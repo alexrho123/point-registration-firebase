@@ -627,6 +627,7 @@
         e.preventDefault();
         const total = parseFloat(totalSpan.textContent.replace('€','')),
               remarks = remarksIn.value.trim();
+        // save into firestore
         const orderRef = await db.collection('points').doc(currentPointId)
                                 .collection('orders').add({
           timestamp: firebase.firestore.FieldValue.serverTimestamp(),
