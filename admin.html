@@ -267,33 +267,25 @@
       ordersList.innerHTML = '<p class="text-center text-gray-500">Φόρτωση...</p>';
       liveOrdersModal.classList.remove('opacity-0','pointer-events-none');
       // αναζήτηση όλων των orders σε group across points
-      db.collectionGroup('orders').orderBy('timestamp','desc').get().then(async snap=>{
-        if (snap.empty) {
-          ordersList.innerHTML = '<p class="text-center">Δεν υπάρχουν ενεργές παραγγελίες.</p>';
-          return;
-        }
-        ordersList.innerHTML = '';
-        for (let doc of snap.docs) {
-          const data = doc.data();
-          // βρίσκουμε το parent point για όνομα
-          const pointRef = doc.ref.parent.parent;
-          const pointDoc = await pointRef.get();
-          const pointName = pointDoc.exists ? pointDoc.data().name : '—';
-          // υπολογίζουμε συνολικές ποσότητες
-          const itemsSnap = await doc.ref.collection('items').get();
-          let totalQty = 0;
-          itemsSnap.docs.forEach(it => totalQty += it.data().quantity);
-          // κουμπί σύνοψης
-          const btn = document.createElement('button');
-          btn.className = 'w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded flex justify-between';
-          btn.innerHTML = `
-            <span><strong>${pointName}</strong> — ${totalQty} τεμ.</span>
-            <span class="font-semibold">€${data.total.toFixed(2)}</span>
-          `;
-          btn.onclick = () => openOrderDetail(pointDoc.id, pointName, doc.ref);
-          ordersList.appendChild(btn);
-        }
-      });
+      db.collectionGroup('orders')
+  .orderBy('timestamp','desc')
+  .get()
+  .then(async snap => {
+    console.log('Live orders count:', snap.size, 'IDs:', snap.docs.map(d=>d.id));
+    if (snap.empty) {
+      ordersList.innerHTML = '<p class="text-center">Δεν υπάρχουν ενεργές παραγγελίες.</p>';
+      return;
+    }
+    ordersList.innerHTML = '';
+    for (let doc of snap.docs) {
+      // εδώ ο υπάρχων κώδικάς σου για να φτιάχνεις τα κουμπιά
+    }
+  })
+  .catch(err => {
+    console.error('Error fetching live orders:', err);
+    ordersList.innerHTML = `<p class="text-red-500 text-center">Σφάλμα: ${err.message}</p>`;
+  });
+
     }
     function closeLiveOrdersModal() {
       liveOrdersModal.classList.add('opacity-0','pointer-events-none');
