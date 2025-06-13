@@ -642,24 +642,26 @@
     total, remarks
   });
   // 3) περιεχόμενα
-  const rows = Array.from(document.querySelectorAll('#orderItemsContainer > div'));
-  for (let row of rows) {
-    const inp = row.querySelector('input');
-    const qty = parseInt(inp.value) || 0;
-    if (qty > 0) {
-      const pid   = inp.dataset.id;
-      const price = parseFloat(inp.dataset.price);
-      await orderRef.collection('items').add({
-        productId: db.doc(`products/${pid}`),
-        quantity: qty,
-        price,
-        subtotal: qty * price
-      });
-    }
+ // βρες όλες τις γραμμές
+const rows = Array.from(document.querySelectorAll('#orderItemsContainer > div'));
+// γράψε σειριακά και περίμενε κάθε add()
+for (let row of rows) {
+  const inp = row.querySelector('input'),
+        qty = parseInt(inp.value) || 0;
+  if (qty > 0) {
+    const pid   = inp.dataset.id,
+          price = parseFloat(inp.dataset.price);
+    await orderRef.collection('items').add({
+      productId: db.doc(`products/${pid}`),
+      quantity: qty,
+      price,
+      subtotal: qty * price
+    });
   }
-  closeOrderModal();
-  alert('Η παραγγελία καταχωρήθηκε!');
-};
+}
+// Τώρα που όλα τα items είναι ήδη γραμμένα, κλείσε το modal
+closeOrderModal();
+alert('Η παραγγελία καταχωρήθηκε!');
 
       // Firestore listener & render
       db.collection("points").orderBy("timestamp","desc")
