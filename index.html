@@ -58,7 +58,9 @@
   <!-- Filters & Actions -->
   <main class="w-full max-w-3xl px-4 space-y-4 mb-8">
     <div class="flex justify-center">
-      <a href="http://treno2025.unaux.com/" target="_blank" class="px-4 py-1 bg-primary text-white rounded uppercase text-sm">Παραγγελίες</a>
+      <button id="refreshStigmaBtn" class="px-4 py-1 bg-accent text-white rounded uppercase text-sm">
+        Ανανέωση Στίγματος
+      </button>
     </div>
     <div class="flex flex-col md:flex-row gap-2 justify-between items-center">
       <select id="regionFilter" class="flex-1 border px-2 py-1 rounded uppercase text-sm">
@@ -275,7 +277,30 @@
             photoDate=document.getElementById("photoDate"),
             deletePhoto=document.getElementById("deletePhotoBtn"),
             closePhoto=document.getElementById("closePhotoModal"),
-            photoInput=document.getElementById("photoInput");
+            photoInput=document.getElementById("photoInput"),
+            refreshBtn=document.getElementById("refreshStigmaBtn");
+
+      // --- Ανανέωση Στίγματος ---
+      refreshBtn.onclick = () => {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            pos => {
+              userLat = pos.coords.latitude;
+              userLng = pos.coords.longitude;
+              userLocationAllowed = true;
+              console.log("Συσκευή ξανα-ενημέρωσε τοποθεσία:", userLat, userLng);
+              render();
+            },
+            err => {
+              console.warn("Αδυναμία λήψης τοποθεσίας:", err);
+              alert("Δεν κατέστη δυνατή η ανανέωση της τοποθεσίας.");
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+          );
+        } else {
+          alert("Το Geolocation δεν υποστηρίζεται από το πρόγραμμα περιήγησης.");
+        }
+      };
 
       // Ζητάμε τοποθεσία μια φορά κατά την εκκίνηση
       if(navigator.geolocation){
@@ -290,7 +315,6 @@
           userLocationAllowed = false;
           userLocationTried = true;
           console.warn("Δεν επιτράπηκε τοποθεσία ή σφάλμα:", err);
-          // render χωρίς ταξινόμηση
           render();
         }, { enableHighAccuracy: true, timeout: 10000 });
       } else {
@@ -302,7 +326,6 @@
       openBtn.onclick=()=>{
         navigator.geolocation.getCurrentPosition(pos=>{
           const lat=pos.coords.latitude, lng=pos.coords.longitude;
-          // αποθηκεύουμε προσωρινά για την καταχώριση
           window._tempLat = lat;
           window._tempLng = lng;
           addModal.classList.remove("opacity-0","pointer-events-none");
@@ -346,7 +369,7 @@
         }
       };
 
-      // --- Route by area (διορθωμένη λογική) ---
+      // --- Route by area ---
       routeBtn.onclick=()=>{
         routeModal.classList.remove("opacity-0","pointer-events-none");
         updateRouteCount();
@@ -415,7 +438,7 @@
         if(w) url+=`&waypoints=${w}`; window.open(url,"_blank"); cancelGen.click();
       };
 
-      // --- Show Photo / Camera logic ---
+      // --- Photo / Camera logic ---
       function showPhoto(id){
         currentPhotoId=id;
         db.collection("points").doc(id).get().then(doc=>{
@@ -457,15 +480,11 @@
         if(!confirm("Θέλεις να αποθηκεύσεις τη φωτογραφία;")) return;
         canvas.toBlob(async blob=>{
           try{
-            console.log("Attempting upload for document ID:", currentPhotoId);
             const ref=storage.ref(`points/${currentPhotoId}.jpg`);
             const snap=await ref.put(blob);
-            console.log("Uploaded to", snap.metadata.fullPath);
             const url=await ref.getDownloadURL();
-            console.log("Download URL:",url);
             const ts=firebase.firestore.FieldValue.serverTimestamp();
             await db.collection("points").doc(currentPhotoId).update({ photoURL:url, photoTimestamp:ts });
-            console.log("Firestore updated with photo");
             photoImg.src=url;
             photoDate.textContent=new Date().toLocaleString();
             photoModal.classList.remove("opacity-0","pointer-events-none");
@@ -486,15 +505,11 @@
         if(!file||!currentPhotoId) return;
         if(!confirm("Θέλεις να αποθηκεύσεις τη φωτογραφία;")) return;
         try{
-          console.log("Attempting fallback upload for document ID:", currentPhotoId);
           const ref=storage.ref(`points/${currentPhotoId}.jpg`);
           const snap=await ref.put(file);
-          console.log("Uploaded to", snap.metadata.fullPath);
           const url=await ref.getDownloadURL();
-          console.log("Download URL:",url);
           const ts=firebase.firestore.FieldValue.serverTimestamp();
           await db.collection("points").doc(currentPhotoId).update({ photoURL:url, photoTimestamp:ts });
-          console.log("Firestore updated with photo (fallback)");
           photoImg.src=url;
           photoDate.textContent=new Date().toLocaleString();
           photoModal.classList.remove("opacity-0","pointer-events-none");
@@ -535,47 +550,33 @@
       function render(){
         container.innerHTML="";
         const sel=regionF.value, vis=visitedF.value;
-        // Φιλτράρισμα
         let pts = allPoints.filter(pt=>{
           const visited = !!pt.lastVisit;
-          return ( (sel==="" || pt.area===sel) &&
-                   (vis==="all" || (vis==="visited"&&visited) || (vis==="unvisited"&&!visited)) );
+          return ((sel===""||pt.area===sel) &&
+                  (vis==="all"||(vis==="visited"&&visited)||(vis==="unvisited"&&!visited)));
         });
-        // Αν έχουμε user location, ταξινόμηση βάσει απόστασης
-        if(userLocationAllowed && userLat!==undefined && userLng!==undefined){
+        if(userLocationAllowed&&userLat!==undefined&&userLng!==undefined){
           pts.sort((a,b)=>{
-            // Υπολογισμός απόστασης
-            const da = getDistanceFromLatLonInKm(userLat, userLng, a.latitude, a.longitude);
-            const db = getDistanceFromLatLonInKm(userLat, userLng, b.latitude, b.longitude);
-            return da - db;
+            const da=getDistanceFromLatLonInKm(userLat,userLng,a.latitude,a.longitude);
+            const db=getDistanceFromLatLonInKm(userLat,userLng,b.latitude,b.longitude);
+            return da-db;
           });
         }
-        // Εμφάνιση
-        pts.forEach(pt=>{
-          container.append(card(pt));
-        });
+        pts.forEach(pt=>container.append(card(pt)));
       }
 
       function card(pt){
         const c=document.createElement("div");
         c.className="relative bg-white rounded-xl p-4 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition overflow-hidden";
-
-        // area badge κεντραρισμένη
         const ab=document.createElement("div");
         ab.className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-region text-white px-2 py-0.5 rounded-full text-xs uppercase";
-        ab.textContent=pt.area;
-        c.append(ab);
-
-        // title ακριβώς κάτω
+        ab.textContent=pt.area; c.append(ab);
         const h3=document.createElement("h3");
         h3.className="mt-6 text-center text-lg font-bold uppercase text-darktext break-words";
-        h3.textContent=pt.name;
-        c.append(h3);
+        h3.textContent=pt.name; c.append(h3);
 
-        // row: ηλικία + κουμπιά
         const row=document.createElement("div");
         row.className="mt-4 flex justify-between items-center";
-        // ηλικία
         const ageDiv=document.createElement("div");
         const age=daysSince(pt.lastVisit||0);
         const dc=age===Infinity||age>7?"bg-danger animate-pulse":age>3?"bg-accent animate-ping":"bg-success";
@@ -585,13 +586,11 @@
                           </span>`;
         row.append(ageDiv);
 
-        // κουμπιά
-        const btns=document.createElement("div");
-        btns.className="flex gap-1";
+        const btns=document.createElement("div"); btns.className="flex gap-1";
         ["Επίσκεψη","Αλλαγή","Διαγραφή","Προβολή"].forEach(lbl=>{
           const b=document.createElement("button");
-          b.className="px-2 py-1 text-xs rounded text-white";
-          b.classList.add(lbl==="Επίσκεψη"?"bg-success":lbl==="Αλλαγή"?"bg-accent":lbl==="Διαγραφή"?"bg-danger":"bg-region");
+          b.className="px-2 py-1 text-xs rounded text-white " +
+                       (lbl==="Επίσκεψη"?"bg-success":lbl==="Αλλαγή"?"bg-accent":lbl==="Διαγραφή"?"bg-danger":"bg-region");
           b.textContent=lbl;
           b.onclick={
             "Επίσκεψη":async()=>{
@@ -614,10 +613,8 @@
           }[lbl];
           btns.append(b);
         });
-        row.append(btns);
-        c.append(row);
+        row.append(btns); c.append(row);
 
-        // τελευταία επίσκεψη
         if(pt.lastVisit){
           const p=document.createElement("p");
           p.className="text-xs text-gray-500 italic mt-2 text-center";
@@ -625,15 +622,12 @@
           c.append(p);
         }
 
-        // χάρτης
         const a=document.createElement("a");
         a.href=`https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}`;
         a.target="_blank";
         a.className="block text-center bg-primary text-white py-1 rounded uppercase text-xs mt-2";
-        a.textContent="Χάρτης";
-        c.append(a);
+        a.textContent="Χάρτης"; c.append(a);
 
-        // Αν selectionMode: checkbox
         if(selectionMode){
           const cb=document.createElement("input");
           cb.type="checkbox";
