@@ -683,7 +683,7 @@
           pts = pts.filter(p => !p.lastVisit);
         }
 
-        const isDefaultFilters = regionVal === '' && visitedVal === 'all';
+        const isDefaultFilters = regionVal === '' && visitedVal.trim().toLowerCase() === 'all' || visitedVal.trim().toLowerCase() === 'όλες';
 
 if (isDefaultFilters && userLocationAllowed) {
   pts.forEach(p => {
