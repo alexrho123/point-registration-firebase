@@ -683,18 +683,20 @@
           pts = pts.filter(p => !p.lastVisit);
         }
 
-        if (userLocationAllowed) {
-          pts.forEach(p => {
-            if (p.latitude && p.longitude) {
-              p._distance = getDistanceFromLatLonInKm(userLat, userLng, p.latitude, p.longitude);
-            } else {
-              p._distance = Infinity;
-            }
-          });
-          pts.sort((a, b) => a._distance - b._distance);
-        } else {
-          pts.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-        }
+        const isDefaultFilters = regionVal === '' && visitedVal === 'all';
+
+if (isDefaultFilters && userLocationAllowed) {
+  pts.forEach(p => {
+    if (p.latitude && p.longitude) {
+      p._distance = getDistanceFromLatLonInKm(userLat, userLng, p.latitude, p.longitude);
+    } else {
+      p._distance = Infinity;
+    }
+  });
+  pts.sort((a, b) => a._distance - b._distance);
+} else {
+  pts.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+}
 
         pts.forEach(pt => {
           const el = card(pt);
