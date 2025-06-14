@@ -287,6 +287,53 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+
+    // Search Client functionality
+    const searchBtn = document.getElementById("searchClientBtn");
+    const searchModal = document.getElementById("searchClientModal");
+    const closeModal = document.getElementById("closeClientModal");
+    const cancelSearchBtn = document.getElementById("clientSearchCancel");
+    const searchForm = document.getElementById("clientSearchForm");
+    const searchInput = document.getElementById("clientSearchInput");
+    const clientResult = document.getElementById("clientResult");
+
+    searchBtn.addEventListener("click", () => {
+      searchModal.classList.remove("opacity-0", "pointer-events-none");
+    });
+    closeModal.addEventListener("click", () => {
+      searchForm.reset();
+      clientResult.innerHTML = '';
+      searchModal.classList.add("opacity-0", "pointer-events-none");
+    });
+    cancelSearchBtn.addEventListener("click", () => {
+      searchForm.reset();
+      clientResult.innerHTML = '';
+      searchModal.classList.add("opacity-0", "pointer-events-none");
+    });
+
+    searchForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      const name = searchInput.value.trim();
+      if (!name) return;
+      clientResult.innerHTML = 'Φόρτωση...';
+      try {
+        const snap = await db.collection("clients").where("name","==",name).get();
+        if (snap.empty) {
+          clientResult.innerHTML = '<p>Δε βρέθηκε πελάτης με αυτή την επωνυμία.</p>';
+        } else {
+          const data = snap.docs[0].data();
+          clientResult.innerHTML = `
+            <div class="bg-softbg p-4 rounded shadow">
+              <p><strong>Επωνυμία:</strong> ${data.name}</p>
+              <p><strong>Διεύθυνση:</strong> ${data.address || '—'}</p>
+              <p><strong>Τηλέφωνο:</strong> ${data.phone || '—'}</p>
+            </div>`;
+        }
+      } catch(err) {
+        clientResult.innerHTML = '<p class="text-danger">Σφάλμα αναζήτησης.</p>';
+      }
+    });
+
       let userLat, userLng, userLocationAllowed = false;
       let allPoints = [], editId, selectionMode = false, currentPhotoId, cameraStream;
       let currentPointId;
@@ -334,52 +381,7 @@
         navigator.geolocation.getCurrentPosition(pos => {
           userLat = pos.coords.latitude; userLng = pos.coords.longitude;
           userLocationAllowed = true; render();
-        }, () => render(), { enableHighAccuracy: true, timeout: 10000 
-    // Search Client functionality
-    const searchBtn = document.getElementById("searchClientBtn");
-    const searchModal = document.getElementById("searchClientModal");
-    const closeModal = document.getElementById("closeClientModal");
-    const cancelSearch = document.getElementById("clientSearchCancel");
-    const searchForm = document.getElementById("clientSearchForm");
-    const searchInput = document.getElementById("clientSearchInput");
-    const clientResult = document.getElementById("clientResult");
-
-    searchBtn.addEventListener("click", () => {
-      searchModal.classList.remove("opacity-0","pointer-events-none");
-    });
-    closeModal.addEventListener("click", () => {
-      searchModal.classList.add("opacity-0","pointer-events-none");
-    });
-    cancelSearch.addEventListener("click", () => {
-      searchForm.reset();
-      clientResult.innerHTML = '';
-      searchModal.classList.add("opacity-0","pointer-events-none");
-    });
-
-    searchForm.addEventListener("submit", async e => {
-      e.preventDefault();
-      const name = searchInput.value.trim();
-      if (!name) return;
-      clientResult.innerHTML = 'Φόρτωση...';
-      try {
-        const snap = await db.collection("clients").where("name","==",name).get();
-        if (snap.empty) {
-          clientResult.innerHTML = '<p>Δε βρέθηκε πελάτης με αυτή την επωνυμία.</p>';
-        } else {
-          const data = snap.docs[0].data();
-          clientResult.innerHTML = `
-            <div class="bg-softbg p-4 rounded shadow">
-              <p><strong>Επωνυμία:</strong> ${data.name}</p>
-              <p><strong>Διεύθυνση:</strong> ${data.address || '—'}</p>
-              <p><strong>Τηλέφωνο:</strong> ${data.phone || '—'}</p>
-            </div>`;
-        }
-      } catch(err) {
-        clientResult.innerHTML = '<p class="text-danger">Σφάλμα αναζήτησης.</p>';
-      }
-    });
-
-  });
+        }, () => render(), { enableHighAccuracy: true, timeout: 10000 });
       } else render();
 
       // Refresh stigma
@@ -690,10 +692,21 @@
           render();
         });
 
-      function render(){
-        container.innerHTML = '';
-        allPoints.forEach(pt=> container.append(card(pt)));
-      }
+      
+  function render(){
+    container.innerHTML = '';
+    let pts = [...allPoints];
+    if(userLocationAllowed){
+      pts.sort((a,b) =>
+        getDistanceFromLatLonInKm(userLat, userLng, a.latitude, a.longitude)
+        - getDistanceFromLatLonInKm(userLat, userLng, b.latitude, b.longitude)
+      );
+    }
+    if(pts.length){
+      container.append(card(pts[0]));
+    }
+  }
+
       function card(pt){
         const c = document.createElement("div");
         c.className = "relative bg-white rounded-xl p-4 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition overflow-hidden";
