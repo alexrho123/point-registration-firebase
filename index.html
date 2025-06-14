@@ -812,14 +812,18 @@ window.onload = function() {
   });
   searchForm.addEventListener("submit", function(e) {
     e.preventDefault();
-    var name = searchInput.value.trim();
-    if(!name) return;
+    var nameInput = searchInput.value.trim().toLowerCase();
+    if(!nameInput) return;
     clientResult.innerHTML = 'Φόρτωση...';
-    db.collection("clients").where("name","==",name).get().then(function(snap){
-      if(snap.empty){
+    db.collection("clients").get().then(function(snap){
+      var matches = snap.docs.filter(function(doc){
+        var clientName = doc.data().name || '';
+        return clientName.toLowerCase() === nameInput;
+      });
+      if(matches.length === 0){
         clientResult.innerHTML = '<p>Δε βρέθηκε πελάτης με αυτή την επωνυμία.</p>';
       } else {
-        var data = snap.docs[0].data();
+        var data = matches[0].data();
         clientResult.innerHTML = '<div class="bg-softbg p-4 rounded shadow">'
           + '<p><strong>Επωνυμία:</strong> '+data.name+'</p>'
           + '<p><strong>Διεύθυνση:</strong> '+(data.address||'—')+'</p>'
