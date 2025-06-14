@@ -276,7 +276,7 @@
 
   <script>
     // Initialize Firebase
-    const firebaseConfig = {
+    var firebaseConfig = {
       apiKey:    "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
       authDomain:"pointregistrationapp.firebaseapp.com",
       projectId: "pointregistrationapp",
@@ -285,18 +285,14 @@
       appId:     "1:925139386507:web:588ae991f39a7bab04548e"
     };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore(), storage = firebase.storage();
-
+    var db = firebase.firestore(), storage = firebase.storage();
 
     // Helpers
     function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-      const toRad = x => x * Math.PI / 180;
-
-      const R = 6371;
-
-      const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
-
-      const a = Math.sin(dLat/2)**2 +
+      var toRad = x => x * Math.PI / 180;
+      var R = 6371;
+      var dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+      var a = Math.sin(dLat/2)**2 +
                 Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*
                 Math.sin(dLon/2)**2;
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
@@ -307,21 +303,14 @@
 
     
 document.addEventListener("DOMContentLoaded", () => {
-      let userLat, userLng, userLocationAllowed = false;
+      var userLat, userLng, userLocationAllowed = false;
+      var allPoints = [], editId, selectionMode = false, currentPhotoId, cameraStream;
+      var currentPointId;
 
-      let allPoints = [], editId, selectionMode = false, currentPhotoId, cameraStream;
-
-      let currentPointId;
-
-
-      const regionFilter = document.getElementById("regionFilter");
-
-      const visitedFilter = document.getElementById("visitedFilter");
-
-      const container = document.getElementById("pointsContainer");
-
-      const refreshBtn = document.getElementById("refreshStigmaBtn");
-
+      var regionFilter = document.getElementById("regionFilter");
+      var visitedFilter = document.getElementById("visitedFilter");
+      var container = document.getElementById("pointsContainer");
+      var refreshBtn = document.getElementById("refreshStigmaBtn");
 
       regionFilter.addEventListener('change', () => {
         console.log('Επιλογή περιοχής:', regionFilter.value);
@@ -358,9 +347,15 @@ document.addEventListener("DOMContentLoaded", () => {
         allPoints = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         render();
       });
+var allPoints = [];
+var editId;
+var selectionMode = false;
+var currentPhotoId;
+var cameraStream;
+      var currentPointId;
 
       // Elements
-      const openBtn = document.getElementById("openModalBtn"),
+      var openBtn = document.getElementById("openModalBtn"),
             container = document.getElementById("pointsContainer"),
             refreshBtn = document.getElementById("refreshStigmaBtn"),
             cancelBtn = document.getElementById("cancelBtn"),
@@ -428,7 +423,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       form.onsubmit = async e => {
         e.preventDefault();
-        const name = form.pointName.value.trim(),
+        var name = form.pointName.value.trim(),
               area = form.areaSelect.value,
               lat  = window._tempLat,
               lng  = window._tempLng;
@@ -447,7 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
       };
       editForm.onsubmit = async e => {
         e.preventDefault();
-        const name = editForm.editName.value.trim(),
+        var name = editForm.editName.value.trim(),
               area = editForm.editArea.value;
         if (!name || !area) return alert("Συμπληρώστε όλα τα πεδία.");
         await db.collection("points").doc(editId).update({ name, area });
@@ -466,12 +461,10 @@ document.addEventListener("DOMContentLoaded", () => {
       };
       routeForm.onsubmit = e => {
         e.preventDefault();
-        const sel = routeRegion.value, days = routeDays.value;
-
-        let pts = allPoints.filter(p => sel==='all'||p.area===sel)
+        var sel = routeRegion.value, days = routeDays.value;
+        var pts = allPoints.filter(p => sel==='all'||p.area===sel)
           .filter(p => {
-            const age = daysSince(p.lastVisit||0);
-
+            var age = daysSince(p.lastVisit||0);
             if (days==='lt3') return age<3;
             if (days==='3to7') return age>=3&&age<=7;
             if (days==='gt7') return age>7;
@@ -480,12 +473,11 @@ document.addEventListener("DOMContentLoaded", () => {
           });
         if (pts.length < 2) return alert("Ελάχιστα 2 σημεία.");
         pts.sort((a,b)=>a.timestamp.seconds-b.timestamp.seconds);
-        const coords = pts.map(p=>`${p.latitude},${p.longitude}`),
+        var coords = pts.map(p=>`${p.latitude},${p.longitude}`),
               o = coords.shift(),
               d = coords.pop(),
               w = coords.join("|");
-        let url = `https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}`;
-
+        var url = `https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}`;
         if (w) url += `&waypoints=${w}`;
         window.open(url,"_blank");
         routeCancel.click();
@@ -493,8 +485,10 @@ document.addEventListener("DOMContentLoaded", () => {
       routeRegion.onchange = updateRouteCount;
       routeDays.onchange = updateRouteCount;
       function updateRouteCount(){
-        const cnt = allPoints.filter(p => sel==='all'||p.area===sel)
+        var sel = routeRegion.value, days = routeDays.value;
+        var cnt = allPoints.filter(p => sel==='all'||p.area===sel)
           .filter(p => {
+            var age = daysSince(p.lastVisit||0);
             if (days==='lt3') return age<3;
             if (days==='3to7') return age>=3&&age<=7;
             if (days==='gt7') return age>7;
@@ -519,16 +513,14 @@ document.addEventListener("DOMContentLoaded", () => {
         render();
       };
       genBtn.onclick = () => {
-        const checked = [...container.querySelectorAll("input[type=checkbox]:checked")];
-
+        var checked = [...container.querySelectorAll("input[type=checkbox]:checked")];
         if (!checked.length) return alert("Επιλέξτε σημεία.");
-        const coords = checked.map(cb => {
-          const p = allPoints.find(x=>x.id===cb.dataset.id);
-
+        var coords = checked.map(cb => {
+          var p = allPoints.find(x=>x.id===cb.dataset.id);
           return `${p.latitude},${p.longitude}`;
         });
-        const o = coords.shift(), d = coords.pop(), w = coords.join("|");
-
+        var o = coords.shift(), d = coords.pop(), w = coords.join("|");
+        var url = `https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}`;
         if (w) url += `&waypoints=${w}`;
         window.open(url,"_blank");
         cancelGen.click();
@@ -538,8 +530,7 @@ document.addEventListener("DOMContentLoaded", () => {
       function showPhoto(id){
         currentPhotoId = id;
         db.collection("points").doc(id).get().then(doc=>{
-          const data = doc.data()||{};
-
+          var data = doc.data()||{};
           if (data.photoURL){
             photoImg.src = data.photoURL;
             photoDate.textContent = new Date(data.photoTimestamp.toDate()).toLocaleString();
@@ -560,8 +551,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       captureBtn.onclick = ()=>{
         if (!cameraVideo?.videoWidth) return;
-        const canvas = document.createElement('canvas');
-
+        var canvas = document.createElement('canvas');
         canvas.width = cameraVideo.videoWidth;
         canvas.height = cameraVideo.videoHeight;
         canvas.getContext('2d').drawImage(cameraVideo,0,0);
@@ -570,12 +560,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!confirm("Θέλεις να αποθηκεύσεις τη φωτογραφία;")) return;
         canvas.toBlob(async blob=>{
           try{
-            const ref = storage.ref(`points/${currentPhotoId}.jpg`);
-
-            const snap = await ref.put(blob);
-
-            const ts = firebase.firestore.FieldValue.serverTimestamp();
-
+            var ref = storage.ref(`points/${currentPhotoId}.jpg`);
+            var snap = await ref.put(blob);
+            var url = await ref.getDownloadURL();
+            var ts = firebase.firestore.FieldValue.serverTimestamp();
             await db.collection("points").doc(currentPhotoId).update({ photoURL:url, photoTimestamp:ts });
             photoImg.src = url;
             photoDate.textContent = new Date().toLocaleString();
@@ -590,11 +578,13 @@ document.addEventListener("DOMContentLoaded", () => {
         cameraModal.classList.add("opacity-0","pointer-events-none");
       };
       photoInput.onchange = async ()=>{
-        const file = photoInput.files[0];
-
+        var file = photoInput.files[0];
         if (!file || !currentPhotoId || !confirm("Θέλεις να αποθηκεύσεις τη φωτογραφία;")) return;
         try{
+          var ref = storage.ref(`points/${currentPhotoId}.jpg`);
           await ref.put(file);
+          var url = await ref.getDownloadURL();
+          var ts = firebase.firestore.FieldValue.serverTimestamp();
           await db.collection("points").doc(currentPhotoId).update({ photoURL:url, photoTimestamp:ts });
           photoImg.src = url;
           photoDate.textContent = new Date().toLocaleString();
@@ -626,28 +616,22 @@ document.addEventListener("DOMContentLoaded", () => {
         remarksIn.value = '';
         db.collection('products').get().then(snap=>{
           snap.docs.forEach(doc=>{
-            const {name, price} = doc.data();
-
-            const row = document.createElement('div');
-
+            var {name, price} = doc.data();
+            var row = document.createElement('div');
             row.className = 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 bg-gray-50 rounded-lg shadow-inner';
-            const spanName = document.createElement('span');
-
+            var spanName = document.createElement('span');
             spanName.className = 'flex-1 text-lg font-medium';
             spanName.textContent = name;
             row.appendChild(spanName);
-            const ctrl = document.createElement('div');
-
+            var ctrl = document.createElement('div');
             ctrl.className = 'flex items-center gap-2';
-            const input = document.createElement('input');
-
+            var input = document.createElement('input');
             input.type = 'number'; input.min='0'; input.value='0';
             input.dataset.id = doc.id; input.dataset.price = price;
             input.className = 'w-16 border rounded-lg px-2 py-1 text-center focus:ring-2 focus:ring-accent';
             input.addEventListener('input', updateOrderTotal);
             [1,3,5].forEach(delta=>{
-              const btn = document.createElement('button');
-
+              var btn = document.createElement('button');
               btn.type='button';
               btn.className = 'bg-primary text-white px-2 py-1 rounded-lg hover:bg-primary/90 text-sm';
               btn.textContent = `+${delta}`;
@@ -658,13 +642,11 @@ document.addEventListener("DOMContentLoaded", () => {
               ctrl.appendChild(btn);
             });
             ctrl.appendChild(input);
-            const spanPrice = document.createElement('span');
-
+            var spanPrice = document.createElement('span');
             spanPrice.className = 'w-20 text-right text-sm text-gray-600';
             spanPrice.textContent = `€${price.toFixed(2)}`;
             ctrl.appendChild(spanPrice);
-            const spanSub = document.createElement('span');
-
+            var spanSub = document.createElement('span');
             spanSub.className = 'w-24 text-right font-semibold item-subtotal';
             spanSub.textContent = '€0.00';
             ctrl.appendChild(spanSub);
@@ -678,10 +660,9 @@ document.addEventListener("DOMContentLoaded", () => {
         orderModal.classList.add('opacity-0','pointer-events-none');
       }
       function updateOrderTotal(){
-        let total = 0;
-
+        var total = 0;
         document.querySelectorAll('#orderItemsContainer > div').forEach(row=>{
-          const inp = row.querySelector('input'),
+          var inp = row.querySelector('input'),
                 qty = parseInt(inp.value)||0,
                 price = parseFloat(inp.dataset.price),
                 st = qty*price;
@@ -694,20 +675,19 @@ document.addEventListener("DOMContentLoaded", () => {
       // HERE is the FIX: use for…of + await instead of forEach
       orderForm.onsubmit = async e=>{
         e.preventDefault();
-        const total   = parseFloat(totalSpan.textContent.replace('€','')),
+        var total   = parseFloat(totalSpan.textContent.replace('€','')),
               remarks = remarksIn.value.trim();
-        const orderRef = await db.collection('points').doc(currentPointId)
+        var orderRef = await db.collection('points').doc(currentPointId)
                                 .collection('orders').add({
           timestamp: firebase.firestore.FieldValue.serverTimestamp(),
           total, remarks
         });
-        const rows = Array.from(document.querySelectorAll('#orderItemsContainer > div'));
-
-        for (let row of rows) {
-          const inp = row.querySelector('input'),
+        var rows = Array.from(document.querySelectorAll('#orderItemsContainer > div'));
+        for (var row of rows) {
+          var inp = row.querySelector('input'),
                 qty = parseInt(inp.value) || 0;
           if (qty > 0) {
-            const pid   = inp.dataset.id,
+            var pid   = inp.dataset.id,
                   price = parseFloat(inp.dataset.price);
             await orderRef.collection('items').add({
               productId: db.doc(`products/${pid}`),
@@ -733,24 +713,21 @@ document.addEventListener("DOMContentLoaded", () => {
         allPoints.forEach(pt=> container.append(card(pt)));
       }
       function card(pt){
-        const c = document.createElement("div");
-
+        var c = document.createElement("div");
         c.className = "relative bg-white rounded-xl p-4 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition overflow-hidden";
 
-        const ab = document.createElement("div");
-
+        var ab = document.createElement("div");
         ab.className = "absolute top-2 left-1/2 transform -translate-x-1/2 bg-region text-white px-2 py-0.5 rounded-full text-xs uppercase";
         ab.textContent = pt.area; c.append(ab);
 
-        const h3 = document.createElement("h3");
-
+        var h3 = document.createElement("h3");
         h3.className = "mt-6 text-center text-lg font-bold uppercase text-darktext break-words";
         h3.textContent = pt.name; c.append(h3);
 
+        var row = document.createElement("div");
         row.className = "mt-4 flex justify-between items-center";
-        const ageDiv = document.createElement("div");
-
-        const age = daysSince(pt.lastVisit||0),
+        var ageDiv = document.createElement("div");
+        var age = daysSince(pt.lastVisit||0),
               dc = age===Infinity||age>7?"bg-danger animate-pulse":age>3?"bg-accent animate-ping":"bg-success";
         ageDiv.innerHTML = `<span class="${dc} inline-block w-2 h-2 rounded-full"></span>
                             <span class="text-xs text-gray-500 uppercase ml-1">
@@ -758,19 +735,16 @@ document.addEventListener("DOMContentLoaded", () => {
                             </span>`;
         row.append(ageDiv);
 
-        const btns = document.createElement("div");
-
+        var btns = document.createElement("div");
         btns.className = "flex gap-1";
         ["Επίσκεψη","Αλλαγή","Διαγραφή","Προβολή"].forEach(lbl=>{
-          const b = document.createElement("button");
-
+          var b = document.createElement("button");
           b.className = "px-2 py-1 text-xs rounded text-white "+
                         (lbl==="Επίσκεψη"?"bg-success":lbl==="Αλλαγή"?"bg-accent":lbl==="Διαγραφή"?"bg-danger":"bg-region");
           b.textContent = lbl;
           b.onclick = {
             "Επίσκεψη": async ()=>{
-              const now = new Date();
-
+              var now = new Date();
               await db.collection("points").doc(pt.id)
                        .update({ lastVisit: firebase.firestore.FieldValue.serverTimestamp() });
               pt.lastVisit = { toDate: ()=>now };
@@ -793,20 +767,19 @@ document.addEventListener("DOMContentLoaded", () => {
         c.append(row);
 
         if (pt.lastVisit){
+          var p = document.createElement("p");
           p.className = "text-xs text-gray-500 italic mt-2 text-center";
           p.textContent = "Τελευταία επίσκεψη: "+pt.lastVisit.toDate().toLocaleString();
           c.append(p);
         }
 
-        const addOrderBtn = document.createElement("button");
-
+        var addOrderBtn = document.createElement("button");
         addOrderBtn.textContent = "Προσθήκη Παραγγελίας";
         addOrderBtn.className = "block w-full mt-2 bg-accent text-white py-1 rounded uppercase text-xs hover:bg-accent/90";
         addOrderBtn.onclick = ()=> openOrderModal(pt.id);
         c.append(addOrderBtn);
 
-        const a = document.createElement("a");
-
+        var a = document.createElement("a");
         a.href = `https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}`;
         a.target = "_blank";
         a.className = "block text-center bg-primary text-white py-1 rounded uppercase text-xs mt-2 hover:bg-primary/90";
@@ -814,8 +787,7 @@ document.addEventListener("DOMContentLoaded", () => {
         c.append(a);
 
         if (selectionMode){
-          const cb = document.createElement("input");
-
+          var cb = document.createElement("input");
           cb.type = "checkbox";
           cb.dataset.id = pt.id;
           cb.className = "absolute top-2 right-2 form-checkbox h-4 w-4 text-primary";
