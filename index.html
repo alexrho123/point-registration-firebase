@@ -660,10 +660,49 @@
           render();
         });
 
-      function render(){
+      
+      function render() {
         container.innerHTML = '';
-        allPoints.forEach(pt=> container.append(card(pt)));
+        let pts = [...allPoints];
+
+        const regionVal = regionFilter.value;
+        const visitedVal = visitedFilter.value;
+
+        console.log('regionVal:', regionVal);
+        console.log('visitedVal:', visitedVal);
+
+        // Apply filters
+        if (regionVal.trim() !== '') {
+          pts = pts.filter(p => p.area && p.area.trim().toLowerCase() === regionVal.trim().toLowerCase());
+        }
+
+        if (visitedVal.trim().toLowerCase() === 'visited' || visitedVal.trim() === 'Επισκεφθείσες') {
+          pts = pts.filter(p => !!p.lastVisit);
+        } else if (visitedVal.trim().toLowerCase() === 'unvisited' || visitedVal.trim() === 'Μη Επισκεφθείσες') {
+          pts = pts.filter(p => !p.lastVisit);
+        }
+
+        const isDefaultFilters = regionVal.trim() === '' && (visitedVal.trim().toLowerCase() === 'all' || visitedVal.trim() === 'Όλες');
+
+        if (isDefaultFilters && userLocationAllowed) {
+          pts.forEach(p => {
+            if (p.latitude && p.longitude) {
+              p._distance = getDistanceFromLatLonInKm(userLat, userLng, p.latitude, p.longitude);
+            } else {
+              p._distance = Infinity;
+            }
+          });
+          pts.sort((a, b) => a._distance - b._distance);
+        } else {
+          pts.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+        }
+
+        pts.forEach(pt => {
+          const el = card(pt);
+          if (el) container.appendChild(el);
+        });
       }
+
       function card(pt){
         const c = document.createElement("div");
         c.className = "relative bg-white rounded-xl p-4 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition overflow-hidden";
