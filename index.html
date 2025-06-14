@@ -303,9 +303,9 @@
 
     
 document.addEventListener("DOMContentLoaded", () => {
-      let userLat, userLng, userLocationAllowed = false;
-      let allPoints = [], editId, selectionMode = false, currentPhotoId, cameraStream;
-      let currentPointId;
+      var userLat, userLng, userLocationAllowed = false;
+      var allPoints = [], editId, selectionMode = false, currentPhotoId, cameraStream;
+      var currentPointId;
 
       const regionFilter = document.getElementById("regionFilter");
       const visitedFilter = document.getElementById("visitedFilter");
@@ -347,11 +347,12 @@ document.addEventListener("DOMContentLoaded", () => {
         allPoints = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         render();
       });
-let editId;
-let selectionMode = false;
-let currentPhotoId;
-let cameraStream;
-      let currentPointId;
+var allPoints = [];
+var editId;
+var selectionMode = false;
+var currentPhotoId;
+var cameraStream;
+      var currentPointId;
 
       // Elements
       const openBtn = document.getElementById("openModalBtn"),
@@ -461,7 +462,7 @@ let cameraStream;
       routeForm.onsubmit = e => {
         e.preventDefault();
         const sel = routeRegion.value, days = routeDays.value;
-        let pts = allPoints.filter(p => sel==='all'||p.area===sel)
+        var pts = allPoints.filter(p => sel==='all'||p.area===sel)
           .filter(p => {
             const age = daysSince(p.lastVisit||0);
             if (days==='lt3') return age<3;
@@ -476,7 +477,7 @@ let cameraStream;
               o = coords.shift(),
               d = coords.pop(),
               w = coords.join("|");
-        let url = `https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}`;
+        var url = `https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}`;
         if (w) url += `&waypoints=${w}`;
         window.open(url,"_blank");
         routeCancel.click();
@@ -519,7 +520,7 @@ let cameraStream;
           return `${p.latitude},${p.longitude}`;
         });
         const o = coords.shift(), d = coords.pop(), w = coords.join("|");
-        let url = `https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}`;
+        var url = `https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}`;
         if (w) url += `&waypoints=${w}`;
         window.open(url,"_blank");
         cancelGen.click();
@@ -659,7 +660,7 @@ let cameraStream;
         orderModal.classList.add('opacity-0','pointer-events-none');
       }
       function updateOrderTotal(){
-        let total = 0;
+        var total = 0;
         document.querySelectorAll('#orderItemsContainer > div').forEach(row=>{
           const inp = row.querySelector('input'),
                 qty = parseInt(inp.value)||0,
