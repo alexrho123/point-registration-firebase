@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Καταχώριση Σημείου</title>
+  <title>Καταχώριση Σημείου (Firebase) με ταξινόμηση & Παραγγελίες</title>
 
   <!-- Tailwind CSS + custom colors -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -347,7 +347,6 @@ document.addEventListener("DOMContentLoaded", () => {
         allPoints = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         render();
       });
-let allPoints = [];
 let editId;
 let selectionMode = false;
 let currentPhotoId;
