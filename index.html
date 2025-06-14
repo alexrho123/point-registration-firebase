@@ -682,9 +682,11 @@
           pts = pts.filter(p => !p.lastVisit);
         }
 
-        const isDefaultFilters = regionVal.trim() === '' && (visitedVal.trim().toLowerCase() === 'all' || visitedVal.trim() === 'Όλες');
+        const isDefaultFilters =
+          regionVal.trim() === '' &&
+          (visitedVal.trim().toLowerCase() === 'all' || visitedVal.trim() === 'Όλες');
 
-        if (isDefaultFilters && userLocationAllowed) {
+        if (userLocationAllowed && isDefaultFilters) {
           pts.forEach(p => {
             if (p.latitude && p.longitude) {
               p._distance = getDistanceFromLatLonInKm(userLat, userLng, p.latitude, p.longitude);
