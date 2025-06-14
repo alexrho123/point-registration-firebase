@@ -756,6 +756,10 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+  const container = document.getElementById('pointsContainer');
+  // ensure allPoints and userLocationAllowed are available
+  window.allPoints = window.allPoints || [];
+  window.userLocationAllowed = window.userLocationAllowed || false;
   // Override render to display only nearest point
   window.render = function(){
     container.innerHTML = '';
