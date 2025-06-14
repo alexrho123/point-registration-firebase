@@ -673,7 +673,8 @@
         const visitedVal = visitedFilter.value;
 
         if (regionVal !== '') {
-          pts = pts.filter(p => p.area && p.area === regionVal);
+          pts = pts.filter(p => p.area && p.area.trim().toLowerCase() === regionVal.trim().toLowerCase());
+
         }
 
         if (visitedVal === 'visited') {
