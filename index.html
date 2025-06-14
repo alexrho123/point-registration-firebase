@@ -660,50 +660,10 @@
           render();
         });
 
-      
-      function render() {
+      function render(){
         container.innerHTML = '';
-        let pts = [...allPoints];
-
-        try {
-          console.log('Όλα τα σημεία:', pts);
-        } catch(e) {}
-
-        const regionVal = regionFilter.value;
-        const visitedVal = visitedFilter.value;
-
-        if (regionVal !== '') {
-          pts = pts.filter(p => p.area && p.area.trim().toLowerCase() === regionVal.trim().toLowerCase());
-
-        }
-
-        if (visitedVal === 'visited') {
-          pts = pts.filter(p => !!p.lastVisit);
-        } else if (visitedVal === 'unvisited') {
-          pts = pts.filter(p => !p.lastVisit);
-        }
-
-        const isDefaultFilters = regionVal === '' && visitedVal.trim().toLowerCase() === 'all' || visitedVal.trim().toLowerCase() === 'όλες';
-
-if (isDefaultFilters && userLocationAllowed) {
-  pts.forEach(p => {
-    if (p.latitude && p.longitude) {
-      p._distance = getDistanceFromLatLonInKm(userLat, userLng, p.latitude, p.longitude);
-    } else {
-      p._distance = Infinity;
-    }
-  });
-  pts.sort((a, b) => a._distance - b._distance);
-} else {
-  pts.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-}
-
-        pts.forEach(pt => {
-          const el = card(pt);
-          if (el) container.appendChild(el);
-        });
+        allPoints.forEach(pt=> container.append(card(pt)));
       }
-
       function card(pt){
         const c = document.createElement("div");
         c.className = "relative bg-white rounded-xl p-4 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition overflow-hidden";
