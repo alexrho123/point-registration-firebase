@@ -67,7 +67,7 @@
               class="px-4 py-1 bg-accent text-white rounded uppercase text-sm hover:bg-accent/90">
         Ανανέωση Στίγματος
       </button>
-      <button id="searchClientBtn" class="ml-4 px-4 py-1 bg-primary text-white rounded uppercase text-sm hover:bg-primary/90">Αναζήτηση Πελάτη</button>
+      <button id=\"searchClientBtn\" class=\"ml-4 px-4 py-1 bg-primary text-white rounded uppercase text-sm hover:bg-primary/90\">Αναζήτηση Πελάτη</button>
     </div>
     <div class="flex flex-col md:flex-row gap-2 justify-between items-center">
       <div class="flex gap-2">
@@ -334,7 +334,70 @@
         navigator.geolocation.getCurrentPosition(pos => {
           userLat = pos.coords.latitude; userLng = pos.coords.longitude;
           userLocationAllowed = true; render();
-        }, () => render(), { enableHighAccuracy: true, timeout: 10000 });
+        }, () => render(), { enableHighAccuracy: true, timeout: 10000
+      // Search Client functionality
+      const searchBtn = document.getElementById("searchClientBtn");
+      const searchModal = document.getElementById("searchClientModal");
+      const closeModal = document.getElementById("closeClientModal");
+      const cancelSearchBtn = document.getElementById("clientSearchCancel");
+      const searchInput = document.getElementById("clientSearchInput");
+      const clientResult = document.getElementById("clientResult");
+      const clientForm = document.getElementById("clientSearchForm");
+
+      searchBtn.addEventListener("click", () => {
+        searchModal.classList.remove("opacity-0","pointer-events-none");
+        searchInput.value = '';
+        clientResult.innerHTML = '';
+      });
+      closeModal.addEventListener("click", () => {
+        searchModal.classList.add("opacity-0","pointer-events-none");
+      });
+      cancelSearchBtn.addEventListener("click", () => {
+        searchModal.classList.add("opacity-0","pointer-events-none");
+      });
+
+      // Live suggestions
+      searchInput.addEventListener("input", async e => {
+        const txt = e.target.value.trim();
+        if (!txt) { clientResult.innerHTML = ""; return; }
+        const snap = await db.collection("clients")
+          .orderBy("name").startAt(txt).endAt(txt + "\uf8ff").limit(5).get();
+        if (snap.empty) {
+          clientResult.innerHTML = '<p>Κανένας πελάτης δεν ταιριάζει.</p>';
+        } else {
+          clientResult.innerHTML = snap.docs.map(doc => {
+            const d = doc.data();
+            return `<div class="p-2 hover:bg-gray-100 cursor-pointer client-suggestion">${d.name}</div>`;
+          }).join("");
+          document.querySelectorAll(".client-suggestion").forEach(el => {
+            el.addEventListener("click", () => {
+              searchInput.value = el.textContent;
+              clientForm.dispatchEvent(new Event("submit"));
+            });
+          });
+        }
+      });
+
+      // Submit search
+      clientForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        const name = searchInput.value.trim();
+        if (!name) return;
+        const snap = await db.collection("clients")
+          .orderBy("name").startAt(name).endAt(name + "\uf8ff").limit(1).get();
+        if (snap.empty) {
+          clientResult.innerHTML = '<p>Δε βρέθηκε πελάτης με αυτή την επωνυμία.</p>';
+        } else {
+          const data = snap.docs[0].data();
+          clientResult.innerHTML = `
+            <div class="bg-softbg p-4 rounded shadow">
+              <p><strong>Επωνυμία:</strong> ${data.name}</p>
+              <p><strong>Διεύθυνση:</strong> ${data.address || '—'}</p>
+              <p><strong>Τηλέφωνο:</strong> ${data.phone || '—'}</p>
+            </div>`;
+        }
+      });
+ });
       } else render();
 
       // Refresh stigma
@@ -645,10 +708,19 @@
           render();
         });
 
-      function render(){
-        container.innerHTML = '';
-        allPoints.forEach(pt=> container.append(card(pt)));
-      }
+      
+  function render(){
+    container.innerHTML = '';
+    let pts = [...allPoints];
+    if(userLocationAllowed){
+      pts.sort((a,b)=>
+        getDistanceFromLatLonInKm(userLat,userLng,a.latitude,a.longitude)
+        - getDistanceFromLatLonInKm(userLat,userLng,b.latitude,b.longitude)
+      );
+    }
+    if(pts.length) container.appendChild(card(pts[0]));
+  }
+
       function card(pt){
         const c = document.createElement("div");
         c.className = "relative bg-white rounded-xl p-4 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition overflow-hidden";
@@ -742,96 +814,16 @@
       <h2 class="text-xl font-bold mb-4">Αναζήτηση Πελάτη</h2>
       <form id="clientSearchForm" class="space-y-3">
         <label class="block font-semibold mb-1">Επωνυμία</label>
-        <input type="text" id="clientSearchInput" required class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"/>
+        <input type="text" id="clientSearchInput" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Γράψε..." autocomplete="off"/>
+        <div id="clientResult" class="mt-2 space-y-1"></div>
         <div class="flex justify-end gap-2 pt-4">
           <button type="button" id="clientSearchCancel" class="px-4 py-1 bg-gray-300 rounded">Άκυρο</button>
           <button type="submit" class="px-4 py-1 bg-success text-white rounded">Αναζήτηση</button>
         </div>
       </form>
-      <div id="clientResult" class="mt-4"></div>
       <button id="closeClientModal" class="absolute top-3 right-3 text-gray-500 hover:text-gray-800">✕</button>
     </div>
   </div>
-
-
-<script>
-// Wrap in window.onload to ensure all elements are present
-window.onload = function() {
-  // Get elements
-  var container = document.getElementById("pointsContainer");
-  var refreshBtn = document.getElementById("refreshStigmaBtn");
-  // Override render
-  window.render = function() {
-    container.innerHTML = '';
-    var pts = window.allPoints || [];
-    if(window.userLocationAllowed){
-      pts.sort(function(a,b){
-        return getDistanceFromLatLonInKm(window.userLat, window.userLng, a.latitude, a.longitude)
-             - getDistanceFromLatLonInKm(window.userLat, window.userLng, b.latitude, b.longitude);
-      });
-    }
-    if(pts.length) {
-      container.appendChild(card(pts[0]));
-    }
-  };
-  // Rebind refresh to use new render
-  refreshBtn.addEventListener("click", function(){
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(function(pos) {
-        window.userLat = pos.coords.latitude;
-        window.userLng = pos.coords.longitude;
-        window.userLocationAllowed = true;
-        render();
-      }, function(){
-        alert("Δεν μπορούμε να ανανεώσουμε τη θέση.");
-      }, { enableHighAccuracy: true, timeout: 10000 });
-    } else alert("Το Geolocation δεν υποστηρίζεται.");
-  });
-  // Initial render call
-  render();
-
-  // Search Client logic
-  var searchBtn = document.getElementById("searchClientBtn");
-  var searchModal = document.getElementById("searchClientModal");
-  var closeModal = document.getElementById("closeClientModal");
-  var cancelSearchBtn = document.getElementById("clientSearchCancel");
-  var searchForm = document.getElementById("clientSearchForm");
-  var searchInput = document.getElementById("clientSearchInput");
-  var clientResult = document.getElementById("clientResult");
-
-  searchBtn.addEventListener("click", function() {
-    searchModal.classList.remove("opacity-0","pointer-events-none");
-  });
-  closeModal.addEventListener("click", function() {
-    searchModal.classList.add("opacity-0","pointer-events-none");
-  });
-  cancelSearchBtn.addEventListener("click", function() {
-    searchForm.reset();
-    clientResult.innerHTML = '';
-    searchModal.classList.add("opacity-0","pointer-events-none");
-  });
-  searchForm.addEventListener("submit", function(e) {
-    e.preventDefault();
-    var name = searchInput.value.trim();
-    if(!name) return;
-    clientResult.innerHTML = 'Φόρτωση...';
-    db.collection("clients").where("name","==",name).get().then(function(snap){
-      if(snap.empty){
-        clientResult.innerHTML = '<p>Δε βρέθηκε πελάτης με αυτή την επωνυμία.</p>';
-      } else {
-        var data = snap.docs[0].data();
-        clientResult.innerHTML = '<div class="bg-softbg p-4 rounded shadow">'
-          + '<p><strong>Επωνυμία:</strong> '+data.name+'</p>'
-          + '<p><strong>Διεύθυνση:</strong> '+(data.address||'—')+'</p>'
-          + '<p><strong>Τηλέφωνο:</strong> '+(data.phone||'—')+'</p>'
-          + '</div>';
-      }
-    }).catch(function(){
-      clientResult.innerHTML = '<p class="text-danger">Σφάλμα αναζήτησης.</p>';
-    });
-  });
-};
-</script>
 
 </body>
 </html>
