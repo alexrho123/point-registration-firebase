@@ -818,7 +818,7 @@ window.onload = function() {
     db.collection("clients").get().then(function(snap){
       var matches = snap.docs.filter(function(doc){
         var clientName = doc.data().name || '';
-        return clientName.toLowerCase() === nameInput;
+        return clientName.toLowerCase().includes(nameInput);
       });
       if(matches.length === 0){
         clientResult.innerHTML = '<p>Δε βρέθηκε πελάτης με αυτή την επωνυμία.</p>';
