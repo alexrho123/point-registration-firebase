@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Καταχώριση Σημείου</title>
+  <title>Καταχώριση Σημείου (Firebase) με ταξινόμηση & Παραγγελίες</title>
 
   <!-- Tailwind CSS + custom colors -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -302,6 +302,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+      console.log('Φορτώθηκε');
       let userLat, userLng, userLocationAllowed = false;
       let allPoints = [], editId, selectionMode = false, currentPhotoId, cameraStream;
       let currentPointId;
@@ -661,6 +662,30 @@
         });
 
       function render(){
+        container.innerHTML = '';
+        let pts = [...allPoints];
+        const regionVal = regionFilter.value;
+        const visitedVal = visitedFilter.value;
+
+        if (regionVal !== '') {
+          pts = pts.filter(p => p.area === regionVal);
+        }
+
+        if (visitedVal === 'visited') {
+          pts = pts.filter(p => p.lastVisit);
+        } else if (visitedVal === 'unvisited') {
+          pts = pts.filter(p => !p.lastVisit);
+        }
+
+        if (userLocationAllowed) {
+          pts.forEach(p => p._distance = getDistanceFromLatLonInKm(userLat, userLng, p.latitude, p.longitude));
+          pts.sort((a, b) => a._distance - b._distance);
+        } else {
+          pts.sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds);
+        }
+
+        pts.forEach(pt => container.append(card(pt)));
+    }
         container.innerHTML = '';
         allPoints.forEach(pt=> container.append(card(pt)));
       }
