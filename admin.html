@@ -48,7 +48,7 @@
       <h1 class="text-2xl font-extrabold text-primary uppercase">Admin Panel</h1>
       <nav class="mt-2 sm:mt-0 flex space-x-2">
         <a href="index.html" class="px-3 py-1 bg-region text-white rounded uppercase text-sm hover:bg-region/90">Αρχική</a>
-        <a href="admin.html"  class="px-3 py-1 bg-accent text-white rounded uppercase text-sm hover:bg-accent/90">Admin</a>
+        <a href="admin.html" class="px-3 py-1 bg-accent text-white rounded uppercase text-sm hover:bg-accent/90">Admin</a>
       </nav>
     </div>
   </header>
@@ -152,7 +152,7 @@
     </div>
   </div>
 
-  <!-- Order Detail Modal (τώρα full responsive, χωρίς scroll) -->
+  <!-- Order Detail Modal -->
   <div id="orderDetailModal"
        class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none p-4">
     <div class="bg-white rounded-2xl w-full max-w-[90vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6 relative shadow-2xl">
@@ -160,8 +160,6 @@
               class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
       <h2 id="detailTitle"
           class="text-xl sm:text-2xl font-bold text-primary mb-4 text-center uppercase">ΛΕΠΤΟΜΕΡΕΙΕΣ ΠΑΡΑΓΓΕΛΙΑΣ</h2>
-
-      <!-- Πίνακας Προϊόντων -->
       <div class="overflow-x-auto">
         <table class="w-full text-sm divide-y divide-gray-200">
           <thead class="bg-accent/20 text-[0.75rem]">
@@ -174,31 +172,18 @@
           <tbody id="detailContent" class="divide-y divide-gray-100 bg-white text-[0.85rem]"></tbody>
         </table>
       </div>
-
-      <!-- Παρατηρήσεις -->
       <div class="mt-3">
         <h3 class="text-sm font-semibold mb-1">Παρατηρήσεις</h3>
         <div id="detailRemarks"
-             class="border border-gray-200 rounded-lg p-2 bg-gray-50 italic text-gray-700 text-xs min-h-[2rem]">
-        </div>
+             class="border border-gray-200 rounded-lg p-2 bg-gray-50 italic text-gray-700 text-xs min-h-[2rem]"></div>
       </div>
-
-      <!-- Σύνολο -->
       <div class="mt-3 flex justify-between font-bold text-sm uppercase">
         <span>Σύνολο:</span>
         <span id="detailTotal" class="text-primary">€0.00</span>
       </div>
-
-      <!-- Κουμπιά -->
       <div class="mt-4 flex flex-col sm:flex-row justify-between gap-2 text-[0.9rem]">
-        <button id="executeOrderBtn"
-                class="w-full sm:w-auto bg-success text-white px-4 py-1 rounded hover:bg-success/90">
-          Εκτέλεση Παραγγελίας
-        </button>
-        <button id="cancelOrderBtn"
-                class="w-full sm:w-auto bg-danger text-white px-4 py-1 rounded hover:bg-danger/90">
-          Ακύρωση Παραγγελίας
-        </button>
+        <button id="executeOrderBtn" class="w-full sm:w-auto bg-success text-white px-4 py-1 rounded hover:bg-success/90">Εκτέλεση Παραγγελίας</button>
+        <button id="cancelOrderBtn"  class="w-full sm:w-auto bg-danger text-white px-4 py-1 rounded hover:bg-danger/90">Ακύρωση Παραγγελίας</button>
       </div>
     </div>
   </div>
@@ -212,11 +197,11 @@
       <form id="sellerForm" class="space-y-4">
         <div>
           <label class="block mb-1">Ονοματεπώνυμο</label>
-          <input id="sellerName"     type="text"     required class="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region"/>
+          <input id="sellerName" type="text" required class="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region"/>
         </div>
         <div>
           <label class="block mb-1">Username</label>
-          <input id="sellerUsername" type="text"     required class="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region"/>
+          <input id="sellerUsername" type="text" required class="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region"/>
         </div>
         <div>
           <label class="block mb-1">Password</label>
@@ -239,7 +224,7 @@
 
   <!-- JS -->
   <script>
-    // Initialize Firebase
+    // Firebase init
     const firebaseConfig = {
       apiKey:    "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
       authDomain:"pointregistrationapp.firebaseapp.com",
@@ -251,9 +236,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // ========================
     // Login handling
-    // ========================
     document.getElementById('loginForm').onsubmit = async e => {
       e.preventDefault();
       const u = document.getElementById('username').value.trim();
@@ -261,7 +244,7 @@
       const doc = await db.collection('users').doc(u).get();
       if (!doc.exists) {
         if (u==='admin'&&p==='123') {
-          await db.collection('users').doc(u).set({ password:'123', role:'admin' });
+          await db.collection('users').doc(u).set({password:'123',role:'admin'});
         } else {
           return alert('Σφάλμα σύνδεσης');
         }
@@ -276,9 +259,7 @@
       }
     };
 
-    // ========================
-    // Add Product Modal
-    // ========================
+    // Add Product Modal logic...
     const addProductModal = document.getElementById('addProductModal');
     window.openAddProductModal  = ()=> addProductModal.classList.remove('opacity-0','pointer-events-none');
     window.closeAddProductModal = ()=> {
@@ -308,15 +289,13 @@
       for (let row of [...document.getElementById('productRows').children]) {
         const name = row.querySelector('input[type=text]').value.trim();
         const price= parseFloat(row.querySelector('input[type=number]').value);
-        if (name&&!isNaN(price)) await db.collection('products').add({ name, price });
+        if (name&&!isNaN(price)) await db.collection('products').add({name,price});
       }
       alert('Προϊόντα αποθηκεύτηκαν');
       closeAddProductModal();
     };
 
-    // ========================
     // Live Orders
-    // ========================
     const liveOrdersModal     = document.getElementById('liveOrdersModal'),
           ordersList          = document.getElementById('ordersList'),
           executedOrdersModal = document.getElementById('executedOrdersModal'),
@@ -347,7 +326,8 @@
             let qty=0; itemsSnap.docs.forEach(i=> qty+=i.data().quantity);
             if (qty===0) continue;
             const pt = await doc.ref.parent.parent.get();
-            const pname = pt.exists ? pt.data().name : '—';
+            let pname = pt.exists ? pt.data().name : '—';
+            pname = pname.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
             const btn = document.createElement('button');
             btn.className = 'w-full flex justify-between p-4 bg-white border-l-4 border-primary rounded-lg shadow-lg hover:shadow-xl transition';
             btn.innerHTML = `
@@ -369,9 +349,7 @@
       liveOrdersModal.classList.add('opacity-0','pointer-events-none');
     }
 
-    // ========================
     // Executed Orders
-    // ========================
     document.getElementById('executedOrdersCard').onclick = openExecutedOrdersModal;
     function openExecutedOrdersModal(){
       executedList.innerHTML = '<p class="text-center text-gray-500">Φόρτωση…</p>';
@@ -386,7 +364,8 @@
             const ts = od.timestamp?.toDate();
             if (ts && ts.toDateString()!==today) continue;
             const pt = await doc.ref.parent.parent.get();
-            const pname = pt.exists ? pt.data().name : '—';
+            let pname = pt.exists ? pt.data().name : '—';
+            pname = pname.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
             const execAt = od.executedAt ? new Date(od.executedAt.toDate()).toLocaleString() : '—';
             const div = document.createElement('div');
             div.className = 'w-full flex justify-between p-4 bg-gray-50 border-l-4 border-success rounded-lg shadow-inner';
@@ -406,13 +385,10 @@
       executedOrdersModal.classList.add('opacity-0','pointer-events-none');
     }
 
-    // ========================
     // Order Detail
-    // ========================
     function openOrderDetail(ref, pname){
       currentOrderRef = ref;
-      detailTitle.textContent = `ΠΑΡΑΓΓΕΛΙΑ @ ${pname}`
-        .toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      detailTitle.textContent = `ΠΑΡΑΓΓΕΛΙΑ @ ${pname}`.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
       detailRemarks.textContent = '';
       detailContent.innerHTML = '';
       detailTotal.textContent = '€0.00';
@@ -468,9 +444,7 @@
       closeLiveOrdersModal();
     };
 
-    // ========================
     // Add Seller Modal
-    // ========================
     const addSellerModal = document.getElementById('addSellerModal');
     document.getElementById('addSellerCard').onclick = ()=> {
       addSellerModal.classList.remove('opacity-0','pointer-events-none');
