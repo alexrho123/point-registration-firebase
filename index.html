@@ -304,7 +304,6 @@
     
 document.addEventListener("DOMContentLoaded", () => {
       let userLat, userLng, userLocationAllowed = false;
-
       let allPoints = [], editId, selectionMode = false, currentPhotoId, cameraStream;
       let currentPointId;
 
@@ -348,8 +347,12 @@ document.addEventListener("DOMContentLoaded", () => {
         allPoints = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         render();
       });
-, userLng, userLocationAllowed = false;
-      let allPoints = [], editId, selectionMode = false, currentPhotoId, cameraStream;
+let userLat, userLng, userLocationAllowed = false;
+let allPoints = [];
+let editId;
+let selectionMode = false;
+let currentPhotoId;
+let cameraStream;
       let currentPointId;
 
       // Elements
