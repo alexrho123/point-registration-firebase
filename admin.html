@@ -388,7 +388,7 @@
     // Order Detail
     function openOrderDetail(ref, pname){
       currentOrderRef = ref;
-      detailTitle.textContent = `ΠΑΡΑΓΓΕΛΙΑ @ ${pname}`.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      detailTitle.textContent = `ΠΑΡΑΓΓΕΛΙΑ @ ${pname}`;
       detailRemarks.textContent = '';
       detailContent.innerHTML = '';
       detailTotal.textContent = '€0.00';
@@ -411,7 +411,7 @@
           sum += sub;
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td class="px-2 py-1">${qty}× ${name}</td>
+            <td class="px-2 py-1">${name}</td>
             <td class="px-2 py-1 text-right">${qty}</td>
             <td class="px-2 py-1 text-right">€${sub.toFixed(2)}</td>`;
           detailContent.appendChild(tr);
@@ -446,9 +446,7 @@
 
     // Add Seller Modal
     const addSellerModal = document.getElementById('addSellerModal');
-    document.getElementById('addSellerCard').onclick = ()=> {
-      addSellerModal.classList.remove('opacity-0','pointer-events-none');
-    };
+    document.getElementById('addSellerCard').onclick = ()=> addSellerModal.classList.remove('opacity-0','pointer-events-none');
     function closeAddSellerModal(){
       addSellerModal.classList.add('opacity-0','pointer-events-none');
       document.getElementById('sellerForm').reset();
