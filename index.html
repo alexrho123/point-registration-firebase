@@ -301,53 +301,9 @@
       return ts ? (new Date() - ts.toDate()) / (1000*60*60*24) : Infinity;
     }
 
-    
-document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", () => {
       let userLat, userLng, userLocationAllowed = false;
-      let allPoints = [], editId, selectionMode = false, currentPhotoId, cameraStream, currentPointId;
       let allPoints = [], editId, selectionMode = false, currentPhotoId, cameraStream;
-      let currentPointId;
-
-      const regionFilter = document.getElementById("regionFilter");
-      const visitedFilter = document.getElementById("visitedFilter");
-      const container = document.getElementById("pointsContainer");
-      const refreshBtn = document.getElementById("refreshStigmaBtn");
-
-      regionFilter.addEventListener('change', () => {
-        console.log('Επιλογή περιοχής:', regionFilter.value);
-        render();
-      });
-
-      visitedFilter.addEventListener('change', () => {
-        console.log('Επιλογή επίσκεψης:', visitedFilter.value);
-        render();
-      });
-
-      // Geo
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          userLat = pos.coords.latitude;
-          userLng = pos.coords.longitude;
-          userLocationAllowed = true;
-          render();
-        }, () => render(), { enableHighAccuracy: true, timeout: 10000 });
-      } else render();
-
-      refreshBtn.onclick = () => {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(pos => {
-            userLat = pos.coords.latitude;
-            userLng = pos.coords.longitude;
-            userLocationAllowed = true;
-            render();
-          }, () => alert("Δεν μπορούμε να ανανεώσουμε τη θέση."), { enableHighAccuracy: true, timeout: 10000 });
-        } else alert("Το Geolocation δεν υποστηρίζεται.");
-      };
-
-      db.collection("points").orderBy("timestamp","desc").onSnapshot(snap => {
-        allPoints = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        render();
-      });
       let currentPointId;
 
       // Elements
