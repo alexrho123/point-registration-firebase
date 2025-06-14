@@ -108,8 +108,7 @@
   </div>
 
   <!-- Add Products Modal -->
-  <div id="addProductModal"
-       class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center opacity-0 pointer-events-none">
+  <div id="addProductModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center opacity-0 pointer-events-none">
     <div class="bg-white rounded-lg w-full max-w-lg p-6 relative">
       <button onclick="closeAddProductModal()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
       <h2 class="text-2xl font-bold text-primary mb-4 text-center">Προσθήκη Προϊόντων</h2>
@@ -133,8 +132,7 @@
   </div>
 
   <!-- Live Orders Modal -->
-  <div id="liveOrdersModal"
-       class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center opacity-0 pointer-events-none">
+  <div id="liveOrdersModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center opacity-0 pointer-events-none">
     <div class="bg-white rounded-lg w-full max-w-2xl p-6 relative">
       <button onclick="closeLiveOrdersModal()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
       <h2 class="text-2xl font-bold text-primary mb-4 text-center">Ζωντανές Παραγγελίες</h2>
@@ -143,8 +141,7 @@
   </div>
 
   <!-- Executed Orders Modal -->
-  <div id="executedOrdersModal"
-       class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center opacity-0 pointer-events-none">
+  <div id="executedOrdersModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center opacity-0 pointer-events-none">
     <div class="bg-white rounded-lg w-full max-w-2xl p-6 relative">
       <button onclick="closeExecutedOrdersModal()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
       <h2 class="text-2xl font-bold text-success mb-4 text-center">Εκτελεσμένες Παραγγελίες</h2>
@@ -153,44 +150,43 @@
   </div>
 
   <!-- Order Detail Modal -->
-  <div id="orderDetailModal"
-       class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none p-4">
+  <div id="orderDetailModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none p-4">
     <div class="bg-white rounded-2xl w-full max-w-[90vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6 relative shadow-2xl">
-      <button onclick="closeOrderDetailModal()"
-              class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
-      <h2 id="detailTitle"
-          class="text-xl sm:text-2xl font-bold text-primary mb-4 text-center uppercase">ΛΕΠΤΟΜΕΡΕΙΕΣ ΠΑΡΑΓΓΕΛΙΑΣ</h2>
+      <button onclick="closeOrderDetailModal()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
+      <h2 id="detailTitle" class="text-xl sm:text-2xl font-bold text-primary mb-4 text-center uppercase">ΛΕΠΤΟΜΕΡΕΙΕΣ ΠΑΡΑΓΓΕΛΙΑΣ</h2>
+
       <div class="overflow-x-auto">
         <table class="w-full text-sm divide-y divide-gray-200">
           <thead class="bg-accent/20 text-[0.75rem]">
             <tr>
               <th class="px-2 py-1 text-left uppercase">Προϊόν</th>
-              <th class="px-2 py-1 text-right uppercase">Ποσ.</th>
+              <th class="px-2 py-1 text-center uppercase">Ποσ.</th>
               <th class="px-2 py-1 text-right uppercase">€</th>
             </tr>
           </thead>
           <tbody id="detailContent" class="divide-y divide-gray-100 bg-white text-[0.85rem]"></tbody>
         </table>
       </div>
+
       <div class="mt-3">
         <h3 class="text-sm font-semibold mb-1">Παρατηρήσεις</h3>
-        <div id="detailRemarks"
-             class="border border-gray-200 rounded-lg p-2 bg-gray-50 italic text-gray-700 text-xs min-h-[2rem]"></div>
+        <div id="detailRemarks" class="border border-gray-200 rounded-lg p-2 bg-gray-50 italic text-gray-700 text-xs min-h-[2rem]"></div>
       </div>
+
       <div class="mt-3 flex justify-between font-bold text-sm uppercase">
         <span>Σύνολο:</span>
         <span id="detailTotal" class="text-primary">€0.00</span>
       </div>
+
       <div class="mt-4 flex flex-col sm:flex-row justify-between gap-2 text-[0.9rem]">
         <button id="executeOrderBtn" class="w-full sm:w-auto bg-success text-white px-4 py-1 rounded hover:bg-success/90">Εκτέλεση Παραγγελίας</button>
-        <button id="cancelOrderBtn"  class="w-full sm:w-auto bg-danger text-white px-4 py-1 rounded hover:bg-danger/90">Ακύρωση Παραγγελίας</button>
+        <button id="cancelOrderBtn"  class="w-full sm:w-auto bg-danger  text-white px-4 py-1 rounded hover:bg-danger/90">Ακύρωση Παραγγελίας</button>
       </div>
     </div>
   </div>
 
   <!-- Add Seller Modal -->
-  <div id="addSellerModal"
-       class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none">
+  <div id="addSellerModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none">
     <div class="bg-white rounded-2xl w-full max-w-md p-8 relative shadow-2xl">
       <button onclick="closeAddSellerModal()" class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-3xl">&times;</button>
       <h2 class="text-2xl font-bold text-primary mb-6 text-center">Προσθήκη Πωλητή</h2>
@@ -245,18 +241,14 @@
       if (!doc.exists) {
         if (u==='admin'&&p==='123') {
           await db.collection('users').doc(u).set({password:'123',role:'admin'});
-        } else {
-          return alert('Σφάλμα σύνδεσης');
-        }
+        } else return alert('Σφάλμα σύνδεσης');
       }
       const data = (await db.collection('users').doc(u).get()).data();
       if (data.password === p) {
         document.getElementById('loginContainer').classList.add('hidden');
         document.getElementById('adminPanel').classList.remove('hidden');
         initAdmin();
-      } else {
-        alert('Σφάλμα σύνδεσης');
-      }
+      } else alert('Σφάλμα σύνδεσης');
     };
 
     // Add Product Modal logic...
@@ -396,9 +388,7 @@
 
       ref.get().then(async odoc=>{
         const od = odoc.data();
-        // remarks
         detailRemarks.textContent = od.remarks || '';
-        // items
         let sum = 0;
         const itemsSnap = await ref.collection('items').get();
         for (let it of itemsSnap.docs) {
@@ -412,7 +402,7 @@
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td class="px-2 py-1">${name}</td>
-            <td class="px-2 py-1 text-right">${qty}</td>
+            <td class="px-2 py-1 text-center">${qty}</td>
             <td class="px-2 py-1 text-right">€${sub.toFixed(2)}</td>`;
           detailContent.appendChild(tr);
         }
