@@ -301,8 +301,53 @@
       return ts ? (new Date() - ts.toDate()) / (1000*60*60*24) : Infinity;
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
+    
+document.addEventListener("DOMContentLoaded", () => {
       let userLat, userLng, userLocationAllowed = false;
+      let allPoints = [], editId, selectionMode = false, currentPhotoId, cameraStream;
+      let currentPointId;
+
+      const regionFilter = document.getElementById("regionFilter");
+      const visitedFilter = document.getElementById("visitedFilter");
+      const container = document.getElementById("pointsContainer");
+      const refreshBtn = document.getElementById("refreshStigmaBtn");
+
+      regionFilter.addEventListener('change', () => {
+        console.log('Επιλογή περιοχής:', regionFilter.value);
+        render();
+      });
+
+      visitedFilter.addEventListener('change', () => {
+        console.log('Επιλογή επίσκεψης:', visitedFilter.value);
+        render();
+      });
+
+      // Geo
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          userLocationAllowed = true;
+          render();
+        }, () => render(), { enableHighAccuracy: true, timeout: 10000 });
+      } else render();
+
+      refreshBtn.onclick = () => {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(pos => {
+            userLat = pos.coords.latitude;
+            userLng = pos.coords.longitude;
+            userLocationAllowed = true;
+            render();
+          }, () => alert("Δεν μπορούμε να ανανεώσουμε τη θέση."), { enableHighAccuracy: true, timeout: 10000 });
+        } else alert("Το Geolocation δεν υποστηρίζεται.");
+      };
+
+      db.collection("points").orderBy("timestamp","desc").onSnapshot(snap => {
+        allPoints = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        render();
+      });
+, userLng, userLocationAllowed = false;
       let allPoints = [], editId, selectionMode = false, currentPhotoId, cameraStream;
       let currentPointId;
 
@@ -660,51 +705,10 @@
           render();
         });
 
-      
-      function render() {
+      function render(){
         container.innerHTML = '';
-        let pts = [...allPoints];
-
-        const regionVal = regionFilter.value;
-        const visitedVal = visitedFilter.value;
-
-        console.log('regionVal:', regionVal);
-        console.log('visitedVal:', visitedVal);
-
-        // Apply filters
-        if (regionVal.trim() !== '') {
-          pts = pts.filter(p => p.area && p.area.trim().toLowerCase() === regionVal.trim().toLowerCase());
-        }
-
-        if (visitedVal.trim().toLowerCase() === 'visited' || visitedVal.trim() === 'Επισκεφθείσες') {
-          pts = pts.filter(p => !!p.lastVisit);
-        } else if (visitedVal.trim().toLowerCase() === 'unvisited' || visitedVal.trim() === 'Μη Επισκεφθείσες') {
-          pts = pts.filter(p => !p.lastVisit);
-        }
-
-        const isDefaultFilters =
-          regionVal.trim() === '' &&
-          (visitedVal.trim().toLowerCase() === 'all' || visitedVal.trim() === 'Όλες');
-
-        if (userLocationAllowed && isDefaultFilters) {
-          pts.forEach(p => {
-            if (p.latitude && p.longitude) {
-              p._distance = getDistanceFromLatLonInKm(userLat, userLng, p.latitude, p.longitude);
-            } else {
-              p._distance = Infinity;
-            }
-          });
-          pts.sort((a, b) => a._distance - b._distance);
-        } else {
-          pts.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-        }
-
-        pts.forEach(pt => {
-          const el = card(pt);
-          if (el) container.appendChild(el);
-        });
+        allPoints.forEach(pt=> container.append(card(pt)));
       }
-
       function card(pt){
         const c = document.createElement("div");
         c.className = "relative bg-white rounded-xl p-4 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition overflow-hidden";
