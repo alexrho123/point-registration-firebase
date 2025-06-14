@@ -69,22 +69,6 @@
       </button>
     </div>
     <div class="flex flex-col md:flex-row gap-2 justify-between items-center">
-      <select id="regionFilter"
-              class="flex-1 border px-2 py-1 rounded uppercase text-sm">
-        <option value="">Όλες οι περιοχές</option>
-        <option value="Πόλη">Πόλη</option>
-        <option value="Ιαλυσός">Ιαλυσός</option>
-        <option value="Φαληράκι">Φαληράκι</option>
-        <option value="Κολύμπια">Κολύμπια</option>
-        <option value="Νότια Ρόδος">Νότια Ρόδος</option>
-        <option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
-      </select>
-      <select id="visitedFilter"
-              class="border px-2 py-1 rounded uppercase text-sm">
-        <option value="all">Όλες</option>
-        <option value="visited">Επισκεφθείσες</option>
-        <option value="unvisited">Μη Επισκεφθείσες</option>
-      </select>
       <div class="flex gap-2">
         <button id="routeBtn"
                 class="bg-indigo-500 text-white px-3 py-1 rounded uppercase text-xs hover:bg-indigo-600">
@@ -660,10 +644,19 @@
           render();
         });
 
-      function render(){
-        container.innerHTML = '';
-        allPoints.forEach(pt=> container.append(card(pt)));
-      }
+      
+function render(){
+  container.innerHTML = '';
+  let pts = [...allPoints];
+  if(userLocationAllowed){
+    pts.sort((a,b)=>
+      getDistanceFromLatLonInKm(userLat, userLng, a.latitude, a.longitude)
+      - getDistanceFromLatLonInKm(userLat, userLng, b.latitude, b.longitude)
+    );
+  }
+  pts.forEach(pt=> container.append(card(pt)));
+}
+
       function card(pt){
         const c = document.createElement("div");
         c.className = "relative bg-white rounded-xl p-4 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition overflow-hidden";
