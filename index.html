@@ -347,7 +347,6 @@ document.addEventListener("DOMContentLoaded", () => {
         allPoints = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         render();
       });
-let userLat, userLng, userLocationAllowed = false;
 let allPoints = [];
 let editId;
 let selectionMode = false;
