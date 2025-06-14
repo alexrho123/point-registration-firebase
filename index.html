@@ -755,72 +755,82 @@
 
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const container = document.getElementById('pointsContainer');
-  // ensure allPoints and userLocationAllowed are available
-  window.allPoints = window.allPoints || [];
-  window.userLocationAllowed = window.userLocationAllowed || false;
-  // Override render to display only nearest point
-  window.render = function(){
+// Wrap in window.onload to ensure all elements are present
+window.onload = function() {
+  // Get elements
+  var container = document.getElementById("pointsContainer");
+  var refreshBtn = document.getElementById("refreshStigmaBtn");
+  // Override render
+  window.render = function() {
     container.innerHTML = '';
-    let pts = [...allPoints];
-    if(userLocationAllowed){
-      pts.sort((a,b) =>
-        getDistanceFromLatLonInKm(userLat,userLng,a.latitude,a.longitude) -
-        getDistanceFromLatLonInKm(userLat,userLng,b.latitude,b.longitude)
-      );
+    var pts = window.allPoints || [];
+    if(window.userLocationAllowed){
+      pts.sort(function(a,b){
+        return getDistanceFromLatLonInKm(window.userLat, window.userLng, a.latitude, a.longitude)
+             - getDistanceFromLatLonInKm(window.userLat, window.userLng, b.latitude, b.longitude);
+      });
     }
-    if(pts.length){
-      container.append(card(pts[0]));
+    if(pts.length) {
+      container.appendChild(card(pts[0]));
     }
   };
-  // Initial render
+  // Rebind refresh to use new render
+  refreshBtn.addEventListener("click", function(){
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        window.userLat = pos.coords.latitude;
+        window.userLng = pos.coords.longitude;
+        window.userLocationAllowed = true;
+        render();
+      }, function(){
+        alert("Δεν μπορούμε να ανανεώσουμε τη θέση.");
+      }, { enableHighAccuracy: true, timeout: 10000 });
+    } else alert("Το Geolocation δεν υποστηρίζεται.");
+  });
+  // Initial render call
   render();
 
-  // Search Client functionality
-  const searchBtn = document.getElementById("searchClientBtn");
-  const searchModal = document.getElementById("searchClientModal");
-  const closeModal = document.getElementById("closeClientModal");
-  const cancelSearchBtn = document.getElementById("clientSearchCancel");
-  const searchForm = document.getElementById("clientSearchForm");
-  const searchInput = document.getElementById("clientSearchInput");
-  const clientResult = document.getElementById("clientResult");
+  // Search Client logic
+  var searchBtn = document.getElementById("searchClientBtn");
+  var searchModal = document.getElementById("searchClientModal");
+  var closeModal = document.getElementById("closeClientModal");
+  var cancelSearchBtn = document.getElementById("clientSearchCancel");
+  var searchForm = document.getElementById("clientSearchForm");
+  var searchInput = document.getElementById("clientSearchInput");
+  var clientResult = document.getElementById("clientResult");
 
-  searchBtn.addEventListener("click", () => {
-    searchModal.classList.remove("opacity-0", "pointer-events-none");
+  searchBtn.addEventListener("click", function() {
+    searchModal.classList.remove("opacity-0","pointer-events-none");
   });
-  closeModal.addEventListener("click", () => {
-    searchModal.classList.add("opacity-0", "pointer-events-none");
+  closeModal.addEventListener("click", function() {
+    searchModal.classList.add("opacity-0","pointer-events-none");
   });
-  cancelSearchBtn.addEventListener("click", () => {
+  cancelSearchBtn.addEventListener("click", function() {
     searchForm.reset();
     clientResult.innerHTML = '';
-    searchModal.classList.add("opacity-0", "pointer-events-none");
+    searchModal.classList.add("opacity-0","pointer-events-none");
   });
-
-  searchForm.addEventListener("submit", async e => {
+  searchForm.addEventListener("submit", function(e) {
     e.preventDefault();
-    const name = searchInput.value.trim();
-    if (!name) return;
+    var name = searchInput.value.trim();
+    if(!name) return;
     clientResult.innerHTML = 'Φόρτωση...';
-    try {
-      const snap = await db.collection("clients").where("name","==",name).get();
-      if (snap.empty) {
+    db.collection("clients").where("name","==",name).get().then(function(snap){
+      if(snap.empty){
         clientResult.innerHTML = '<p>Δε βρέθηκε πελάτης με αυτή την επωνυμία.</p>';
       } else {
-        const data = snap.docs[0].data();
-        clientResult.innerHTML = `
-          <div class="bg-softbg p-4 rounded shadow">
-            <p><strong>Επωνυμία:</strong> ${data.name}</p>
-            <p><strong>Διεύθυνση:</strong> ${data.address || '—'}</p>
-            <p><strong>Τηλέφωνο:</strong> ${data.phone || '—'}</p>
-          </div>`;
+        var data = snap.docs[0].data();
+        clientResult.innerHTML = '<div class="bg-softbg p-4 rounded shadow">'
+          + '<p><strong>Επωνυμία:</strong> '+data.name+'</p>'
+          + '<p><strong>Διεύθυνση:</strong> '+(data.address||'—')+'</p>'
+          + '<p><strong>Τηλέφωνο:</strong> '+(data.phone||'—')+'</p>'
+          + '</div>';
       }
-    } catch(err) {
+    }).catch(function(){
       clientResult.innerHTML = '<p class="text-danger">Σφάλμα αναζήτησης.</p>';
-    }
+    });
   });
-});
+};
 </script>
 
 </body>
