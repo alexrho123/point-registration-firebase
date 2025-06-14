@@ -68,7 +68,6 @@
         Ανανέωση Στίγματος
       </button>
       <button id=\"searchClientBtn\" class=\"ml-4 px-4 py-1 bg-primary text-white rounded uppercase text-sm hover:bg-primary/90\">Αναζήτηση Πελάτη</button>
-      <button id=\"searchClientBtn\" class=\"ml-4 px-4 py-1 bg-primary text-white rounded uppercase text-sm hover:bg-primary/90\">Αναζήτηση Πελάτη</button>
     </div>
     <div class="flex flex-col md:flex-row gap-2 justify-between items-center">
       <div class="flex gap-2">
@@ -288,74 +287,6 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-
-    // Search Client functionality
-    const searchBtn = document.getElementById("searchClientBtn"),
-          searchModal = document.getElementById("searchClientModal"),
-          closeModal = document.getElementById("closeClientModal"),
-          cancelSearch = document.getElementById("clientSearchCancel"),
-          searchForm = document.getElementById("clientSearchForm"),
-          searchInput = document.getElementById("clientSearchInput"),
-          clientResult = document.getElementById("clientResult");
-
-    searchBtn.onclick = () => searchModal.classList.remove("opacity-0","pointer-events-none");
-    closeModal.onclick = () => searchModal.classList.add("opacity-0","pointer-events-none");
-    cancelSearch.onclick = () => {
-      searchForm.reset();
-      clientResult.innerHTML = '';
-      searchModal.classList.add("opacity-0","pointer-events-none");
-    };
-
-    searchForm.onsubmit = async e => {
-      e.preventDefault();
-      const name = searchInput.value.trim();
-      if(!name) return;
-      clientResult.innerHTML = 'Φόρτωση...';
-      try {
-        const snap = await db.collection("clients").where("name","==",name).get();
-        if(snap.empty) {
-          clientResult.innerHTML = '<p>Δε βρέθηκε πελάτης με αυτή την επωνυμία.</p>';
-        } else {
-          const doc = snap.docs[0];
-          const data = doc.data();
-          clientResult.innerHTML = `
-            <div class="bg-softbg p-4 rounded shadow">
-              <p><strong>Επωνυμία:</strong> ${data.name}</p>
-              <p><strong>Διεύθυνση:</strong> ${data.address || '—'}</p>
-              <p><strong>Τηλέφωνο:</strong> ${data.phone || '—'}</p>
-            </div>`;
-        }
-      } catch(err) {
-        clientResult.innerHTML = '<p class="text-danger">Σφάλμα αναζήτησης.</p>';
-      }
-    };
-
-
-
-    searchForm.onsubmit = async e => {
-      e.preventDefault();
-      const name = searchInput.value.trim();
-      if(!name) return;
-      clientResult.innerHTML = 'Φόρτωση...';
-      try {
-        const snap = await db.collection("clients").where("name","==",name).get();
-        if(snap.empty) {
-          clientResult.innerHTML = '<p>Δε βρέθηκε πελάτης με αυτή την επωνυμία.</p>';
-        } else {
-          const doc = snap.docs[0];
-          const data = doc.data();
-          clientResult.innerHTML = `
-            <div class="bg-softbg p-4 rounded shadow">
-              <p><strong>Επωνυμία:</strong> ${data.name}</p>
-              <p><strong>Διεύθυνση:</strong> ${data.address || '—'}</p>
-              <p><strong>Τηλέφωνο:</strong> ${data.phone || '—'}</p>
-            </div>`;
-        }
-      } catch(err) {
-        clientResult.innerHTML = '<p class="text-danger">Σφάλμα αναζήτησης.</p>';
-      }
-    };
-
       let userLat, userLng, userLocationAllowed = false;
       let allPoints = [], editId, selectionMode = false, currentPhotoId, cameraStream;
       let currentPointId;
@@ -403,7 +334,52 @@
         navigator.geolocation.getCurrentPosition(pos => {
           userLat = pos.coords.latitude; userLng = pos.coords.longitude;
           userLocationAllowed = true; render();
-        }, () => render(), { enableHighAccuracy: true, timeout: 10000 });
+        }, () => render(), { enableHighAccuracy: true, timeout: 10000 
+    // Search Client functionality
+    const searchBtn = document.getElementById("searchClientBtn");
+    const searchModal = document.getElementById("searchClientModal");
+    const closeModal = document.getElementById("closeClientModal");
+    const cancelSearch = document.getElementById("clientSearchCancel");
+    const searchForm = document.getElementById("clientSearchForm");
+    const searchInput = document.getElementById("clientSearchInput");
+    const clientResult = document.getElementById("clientResult");
+
+    searchBtn.addEventListener("click", () => {
+      searchModal.classList.remove("opacity-0","pointer-events-none");
+    });
+    closeModal.addEventListener("click", () => {
+      searchModal.classList.add("opacity-0","pointer-events-none");
+    });
+    cancelSearch.addEventListener("click", () => {
+      searchForm.reset();
+      clientResult.innerHTML = '';
+      searchModal.classList.add("opacity-0","pointer-events-none");
+    });
+
+    searchForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      const name = searchInput.value.trim();
+      if (!name) return;
+      clientResult.innerHTML = 'Φόρτωση...';
+      try {
+        const snap = await db.collection("clients").where("name","==",name).get();
+        if (snap.empty) {
+          clientResult.innerHTML = '<p>Δε βρέθηκε πελάτης με αυτή την επωνυμία.</p>';
+        } else {
+          const data = snap.docs[0].data();
+          clientResult.innerHTML = `
+            <div class="bg-softbg p-4 rounded shadow">
+              <p><strong>Επωνυμία:</strong> ${data.name}</p>
+              <p><strong>Διεύθυνση:</strong> ${data.address || '—'}</p>
+              <p><strong>Τηλέφωνο:</strong> ${data.phone || '—'}</p>
+            </div>`;
+        }
+      } catch(err) {
+        clientResult.innerHTML = '<p class="text-danger">Σφάλμα αναζήτησης.</p>';
+      }
+    });
+
+  });
       } else render();
 
       // Refresh stigma
@@ -714,21 +690,10 @@
           render();
         });
 
-      
-function render(){
-  container.innerHTML = '';
-  let pts = [...allPoints];
-  if(userLocationAllowed){
-    pts.sort((a,b)=>
-      getDistanceFromLatLonInKm(userLat,userLng,a.latitude,a.longitude)
-      - getDistanceFromLatLonInKm(userLat,userLng,b.latitude,b.longitude)
-    );
-  }
-  if(pts.length > 0){
-    container.append(card(pts[0]));
-  }
-}
-
+      function render(){
+        container.innerHTML = '';
+        allPoints.forEach(pt=> container.append(card(pt)));
+      }
       function card(pt){
         const c = document.createElement("div");
         c.className = "relative bg-white rounded-xl p-4 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition overflow-hidden";
@@ -814,25 +779,7 @@ function render(){
         return c;
       }
     });
-  
-</script>
-
-  <!-- Search Client Modal -->
-  <div id="searchClientModal" class="modal fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center">
-    <div class="modal-inner bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl relative">
-      <h2 class="text-xl font-bold mb-4">Αναζήτηση Πελάτη</h2>
-      <form id="clientSearchForm" class="space-y-3">
-        <label class="block font-semibold mb-1">Επωνυμία</label>
-        <input type="text" id="clientSearchInput" required class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"/>
-        <div class="flex justify-end gap-2 pt-4">
-          <button type="button" id="clientSearchCancel" class="px-4 py-1 bg-gray-300 rounded">Άκυρο</button>
-          <button type="submit" class="px-4 py-1 bg-success text-white rounded">Αναζήτηση</button>
-        </div>
-      </form>
-      <div id="clientResult" class="mt-4"></div>
-      <button id="closeClientModal" class="absolute top-3 right-3 text-gray-500 hover:text-gray-800">✕</button>
-    </div>
-  </div>
+  </script>
 
   <!-- Search Client Modal -->
   <div id="searchClientModal" class="modal fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center">
