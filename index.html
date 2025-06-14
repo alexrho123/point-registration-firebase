@@ -331,22 +331,6 @@
     };
 
 
-    // Search Client functionality
-    const searchBtn = document.getElementById("searchClientBtn"),
-          searchModal = document.getElementById("searchClientModal"),
-          closeModal = document.getElementById("closeClientModal"),
-          cancelSearch = document.getElementById("clientSearchCancel"),
-          searchForm = document.getElementById("clientSearchForm"),
-          searchInput = document.getElementById("clientSearchInput"),
-          clientResult = document.getElementById("clientResult");
-
-    searchBtn.onclick = () => searchModal.classList.remove("opacity-0","pointer-events-none");
-    closeModal.onclick = () => searchModal.classList.add("opacity-0","pointer-events-none");
-    cancelSearch.onclick = () => {
-      searchForm.reset();
-      clientResult.innerHTML = '';
-      searchModal.classList.add("opacity-0","pointer-events-none");
-    };
 
     searchForm.onsubmit = async e => {
       e.preventDefault();
