@@ -790,9 +790,8 @@ window.onload = function() {
   // Initial render call
   render();
 
-  
-      // Search Client logic
-      var searchBtn = document.getElementById("searchClientBtn");
+  // Search Client logic
+  var searchBtn = document.getElementById("searchClientBtn");
       var searchModal = document.getElementById("searchClientModal");
       var closeModal = document.getElementById("closeClientModal");
       var cancelSearchBtn = document.getElementById("clientSearchCancel");
@@ -800,50 +799,31 @@ window.onload = function() {
       var searchInput = document.getElementById("clientSearchInput");
       var clientResult = document.getElementById("clientResult");
 
-      // Open modal
       searchBtn.addEventListener("click", function() {
-        searchModal.classList.remove("opacity-0", "pointer-events-none");
+        searchModal.classList.remove("opacity-0","pointer-events-none");
       });
-
-      // Close modal
       closeModal.addEventListener("click", function() {
-        searchModal.classList.add("opacity-0", "pointer-events-none");
+        searchModal.classList.add("opacity-0","pointer-events-none");
       });
-
-      // Cancel search
       cancelSearchBtn.addEventListener("click", function() {
         searchForm.reset();
-        clientResult.innerHTML = "";
-        searchModal.classList.add("opacity-0", "pointer-events-none");
+        clientResult.innerHTML = '';
+        searchModal.classList.add("opacity-0","pointer-events-none");
       });
 
-      // Handle form submission
+            
       searchForm.addEventListener("submit", function(e) {
         e.preventDefault();
         var nameInput = searchInput.value.trim().toLowerCase();
         if (!nameInput) return;
-        clientResult.innerHTML = "Φόρτωση...";
-        db.collection("clients").get().then(function(snap) {
-          var matches = snap.docs.filter(function(doc) {
-            var clientName = (doc.data().name || "").toLowerCase();
-            return clientName.includes(nameInput);
-          });
-          if (matches.length === 0) {
-            clientResult.innerHTML = "<p>Δε βρέθηκε πελάτης με αυτή την επωνυμία.</p>";
-          } else {
-            var data = matches[0].data();
-            clientResult.innerHTML = '<div class="bg-softbg p-4 rounded shadow">' +
-              '<p><strong>Επωνυμία:</strong> ' + data.name + '</p>' +
-              '<p><strong>Διεύθυνση:</strong> ' + (data.address || "—") + '</p>' +
-              '<p><strong>Τηλέφωνο:</strong> ' + (data.phone || "—") + '</p>' +
-              "</div>";
-          }
-        }).catch(function(error) {
-          console.error(error);
-          clientResult.innerHTML = '<p class="text-danger">Σφάλμα αναζήτησης.</p>';
-        });
-      });
-if (matches.length === 0) {
+        clientResult.innerHTML = 'Φόρτωση...';
+        db.collection("clients").get()
+          .then(function(snap) {
+            var matches = snap.docs.filter(function(doc) {
+              var clientName = doc.data().name || '';
+              return clientName.toLowerCase().includes(nameInput);
+            });
+            if (matches.length === 0) {
               clientResult.innerHTML = '<p>Δε βρέθηκε πελάτης με αυτή την επωνυμία.</p>';
             } else {
               var data = matches[0].data();
@@ -889,15 +869,6 @@ if(matches.length === 0){
           clientResult.innerHTML = '<p class="text-danger">Σφάλμα αναζήτησης.</p>';
         });
       });
-      if(matches.length === 0){
-        clientResult.innerHTML = '<p>Δε βρέθηκε πελάτης με αυτή την επωνυμία.</p>';
-      } else {
-        var data = matches[0].data();
-        clientResult.innerHTML = '<div class="bg-softbg p-4 rounded shadow">'
-          + '<p><strong>Επωνυμία:</strong> '+data.name+'</p>'
-          + '<p><strong>Διεύθυνση:</strong> '+(data.address||'—')+'</p>'
-          + '<p><strong>Τηλέφωνο:</strong> '+(data.phone||'—')+'</p>'
-          + '</div>';
       }
     }).catch(function(){
       clientResult.innerHTML = '<p class="text-danger">Σφάλμα αναζήτησης.</p>';
