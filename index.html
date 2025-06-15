@@ -292,7 +292,6 @@
       } else render();
 
       // Refresh stigma
-      refreshBtn.onclick = () => {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(pos => {
             userLat = pos.coords.latitude; userLng = pos.coords.longitude;
