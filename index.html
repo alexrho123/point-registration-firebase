@@ -194,28 +194,60 @@
 <!-- Hidden fallback file input -->
 <input accept="image/*" capture="environment" id="photoInput" style="display:none" type="file"/>
 <!-- Add Order Modal -->
-<div class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center p-4" id="orderModal">
-<div class="bg-white rounded-xl w-full max-w-xl modal-inner p-6 relative shadow-2xl">
-<button class="absolute top-4 right-4 text-gray-600 text-2xl hover:text-gray-800" onclick="closeOrderModal()">✕</button>
-<h2 class="text-3xl font-bold text-primary mb-6 text-center">Προσθήκη Παραγγελίας</h2>
-<form class="space-y-6" id="orderForm">
-<div class="space-y-4" id="orderItemsContainer"></div>
-<div class="flex justify-between items-center">
-<span class="text-xl font-medium">Σύνολο</span>
-<span class="text-2xl font-extrabold" id="orderTotal">€0.00</span>
+<div class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center p-4 z-50" id="orderModal"><div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 md:mx-0 transform scale-95 transition-transform duration-200">
+<div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+<h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Προσθήκη Παραγγελίας</h2>
+<button class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" onclick="closeOrderModal()" type="button">
+<svg class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
 </div>
-<div>
-<label class="block font-medium mb-1">Παρατηρήσεις (προαιρετικό)</label>
-<textarea class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary" id="orderRemarks" rows="3"></textarea>
+
+<div class="px-6 py-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
+<form class="space-y-4" id="orderForm">
+<!-- Client name readonly -->
+<div class="flex flex-col">
+<label class="text-sm font-medium text-gray-700 dark:text-gray-300" for="orderClientName">Πελάτης</label>
+<input class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" id="orderClientName" name="clientName" readonly="" type="text"/>
 </div>
-<div class="text-center">
-<button class="bg-success text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-success/90" type="submit">
-            Αποστολή Παραγγελίας
-          </button>
+<!-- DateTime -->
+<div class="flex flex-col">
+<label class="text-sm font-medium text-gray-700 dark:text-gray-300" for="orderDateTime">Ημερομηνία &amp; Ώρα</label>
+<input class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" id="orderDateTime" name="dateTime" type="datetime-local"/>
+</div>
+<!-- Items container -->
+<div class="space-y-2" id="orderItemsContainer">
+<label class="text-sm font-medium text-gray-700 dark:text-gray-300">Είδη Παραγγελίας</label>
+</div>
+<button class="inline-flex items-center px-3 py-1.5 bg-primary text-white text-sm font-medium rounded hover:bg-primary/90" onclick="addOrderItemRow()" type="button">
+<svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+          Προσθήκη Είδους
+        </button>
+<!-- Remarks -->
+<div class="flex flex-col">
+<label class="text-sm font-medium text-gray-700 dark:text-gray-300" for="orderRemarks">Παρατηρήσεις (προαιρετικό)</label>
+<textarea class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" id="orderRemarks" name="remarks" placeholder="Ειδικές οδηγίες, ώρα παράδοσης κ.λπ." rows="2"></textarea>
+</div>
+<!-- Total display -->
+<div class="flex justify-between items-center pt-2">
+<span class="text-xl font-medium text-gray-800 dark:text-gray-100">Σύνολο</span>
+<span class="text-2xl font-extrabold text-gray-800 dark:text-gray-100" id="orderTotal">€0.00</span>
 </div>
 </form>
 </div>
+
+<div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-2">
+<button class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-500" onclick="closeOrderModal()" type="button">
+        Άκυρο
+      </button>
+<button class="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90" id="submitOrderBtn" type="button">
+        Αποστολή
+      </button>
 </div>
+</div></div>
 <script>
     // Initialize Firebase
     const firebaseConfig = {
@@ -754,6 +786,169 @@ document.addEventListener('DOMContentLoaded', function() {
         var name = nameEl ? nameEl.textContent.toLowerCase() : '';
         card.style.display = name.includes(filter) ? '' : 'none';
       });
+    });
+  }
+});
+</script><script>
+// Order Modal functions
+let currentOrderClientId = null;
+
+function openOrderModal(clientId) {
+  currentOrderClientId = clientId;
+  // Set client name
+  const nameInput = document.getElementById('orderClientName');
+  if (nameInput && window.allPoints) {
+    const doc = allPoints.find(d => d.id === clientId);
+    nameInput.value = doc ? (doc.name || '') : '';
+  }
+  // Set current datetime
+  const dtInput = document.getElementById('orderDateTime');
+  if (dtInput) {
+    const now = new Date();
+    const pad = n => n.toString().padStart(2,'0');
+    const localISO = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    dtInput.value = localISO;
+  }
+  // Clear previous items
+  const itemsContainer = document.getElementById('orderItemsContainer');
+  if (itemsContainer) {
+    itemsContainer.querySelectorAll('.order-item-row').forEach(el => el.remove());
+  }
+  // Add one initial row
+  addOrderItemRow();
+  // Reset total and remarks
+  const totalSpan = document.getElementById('orderTotal');
+  if (totalSpan) totalSpan.textContent = '€0.00';
+  const remarksIn = document.getElementById('orderRemarks');
+  if (remarksIn) remarksIn.value = '';
+  // Show modal
+  const modal = document.getElementById('orderModal');
+  if (modal) {
+    modal.classList.remove('opacity-0','pointer-events-none');
+    setTimeout(() => {
+      const inner = modal.firstElementChild;
+      if (inner) inner.classList.remove('scale-95');
+      modal.classList.add('opacity-100');
+    }, 10);
+  }
+}
+
+function closeOrderModal() {
+  const modal = document.getElementById('orderModal');
+  if (modal) {
+    const inner = modal.firstElementChild;
+    if (inner) {
+      inner.classList.add('scale-95');
+    }
+    modal.classList.remove('opacity-100');
+    setTimeout(() => {
+      modal.classList.add('opacity-0','pointer-events-none');
+    }, 200);
+  }
+  // Reset form
+  const form = document.getElementById('orderForm');
+  if (form) form.reset();
+  currentOrderClientId = null;
+}
+
+function addOrderItemRow() {
+  const container = document.getElementById('orderItemsContainer');
+  if (!container) return;
+  const row = document.createElement('div');
+  row.className = 'order-item-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg';
+  // Product selector (if products collection exists) or text input
+  const prodInput = document.createElement('input');
+  prodInput.type = 'text';
+  prodInput.name = 'productName';
+  prodInput.placeholder = 'Προϊόν';
+  prodInput.required = true;
+  prodInput.className = 'flex-1 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary';
+  // Quantity input
+  const qtyInput = document.createElement('input');
+  qtyInput.type = 'number';
+  qtyInput.name = 'quantity';
+  qtyInput.placeholder = 'Ποσότητα';
+  qtyInput.min = '1';
+  qtyInput.value = '1';
+  qtyInput.required = true;
+  qtyInput.className = 'w-20 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary';
+  qtyInput.addEventListener('input', updateOrderTotal);
+  // Delete button
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button';
+  delBtn.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500 hover:text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+    </svg>`;
+  delBtn.onclick = () => {
+    row.remove();
+    updateOrderTotal();
+  };
+  // Append elements
+  row.append(prodInput, qtyInput, delBtn);
+  container.append(row);
+}
+
+function updateOrderTotal() {
+  let total = 0;
+  document.querySelectorAll('#orderItemsContainer .order-item-row').forEach(row => {
+    const prodName = row.querySelector('input[name="productName"]')?.value.trim();
+    const qty = parseInt(row.querySelector('input[name="quantity"]')?.value) || 0;
+    let price = 0;
+    // If products collection exists with price data, could fetch price; here leave price=0 or implement lookup
+    // For now, subtotal remains 0; user can adjust if needed
+    const subtotal = qty * price;
+    const spanSub = row.querySelector('.item-subtotal');
+    if (spanSub) spanSub.textContent = `€${subtotal.toFixed(2)}`;
+    total += subtotal;
+  });
+  const totalSpan = document.getElementById('orderTotal');
+  if (totalSpan) totalSpan.textContent = `€${total.toFixed(2)}`;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const submitBtn = document.getElementById('submitOrderBtn');
+  if (submitBtn) {
+    submitBtn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      if (!currentOrderClientId) {
+        alert('Δεν έχει επιλεχθεί πελάτης.');
+        return;
+      }
+      const form = document.getElementById('orderForm');
+      if (!form) return;
+      // Gather data
+      const data = {};
+      data.clientId = currentOrderClientId;
+      const dtInput = document.getElementById('orderDateTime');
+      data.dateTime = dtInput && dtInput.value ? new Date(dtInput.value) : new Date();
+      // Items
+      const items = [];
+      document.querySelectorAll('#orderItemsContainer .order-item-row').forEach(row => {
+        const name = row.querySelector('input[name="productName"]')?.value.trim();
+        const qty = parseInt(row.querySelector('input[name="quantity"]')?.value) || 0;
+        if (name && qty > 0) {
+          items.push({ name, quantity: qty });
+        }
+      });
+      if (items.length === 0) {
+        alert('Πρέπει να προσθέσεις τουλάχιστον ένα είδος.');
+        return;
+      }
+      data.items = items;
+      const remarksIn = document.getElementById('orderRemarks');
+      if (remarksIn) data.remarks = remarksIn.value.trim();
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      try {
+        // Save under points/{id}/orders
+        await firebase.firestore().collection('points').doc(currentOrderClientId)
+          .collection('orders').add(data);
+        alert('Η παραγγελία καταχωρήθηκε!');
+        closeOrderModal();
+      } catch(err) {
+        console.error('Error saving order:', err);
+        alert('Σφάλμα κατά την αποθήκευση της παραγγελίας.');
+      }
     });
   }
 });
