@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
-<title>Καταχώριση Σημείου (Firebase) με ταξινόμηση &amp; Παραγγελίες</title>
+<title>Nobacco Sales</title>
 <!-- Tailwind CSS + custom colors -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -740,4 +740,157 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
-</script></body></html>
+</script>
+<script>
+// Enhancement: real-time Firestore onSnapshot, live search override, proximity highlight, geolocation watch
+(function() {
+  // Initialize Firebase if not already initialized
+  if (typeof firebase !== 'undefined' && (!firebase.apps || !firebase.apps.length)) {
+    const firebaseConfig = {
+      apiKey: "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
+      authDomain: "pointregistrationapp.firebaseapp.com",
+      projectId: "pointregistrationapp",
+      storageBucket: "pointregistrationapp.appspot.com",
+      messagingSenderId: "925139386507",
+      appId: "1:925139386507:web:588ae991f39a7bab04548e"
+    };
+    firebase.initializeApp(firebaseConfig);
+  }
+  const db = (typeof firebase !== 'undefined') ? firebase.firestore() : null;
+  document.addEventListener('DOMContentLoaded', function() {
+    const liveInput = document.getElementById('liveSearchInput');
+    const container = document.getElementById('pointsContainer');
+    if (!container || !db) return;
+    let clientDocs = [];
+    let userLat = null, userLng = null;
+    const AUTO_RADIUS_KM = 0.05; // 50 meters highlight
+
+    function getDistanceKm(lat1, lon1, lat2, lon2) {
+      function toRad(x) { return x * Math.PI / 180; }
+      const R = 6371;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    function createClientCard(doc, distKm) {
+      const data = doc.data();
+      const card = document.createElement('div');
+      let classes = 'client-card bg-white p-4 rounded-lg shadow mb-4 w-full max-w-sm';
+      if (distKm !== null && distKm <= AUTO_RADIUS_KM) {
+        classes += ' border-2 border-success bg-green-50';
+      }
+      card.className = classes;
+      const name = data.name || '';
+      let titleText = name;
+      if (distKm !== null) {
+        titleText += ' (' + distKm.toFixed(2) + ' km)';
+      }
+      const h3 = document.createElement('h3');
+      h3.className = 'text-lg font-bold text-center text-darktext uppercase';
+      h3.textContent = titleText;
+      card.append(h3);
+      // Buttons row
+      const btnRow = document.createElement('div');
+      btnRow.className = 'mt-2 flex justify-center gap-2 flex-wrap';
+      ['Επίσκεψη','Αλλαγή','Διαγραφή','Προβολή'].forEach(lbl=>{
+        const b = document.createElement('button');
+        const base = 'px-3 py-1 text-xs rounded text-white';
+        if(lbl==='Επίσκεψη') b.className = base + ' bg-success';
+        else if(lbl==='Αλλαγή') b.className = base + ' bg-accent';
+        else if(lbl==='Διαγραφή') b.className = base + ' bg-danger';
+        else b.className = base + ' bg-region';
+        b.textContent = lbl;
+        card.append(b);
+      });
+      // Last visit info
+      if (data.lastVisit) {
+        const p = document.createElement('p');
+        p.className = 'text-xs text-gray-500 italic mt-2 text-center';
+        const dateVal = data.lastVisit.toDate ? data.lastVisit.toDate() : new Date(data.lastVisit);
+        p.textContent = 'Τελευταία επίσκεψη: ' + dateVal.toLocaleString();
+        card.append(p);
+      }
+      // Order & Map buttons
+      const orderBtn = document.createElement('button');
+      orderBtn.textContent = 'Προσθήκη Παραγγελίας';
+      orderBtn.className = 'block w-full mt-2 bg-accent text-white py-1 rounded uppercase text-xs hover:bg-accent/90';
+      card.append(orderBtn);
+      const mapLink = document.createElement('a');
+      if (data.lat != null && data.lng != null) {
+        mapLink.href = `https://www.google.com/maps/search/?api=1&query=${data.lat},${data.lng}`;
+      } else {
+        mapLink.href = '#';
+      }
+      mapLink.target = '_blank';
+      mapLink.className = 'block text-center bg-primary text-white py-1 rounded uppercase text-xs mt-1 hover:bg-primary/90';
+      mapLink.textContent = 'ΧΑΡΤΗΣ';
+      card.append(mapLink);
+      return card;
+    }
+
+    function computeAndRender() {
+      if (!clientDocs.length) {
+        container.innerHTML = '<p class="text-gray-600 text-center">Δεν υπάρχουν καταχωρίσεις.</p>';
+        return;
+      }
+      let docsWithDist = clientDocs.map(doc => {
+        const data = doc.data();
+        if (userLat != null && data.lat != null && data.lng != null) {
+          const dist = getDistanceKm(userLat, userLng, data.lat, data.lng);
+          return { doc: doc, distKm: dist };
+        }
+        return { doc: doc, distKm: null };
+      });
+      const filter = liveInput ? liveInput.value.trim().toLowerCase() : '';
+      if (filter) {
+        docsWithDist = docsWithDist.filter(item => {
+          return (item.doc.data().name || '').toLowerCase().includes(filter);
+        });
+      }
+      docsWithDist.sort((a,b) => {
+        if (a.distKm===null && b.distKm===null) return 0;
+        if (a.distKm===null) return 1;
+        if (b.distKm===null) return -1;
+        return a.distKm - b.distKm;
+      });
+      container.innerHTML = '';
+      docsWithDist.forEach(item => {
+        container.append(createClientCard(item.doc, item.distKm));
+      });
+    }
+
+    // Firestore real-time listener
+    db.collection('clients').onSnapshot(snapshot => {
+      clientDocs = snapshot.docs;
+      computeAndRender();
+    });
+
+    // Geolocation watch
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(pos => {
+        userLat = pos.coords.latitude;
+        userLng = pos.coords.longitude;
+        computeAndRender();
+      }, err => {
+        console.warn('Geolocation error', err);
+        computeAndRender();
+      }, { enableHighAccuracy: true, maximumAge: 30000, timeout: 27000 });
+    } else {
+      computeAndRender();
+    }
+
+    // Live search input listener
+    if (liveInput) {
+      liveInput.addEventListener('input', () => {
+        computeAndRender();
+      });
+    }
+  });
+})();
+</script>
+</body></html>
