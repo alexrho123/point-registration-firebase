@@ -313,8 +313,7 @@
             totalSpan = document.getElementById("orderTotal"),
             remarksIn = document.getElementById("orderRemarks");
 
-      
-            const totalSpanEl = document.getElementById("orderTotal");window.openOrderModal = openOrderModal;
+      window.openOrderModal = openOrderModal;
       window.closeOrderModal = closeOrderModal;
 
       // Geolocation on load
@@ -552,115 +551,14 @@
       closePhoto.onclick = ()=> photoModal.classList.add("opacity-0","pointer-events-none");
 
       // Order modal functions
-      
-
-
-function openOrderModal(clientId) {
-  currentOrderClientId = clientId;
-  // Set client name
-  const nameInput = document.getElementById('orderClientName');
-  if (nameInput && window.clientDocs) {
-    const doc = window.clientDocs.find(d => d.id === clientId);
-    nameInput.value = doc ? (doc.data().name || "") : "";
-  }
-  // Set current datetime automatically
-  const dtInput = document.getElementById('orderDateTime');
-  if (dtInput) {
-    const now = new Date();
-    const pad = n => n.toString().padStart(2,'0');
-    const year = now.getFullYear();
-    const month = pad(now.getMonth()+1);
-    const day = pad(now.getDate());
-    const hour = pad(now.getHours());
-    const minute = pad(now.getMinutes());
-    const localISO = year + "-" + month + "-" + day + "T" + hour + ":" + minute;
-    dtInput.value = localISO;
-  }
-  // Clear previous items
-  const itemsContainer = document.getElementById('orderItemsContainer');
-  if (itemsContainer) {
-    itemsContainer.querySelectorAll('.order-item-row').forEach(el => el.remove());
-  }
-  // Reset total and remarks
-  
-  if (totalSpanEl) totalSpanEl.textContent = '€0.00';
-  let remarksIn = document.getElementById('orderRemarks');
-  if (remarksIn) remarksIn.value = '';
-  // Add one initial row
-  addOrderItemRow();
-  // Show modal
-  const modal = document.getElementById('orderModal');
-  if (modal) {
-    modal.classList.remove('opacity-0','pointer-events-none');
-    setTimeout(() => {
-      const inner = modal.firstElementChild;
-      if (inner) inner.classList.remove('scale-95');
-      modal.classList.add('opacity-100');
-    }, 10);
-  }
-}
-// Set current datetime automatically
-  const dtInput = document.getElementById('orderDateTime');
-  if (dtInput) {
-    const now = new Date();
-    const pad = n => n.toString().padStart(2,'0');
-    const localISO = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
-    dtInput.value = localISO;
-  }
-  // Clear previous items
-  const itemsContainer = document.getElementById('orderItemsContainer');
-  if (itemsContainer) {
-    itemsContainer.querySelectorAll('.order-item-row').forEach(el => el.remove());
-  }
-  // Reset total and remarks
-  
-  if (totalSpanEl) totalSpanEl.textContent = '€0.00';
-  const remarksIn = document.getElementById('orderRemarks');
-  if (remarksIn) remarksIn.value = '';
-  // Add one initial row
-  addOrderItemRow();
-  // Show modal
-  const modal = document.getElementById('orderModal');
-  if (modal) {
-    modal.classList.remove('opacity-0','pointer-events-none');
-    setTimeout(() => {
-      const inner = modal.firstElementChild;
-      if (inner) inner.classList.remove('scale-95');
-      modal.classList.add('opacity-100');
-    }, 10);
-  }
-}
-
-  // Set current datetime automatically
-  const dtInput = document.getElementById('orderDateTime');
-  if (dtInput) {
-    const now = new Date();
-    const pad = n => n.toString().padStart(2,'0');
-    dtInput.value = localISO;
-  }
-  // Clear previous items
-  const itemsContainer = document.getElementById('orderItemsContainer');
-  if (itemsContainer) {
-    itemsContainer.querySelectorAll('.order-item-row').forEach(el => el.remove());
-  }
-  // Reset total and remarks
-  
-  if (totalSpanEl) totalSpanEl.textContent = '€0.00';
-  const remarksIn = document.getElementById('orderRemarks');
-  if (remarksIn) remarksIn.value = '';
-  // Add one initial row
-  addOrderItemRow();
-  // Show modal
-  const modal = document.getElementById('orderModal');
-  if (modal) {
-    modal.classList.remove('opacity-0','pointer-events-none');
-    setTimeout(() => {
-      const inner = modal.firstElementChild;
-      if (inner) inner.classList.remove('scale-95');
-      modal.classList.add('opacity-100');
-    }, 10);
-  }
-}
+      function openOrderModal(pointId){
+        currentPointId = pointId;
+        itemsCont.innerHTML = '';
+        totalSpan.textContent = '€0.00';
+        remarksIn.value = '';
+        db.collection('products').get().then(snap=>{
+          snap.docs.forEach(doc=>{
+            const {name, price} = doc.data();
             const row = document.createElement('div');
             row.className = 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 bg-gray-50 rounded-lg shadow-inner';
             const spanName = document.createElement('span');
@@ -893,81 +791,28 @@ document.addEventListener('DOMContentLoaded', function() {
 // Order Modal functions
 let currentOrderClientId = null;
 
-
-
-
-
-// Set current datetime automatically
-  const dtInput = document.getElementById('orderDateTime');
-  if (dtInput) {
-    const now = new Date();
-    const pad = n => n.toString().padStart(2,'0');
-    const localISO = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
-    dtInput.value = localISO;
-  }
-  // Clear previous items
-  const itemsContainer = document.getElementById('orderItemsContainer');
-  if (itemsContainer) {
-    itemsContainer.querySelectorAll('.order-item-row').forEach(el => el.remove());
-  }
-  // Reset total and remarks
-  
-  if (totalSpanEl) totalSpanEl.textContent = '€0.00';
-  const remarksIn = document.getElementById('orderRemarks');
-  if (remarksIn) remarksIn.value = '';
-  // Add one initial row
-  addOrderItemRow();
-  // Show modal
-  const modal = document.getElementById('orderModal');
-  if (modal) {
-    modal.classList.remove('opacity-0','pointer-events-none');
-    setTimeout(() => {
-      const inner = modal.firstElementChild;
-      if (inner) inner.classList.remove('scale-95');
-      modal.classList.add('opacity-100');
-    }, 10);
-  }
-}
-
+function openOrderModal(clientId) {
+  currentOrderClientId = clientId;
+  // Set client name
+  const nameInput = document.getElementById('orderClientName');
+  if (nameInput && window.clientDocs) {
+    const doc = window.clientDocs.find(d => d.id === clientId);
+    nameInput.value = doc ? (doc.data().name || "") : "";
   // Set current datetime automatically
   const dtInput = document.getElementById('orderDateTime');
   if (dtInput) {
     const now = new Date();
     const pad = n => n.toString().padStart(2,'0');
+    const localISO = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
     dtInput.value = localISO;
   }
-  // Clear previous items
-  const itemsContainer = document.getElementById('orderItemsContainer');
-  if (itemsContainer) {
-    itemsContainer.querySelectorAll('.order-item-row').forEach(el => el.remove());
-  }
-  // Reset total and remarks
-  
-  if (totalSpanEl) totalSpanEl.textContent = '€0.00';
-  const remarksIn = document.getElementById('orderRemarks');
-  if (remarksIn) remarksIn.value = '';
-  // Add one initial row
-  addOrderItemRow();
-  // Show modal
-  const modal = document.getElementById('orderModal');
-  if (modal) {
-    modal.classList.remove('opacity-0','pointer-events-none');
-    setTimeout(() => {
-      const inner = modal.firstElementChild;
-      if (inner) inner.classList.remove('scale-95');
-      modal.classList.add('opacity-100');
-    }, 10);
-  }
-}
-    dtInput.value = localISO;
-  }
- : '';
   }
   // Set current datetime
   const dtInput = document.getElementById('orderDateTime');
   if (dtInput) {
     const now = new Date();
     const pad = n => n.toString().padStart(2,'0');
+    const localISO = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
     dtInput.value = localISO;
   }
   // Clear previous items
@@ -978,8 +823,8 @@ let currentOrderClientId = null;
   // Add one initial row
   addOrderItemRow();
   // Reset total and remarks
-  
-  if (totalSpanEl) totalSpanEl.textContent = '€0.00';
+  const totalSpan = document.getElementById('orderTotal');
+  if (totalSpan) totalSpan.textContent = '€0.00';
   const remarksIn = document.getElementById('orderRemarks');
   if (remarksIn) remarksIn.value = '';
   // Show modal
@@ -1063,8 +908,8 @@ function updateOrderTotal() {
     if (spanSub) spanSub.textContent = `€${subtotal.toFixed(2)}`;
     total += subtotal;
   });
-  
-  if (totalSpanEl) totalSpanEl.textContent = `€${total.toFixed(2)}`;
+  const totalSpan = document.getElementById('orderTotal');
+  if (totalSpan) totalSpan.textContent = `€${total.toFixed(2)}`;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
