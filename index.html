@@ -865,7 +865,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Firestore real-time listener
-    db.collection('clients').onSnapshot(snapshot => {
+    db.collection('points').onSnapshot(snapshot => {
       clientDocs = snapshot.docs;
       computeAndRender();
     });
