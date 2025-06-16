@@ -458,7 +458,7 @@
         const checked = [...container.querySelectorAll("input[type=checkbox]:checked")];
         if (!checked.length) return alert("Επιλέξτε σημεία.");
         const coords = checked.map(cb => {
-          const p = allPoints.find(x=>x.id===cb.dataset.id);
+          const p = window.clientDocs.find(x=>x.id===cb.dataset.id);
           return `${p.latitude},${p.longitude}`;
         });
         const o = coords.shift(), d = coords.pop(), w = coords.join("|");
@@ -796,7 +796,7 @@ function openOrderModal(clientId) {
   // Set client name
   const nameInput = document.getElementById('orderClientName');
   if (nameInput && window.allPoints) {
-    const doc = allPoints.find(d => d.id === clientId);
+    const doc = window.clientDocs.find(d => d.id === clientId);
     nameInput.value = doc ? (doc.name || '') : '';
   }
   // Set current datetime
