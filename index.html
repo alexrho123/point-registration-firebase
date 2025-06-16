@@ -203,7 +203,6 @@
 </svg>
 </button>
 </div>
-
 <div class="px-6 py-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
 <form class="space-y-4" id="orderForm">
 <!-- Client name readonly -->
@@ -214,7 +213,7 @@
 <!-- DateTime -->
 <div class="flex flex-col">
 <label class="text-sm font-medium text-gray-700 dark:text-gray-300" for="orderDateTime">Ημερομηνία &amp; Ώρα</label>
-<input class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" id="orderDateTime" name="dateTime" type="datetime-local"/>
+<input class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" disabled="" id="orderDateTime" name="dateTime" type="datetime-local"/>
 </div>
 <!-- Items container -->
 <div class="space-y-2" id="orderItemsContainer">
@@ -238,7 +237,6 @@
 </div>
 </form>
 </div>
-
 <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-2">
 <button class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-500" onclick="closeOrderModal()" type="button">
         Άκυρο
@@ -855,14 +853,14 @@ function addOrderItemRow() {
   const container = document.getElementById('orderItemsContainer');
   if (!container) return;
   const row = document.createElement('div');
-  row.className = 'order-item-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg';
+    row.className = 'order-item-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 p-1 bg-gray-50 dark:bg-gray-700 rounded-md';
   // Product selector (if products collection exists) or text input
   const prodInput = document.createElement('input');
   prodInput.type = 'text';
   prodInput.name = 'productName';
   prodInput.placeholder = 'Προϊόν';
   prodInput.required = true;
-  prodInput.className = 'flex-1 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary';
+    prodInput.className = 'flex-1 border border-gray-300 dark:border-gray-600 rounded-md px-1 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary';
   // Quantity input
   const qtyInput = document.createElement('input');
   qtyInput.type = 'number';
@@ -871,7 +869,7 @@ function addOrderItemRow() {
   qtyInput.min = '1';
   qtyInput.value = '1';
   qtyInput.required = true;
-  qtyInput.className = 'w-20 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary';
+    qtyInput.className = 'w-16 border border-gray-300 dark:border-gray-600 rounded-md px-1 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary';
   qtyInput.addEventListener('input', updateOrderTotal);
   // Delete button
   const delBtn = document.createElement('button');
@@ -951,5 +949,4 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
-});
-</script></body></html>
+});</script></body></html>
