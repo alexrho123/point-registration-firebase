@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
-<title>Hayati Sales</title>
+<title>Καταχώριση Σημείου (Firebase) με ταξινόμηση &amp; Παραγγελίες</title>
 <!-- Tailwind CSS + custom colors -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -313,7 +313,8 @@
             totalSpan = document.getElementById("orderTotal"),
             remarksIn = document.getElementById("orderRemarks");
 
-      window.openOrderModal = openOrderModal;
+      
+            const totalSpanEl = document.getElementById("orderTotal");window.openOrderModal = openOrderModal;
       window.closeOrderModal = closeOrderModal;
 
       // Geolocation on load
@@ -581,8 +582,8 @@ function openOrderModal(clientId) {
     itemsContainer.querySelectorAll('.order-item-row').forEach(el => el.remove());
   }
   // Reset total and remarks
-  let totalSpan = document.getElementById('orderTotal');
-  if (totalSpan) totalSpan.textContent = '€0.00';
+  
+  if (totalSpanEl) totalSpanEl.textContent = '€0.00';
   let remarksIn = document.getElementById('orderRemarks');
   if (remarksIn) remarksIn.value = '';
   // Add one initial row
@@ -612,8 +613,8 @@ function openOrderModal(clientId) {
     itemsContainer.querySelectorAll('.order-item-row').forEach(el => el.remove());
   }
   // Reset total and remarks
-  const totalSpan = document.getElementById('orderTotal');
-  if (totalSpan) totalSpan.textContent = '€0.00';
+  
+  if (totalSpanEl) totalSpanEl.textContent = '€0.00';
   const remarksIn = document.getElementById('orderRemarks');
   if (remarksIn) remarksIn.value = '';
   // Add one initial row
@@ -643,8 +644,8 @@ function openOrderModal(clientId) {
     itemsContainer.querySelectorAll('.order-item-row').forEach(el => el.remove());
   }
   // Reset total and remarks
-  const totalSpan = document.getElementById('orderTotal');
-  if (totalSpan) totalSpan.textContent = '€0.00';
+  
+  if (totalSpanEl) totalSpanEl.textContent = '€0.00';
   const remarksIn = document.getElementById('orderRemarks');
   if (remarksIn) remarksIn.value = '';
   // Add one initial row
@@ -910,8 +911,8 @@ let currentOrderClientId = null;
     itemsContainer.querySelectorAll('.order-item-row').forEach(el => el.remove());
   }
   // Reset total and remarks
-  const totalSpan = document.getElementById('orderTotal');
-  if (totalSpan) totalSpan.textContent = '€0.00';
+  
+  if (totalSpanEl) totalSpanEl.textContent = '€0.00';
   const remarksIn = document.getElementById('orderRemarks');
   if (remarksIn) remarksIn.value = '';
   // Add one initial row
@@ -941,8 +942,8 @@ let currentOrderClientId = null;
     itemsContainer.querySelectorAll('.order-item-row').forEach(el => el.remove());
   }
   // Reset total and remarks
-  const totalSpan = document.getElementById('orderTotal');
-  if (totalSpan) totalSpan.textContent = '€0.00';
+  
+  if (totalSpanEl) totalSpanEl.textContent = '€0.00';
   const remarksIn = document.getElementById('orderRemarks');
   if (remarksIn) remarksIn.value = '';
   // Add one initial row
@@ -977,8 +978,8 @@ let currentOrderClientId = null;
   // Add one initial row
   addOrderItemRow();
   // Reset total and remarks
-  const totalSpan = document.getElementById('orderTotal');
-  if (totalSpan) totalSpan.textContent = '€0.00';
+  
+  if (totalSpanEl) totalSpanEl.textContent = '€0.00';
   const remarksIn = document.getElementById('orderRemarks');
   if (remarksIn) remarksIn.value = '';
   // Show modal
@@ -1062,8 +1063,8 @@ function updateOrderTotal() {
     if (spanSub) spanSub.textContent = `€${subtotal.toFixed(2)}`;
     total += subtotal;
   });
-  const totalSpan = document.getElementById('orderTotal');
-  if (totalSpan) totalSpan.textContent = `€${total.toFixed(2)}`;
+  
+  if (totalSpanEl) totalSpanEl.textContent = `€${total.toFixed(2)}`;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
