@@ -233,7 +233,7 @@
       // Φόρτωση δεδομένων παραγγελίας
       const orderRef = db.collection('points').doc(pointId).collection('orders').doc(orderId);
       orderRef.get().then(doc => {
-        const data = doc.data();
+        const data = doc.data() || {};
         // Ημερομηνία & Ώρα
         if (data.timestamp) {
           const d = data.timestamp.toDate();
