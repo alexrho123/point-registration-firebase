@@ -221,18 +221,37 @@
     function openEditOrder(pointId, orderId) {
       currentEditOrder = { pointId, orderId };
       document.getElementById('orderModal').classList.remove('hidden');
+      // Prefill Πελάτης με το όνομα του σημείου
+      db.collection('points').doc(pointId).get().then(ptDoc => {
+        if (ptDoc.exists) {
+          document.getElementById('orderClientName').value = ptDoc.data().name || '';
+        }
+      });
       const form = document.getElementById('orderForm');
       form.reset();
       document.getElementById('orderItemsContainer').innerHTML = '';
+      // Φόρτωση δεδομένων παραγγελίας
       const orderRef = db.collection('points').doc(pointId).collection('orders').doc(orderId);
       orderRef.get().then(doc => {
         const data = doc.data();
-        document.getElementById('orderClientName').value = data.clientName || '';
+        // Ημερομηνία & Ώρα
         if (data.timestamp) {
           const d = data.timestamp.toDate();
           const pad = n => String(n).padStart(2,'0');
-          document.getElementById('orderDateTime').value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+          document.getElementById('orderDateTime').value =
+            `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
         }
+        // Παρατηρήσεις
+        document.getElementById('orderRemarks').value = data.remarks || '';
+        // Είδη παραγγελίας
+        orderRef.collection('items').get().then(itemsSnap => {
+          itemsSnap.forEach(itemDoc => {
+            const item = itemDoc.data();
+            addOrderItemRow({ productId: item.productId.id.split('/').pop(), quantity: item.quantity });
+          });
+        });
+      });
+    }
         document.getElementById('orderRemarks').value = data.remarks || '';
         orderRef.collection('items').get().then(itemsSnap => {
           itemsSnap.forEach(itemDoc => {
