@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Panel</title>
+  <title>Πίνακας Διαχείρισης</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -11,10 +11,10 @@
 </head>
 <body class="bg-gray-100">
 
-  <!-- Login Modal -->
+  <!-- Σύνδεση Modal -->
   <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
-      <h2 class="text-2xl font-bold mb-4">Admin Login</h2>
+      <h2 class="text-2xl font-bold mb-4">Admin Σύνδεση</h2>
       <form id="loginForm" class="space-y-4">
         <label class="block">
           Username
@@ -25,7 +25,7 @@
           <input type="password" id="loginPassword" required class="w-full border px-3 py-2 rounded"/>
         </label>
         <div class="text-right">
-          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Login</button>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Σύνδεση</button>
         </div>
       </form>
     </div>
@@ -36,61 +36,61 @@
 
     <!-- Navbar -->
     <nav class="bg-white shadow p-4 flex justify-between">
-      <h1 class="text-xl font-bold">Admin Panel</h1>
-      <button id="logoutBtn" class="bg-red-500 text-white px-3 py-1 rounded">Logout</button>
+      <h1 class="text-xl font-bold">Πίνακας Διαχείρισης</h1>
+      <button id="logoutBtn" class="bg-red-500 text-white px-3 py-1 rounded">Αποσύνδεση</button>
     </nav>
 
     <!-- Tabs -->
     <div class="p-4">
       <ul id="tabs" class="flex space-x-4 border-b">
-        <li data-tab="dashboard" class="pb-2 border-blue-600 cursor-pointer">Dashboard</li>
-        <li data-tab="orders" class="pb-2 cursor-pointer">Orders</li>
-        <li data-tab="customers" class="pb-2 cursor-pointer">Customers</li>
-        <li data-tab="products" class="pb-2 cursor-pointer">Products</li>
+        <li data-tab="dashboard" class="pb-2 border-blue-600 cursor-pointer">Πίνακας Ελέγχου</li>
+        <li data-tab="orders" class="pb-2 cursor-pointer">Παραγγελίες</li>
+        <li data-tab="customers" class="pb-2 cursor-pointer">Πελάτες</li>
+        <li data-tab="products" class="pb-2 cursor-pointer">Προϊόντα</li>
       </ul>
 
-      <!-- Dashboard -->
+      <!-- Πίνακας Ελέγχου -->
       <div id="dashboard" class="tab-content p-4">
         <div class="grid grid-cols-3 gap-4">
           <div class="bg-white p-4 rounded shadow">
-            <h2>Total Orders</h2>
-            <p id="totalOrders" class="text-2xl"></p>
+            <h2>Total Παραγγελίες</h2>
+            <p id="totalΠαραγγελίες" class="text-2xl"></p>
           </div>
           <div class="bg-white p-4 rounded shadow">
-            <h2>Total Revenue</h2>
+            <h2>Σύνολο Εσόδων</h2>
             <p id="totalRevenue" class="text-2xl"></p>
           </div>
           <div class="bg-white p-4 rounded shadow">
-            <h2>Customers</h2>
-            <p id="totalCustomers" class="text-2xl"></p>
+            <h2>Πελάτες</h2>
+            <p id="totalΠελάτες" class="text-2xl"></p>
           </div>
         </div>
       </div>
 
-      <!-- Orders -->
+      <!-- Παραγγελίες -->
       <div id="orders" class="tab-content hidden p-4">
-        <h2>Live Orders</h2>
+        <h2>Live Παραγγελίες</h2>
         <table class="min-w-full bg-white">
           <thead>
             <tr>
-              <th class="px-4 py-2">Customer</th>
-              <th class="px-4 py-2">Total (€)</th>
-              <th class="px-4 py-2">Timestamp</th>
+              <th class="px-4 py-2">Πελάτης</th>
+              <th class="px-4 py-2">Σύνολο (€)</th>
+              <th class="px-4 py-2">Ημερομηνία/Ώρα</th>
             </tr>
           </thead>
           <tbody id="ordersTable"></tbody>
         </table>
       </div>
 
-      <!-- Customers -->
+      <!-- Πελάτες -->
       <div id="customers" class="tab-content hidden p-4">
-        <h2>Customers</h2>
+        <h2>Πελάτες</h2>
         <table class="min-w-full bg-white mb-4">
           <thead>
             <tr>
-              <th class="px-4 py-2">Name</th>
-              <th class="px-4 py-2">Phone</th>
-              <th class="px-4 py-2">Address</th>
+              <th class="px-4 py-2">Όνομα</th>
+              <th class="px-4 py-2">Τηλέφωνο</th>
+              <th class="px-4 py-2">Προσθήκηress</th>
             </tr>
           </thead>
           <tbody id="customersTable"></tbody>
@@ -98,16 +98,16 @@
         <div id="customerDetails" class="bg-white p-4 rounded shadow hidden"></div>
       </div>
 
-      <!-- Products -->
+      <!-- Προϊόντα -->
       <div id="products" class="tab-content hidden p-4">
         <div class="flex justify-between mb-4">
-          <h2>Products</h2>
-          <button id="addProductBtn" class="bg-green-600 text-white px-3 py-1 rounded">Add</button>
+          <h2>Προϊόντα</h2>
+          <button id="addProductBtn" class="bg-green-600 text-white px-3 py-1 rounded">Προσθήκη</button>
         </div>
         <table class="min-w-full bg-white">
           <thead>
             <tr>
-              <th class="px-4 py-2">Name</th>
+              <th class="px-4 py-2">Όνομα</th>
               <th class="px-4 py-2">Price</th>
               <th class="px-4 py-2">Actions</th>
             </tr>
@@ -118,14 +118,14 @@
     </div>
   </div>
 
-  <!-- Add Product Modal -->
+  <!-- Προσθήκη Product Modal -->
   <div id="productModal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
     <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
-      <h2 class="text-xl mb-4">Add Product</h2>
+      <h2 class="text-xl mb-4">Προσθήκη Product</h2>
       <form id="productForm" class="space-y-4">
-        <label>Name<input type="text" id="productName" required class="w-full border px-3 py-2 rounded"/></label>
+        <label>Όνομα<input type="text" id="productΌνομα" required class="w-full border px-3 py-2 rounded"/></label>
         <label>Price<input type="number" id="productPrice" required class="w-full border px-3 py-2 rounded"/></label>
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Αποθήκευση</button>
       </form>
     </div>
   </div>
@@ -152,7 +152,7 @@
       e.preventDefault();
       var user = document.getElementById("loginUsername").value.trim();
       var pass = document.getElementById("loginPassword").value;
-      console.log("Login attempt:", user);
+      console.log("Σύνδεση attempt:", user);
       try {
         var doc = await db.collection("admins").doc(user).get();
         console.log("Admin doc:", doc.exists, doc.data());
@@ -164,7 +164,7 @@
         }
       } catch(err) {
         console.error(err);
-        alert("Login failed");
+        alert("Σύνδεση failed");
       }
     });
     logoutBtn.addEventListener("click", function() {
@@ -181,17 +181,17 @@
       });
     });
 
-    // Dashboard stats
-    async function updateDashboard() {
+    // Πίνακας Ελέγχου stats
+    async function updateΠίνακας Ελέγχου() {
       var ordersSnap = await db.collection("orders").get();
-      document.getElementById("totalOrders").textContent = ordersSnap.size;
+      document.getElementById("totalΠαραγγελίες").textContent = ordersSnap.size;
       var revenue = 0;
       ordersSnap.docs.forEach(function(d){revenue += d.data().total;});
       document.getElementById("totalRevenue").textContent = revenue.toFixed(2) + " €";
       var custSnap = await db.collection("clients").get();
-      document.getElementById("totalCustomers").textContent = custSnap.size;
+      document.getElementById("totalΠελάτες").textContent = custSnap.size;
     }
-    updateDashboard();
+    updateΠίνακας Ελέγχου();
 
     // Live orders
     db.collection("orders").onSnapshot(function(snap) {
@@ -200,12 +200,12 @@
       snap.docs.forEach(function(d) {
         var data = d.data();
         var tr = document.createElement("tr");
-        tr.innerHTML = "<td class='border px-4 py-2'>" + data.clientName + "</td><td class='border px-4 py-2'>" + data.total.toFixed(2) + "</td><td class='border px-4 py-2'>" + new Date(data.timestamp.toDate()).toLocaleString() + "</td>";
+        tr.innerHTML = "<td class='border px-4 py-2'>" + data.clientΌνομα + "</td><td class='border px-4 py-2'>" + data.total.toFixed(2) + "</td><td class='border px-4 py-2'>" + new Date(data.timestamp.toDate()).toLocaleString() + "</td>";
         tbody.appendChild(tr);
       });
     });
 
-    // Customers
+    // Πελάτες
     db.collection("clients").onSnapshot(function(snap) {
       var tbody = document.getElementById("customersTable");
       tbody.innerHTML = "";
@@ -221,17 +221,17 @@
       var d = (await db.collection("clients").doc(id).get()).data();
       var details = document.getElementById("customerDetails");
       details.classList.remove("hidden");
-      details.innerHTML = "<h3 class='font-bold'>" + d.name + "</h3><p><strong>Address:</strong> " + (d.address||"—") + "</p><p><strong>Phone:</strong> " + (d.phone||"—") + "</p>";
+      details.innerHTML = "<h3 class='font-bold'>" + d.name + "</h3><p><strong>Προσθήκηress:</strong> " + (d.address||"—") + "</p><p><strong>Τηλέφωνο:</strong> " + (d.phone||"—") + "</p>";
     }
 
-    // Products CRUD
+    // Προϊόντα CRUD
     var addBtn = document.getElementById("addProductBtn"),
         prodModal = document.getElementById("productModal"),
         prodForm = document.getElementById("productForm");
     addBtn.addEventListener("click", function(){ prodModal.classList.remove("hidden"); });
     prodForm.addEventListener("submit", async function(e){
       e.preventDefault();
-      var name = document.getElementById("productName").value.trim();
+      var name = document.getElementById("productΌνομα").value.trim();
       var price = parseFloat(document.getElementById("productPrice").value);
       await db.collection("products").add({ name: name, price: price });
       prodForm.reset();
@@ -243,7 +243,7 @@
       snap.docs.forEach(function(doc) {
         var data = doc.data();
         var tr = document.createElement("tr");
-        tr.innerHTML = "<td class='border px-4 py-2'>" + data.name + "</td><td class='border px-4 py-2'>" + data.price.toFixed(2) + "</td><td class='border px-4 py-2'><button data-id='"+doc.id+"' class='deleteProd text-red-500'>Delete</button></td>";
+        tr.innerHTML = "<td class='border px-4 py-2'>" + data.name + "</td><td class='border px-4 py-2'>" + data.price.toFixed(2) + "</td><td class='border px-4 py-2'><button data-id='"+doc.id+"' class='deleteProd text-red-500'>Διαγραφή</button></td>";
         tbody.appendChild(tr);
       });
       document.querySelectorAll(".deleteProd").forEach(function(b){
