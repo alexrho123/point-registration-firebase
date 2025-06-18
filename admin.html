@@ -64,7 +64,7 @@
         <li data-tab="orders" class="py-2 cursor-pointer hover:text-primary">Παραγγελίες</li>
       </ul>
     </div>
-    <main class="flex-1 overflow-auto p-6 bg-softbg">
+    <main class="flex-1 overflow-auto p-6 bg-softbg w-full">
       <!-- Users -->
       <section id="users" class="tab-content hidden flex flex-col items-center">
         <button id="addUserBtn" class="mb-4 bg-success text-white px-4 py-2 rounded-xl">Προσθήκη Χρήστη</button>
@@ -89,7 +89,7 @@
               <th class="px-4 py-2">Ώρα</th>
               <th class="px-4 py-2">Διαγρ.</th>
               <th class="px-4 py-2">Επεξ.</th>
-              <th class="px-4 py-2">Ολοκλήρ.</th>
+              <th class="px-4 py-2">Ολοκλ.</th>
             </tr>
           </thead>
           <tbody id="ordersTable"></tbody>
@@ -99,7 +99,7 @@
   </div>
 
   <!-- Modals -->
-  <div id="userModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+  <div id="userModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
     <div class="bg-white rounded-2xl p-6 shadow-strong w-full max-w-md relative backdrop-glass">
       <button onclick="closeModal('userModal')" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">✕</button>
       <h3 class="text-xl font-semibold mb-4 text-center">Νέος Χρήστης</h3>
@@ -111,7 +111,7 @@
       </form>
     </div>
   </div>
-  <div id="productModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+  <div id="productModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
     <div class="bg-white rounded-2xl p-6 shadow-strong w-full max-w-md relative backdrop-glass">
       <button onclick="closeModal('productModal')" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">✕</button>
       <h3 class="text-xl font-semibold mb-4 text-center">Νέο Προϊόν</h3>
@@ -122,25 +122,25 @@
       </form>
     </div>
   </div>
-  <div id="pointModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+  <div id="pointModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
     <div class="bg-white rounded-2xl p-6 shadow-strong w-full max-w-md relative backdrop-glass">
       <button onclick="closeModal('pointModal')" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">✕</button>
       <h3 class="text-xl font-semibold mb-4 text-center">Επεξεργασία Σημείου</h3>
       <form id="pointForm" class="space-y-3">
         <input id="pointNameInput" placeholder="Όνομα" required class="w-full px-3 py-2 border rounded-lg"/>
         <select id="pointAreaInput" class="w-full px-3 py-2 border rounded-lg">
-          <option>Πόλη</option><option>Ιαλυσός</option><option>Φαληράκι</option><option>Κολύμπια</option><option>ΝΌτια Ρόδος</option><option>Δυτική Ρόδος</option>
+          <option>Πόλη</option><option>Ιαλυσός</option><option>Φαληράκι</option><option>Κολύμπια</option><option>Νότια Ρόδος</option><option>Δυτική Ρόδος</option>
         </select>
         <button type="submit" class="w-full bg-primary text-white py-2 rounded-xl">Αποθήκευση</button>
       </form>
     </div>
   </div>
-  <div id="orderModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+  <div id="orderModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
     <div class="bg-white rounded-2xl p-6 shadow-strong w-full max-w-lg relative backdrop-glass overflow-auto max-h-[90vh]">
       <button onclick="closeModal('orderModal')" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">✕</button>
       <h3 class="text-xl font-semibold mb-4 text-center">Επεξεργασία Παραγγελίας</h3>
       <form id="orderForm" class="space-y-3">
-        <!-- Fields for editing order -->
+        <!-- Order edit fields -->
       </form>
       <button onclick="saveOrder()" class="mt-4 w-full bg-primary text-white py-2 rounded-xl">Αποθήκευση</button>
     </div>
@@ -148,10 +148,16 @@
 
   <script>
     // Firebase init
-    firebase.initializeApp({ apiKey: "AIzaSy...", authDomain: "pointregistrationapp.firebaseapp.com", projectId: "pointregistrationapp", storageBucket: "pointregistrationapp.appspot.com", messagingSenderId: "925139386507", appId: "1:925139386507:web:..." });
+    firebase.initializeApp({
+      apiKey: "AIzaSy...", authDomain: "pointregistrationapp.firebaseapp.com",
+      projectId: "pointregistrationapp", storageBucket: "pointregistrationapp.appspot.com",
+      messagingSenderId: "925139386507", appId: "1:925139386507:web:..."
+    });
     const db = firebase.firestore();
 
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
       const loginForm = document.getElementById('loginForm');
@@ -181,8 +187,6 @@
           document.getElementById(btn.dataset.tab).classList.remove('hidden');
         });
       });
-
-      // Show users tab by default after login
     });
 
     function clientCard(c) {
@@ -297,7 +301,7 @@
           const parentRef = doc.ref.parent.parent;
           const parentDoc = await parentRef.get();
           const pointName = parentDoc.exists ? parentDoc.data().name : parentRef.id;
-          ordersTable.appendChild(orderRow({ ...o, id: doc.id }, pointName));
+          ordersTable.appendChild(orderRow(o, pointName));
         }
       });
     }
@@ -333,21 +337,21 @@
       document.getElementById('pointModal').classList.remove('hidden');
       document.getElementById('pointNameInput').value = name;
       document.getElementById('pointAreaInput').value = area;
-      document.getElementById('pointForm').addEventListener('submit', async e => {
+      document.getElementById('pointForm').onsubmit = async e => {
         e.preventDefault();
         await db.collection('points').doc(id).update({
           name: document.getElementById('pointNameInput').value.trim(),
           area: document.getElementById('pointAreaInput').value
         });
         closeModal('pointModal');
-      }, { once: true });
+      };
     }
     function openEditOrder(id) {
-      alert('Επεξεργασία παραγγελίας: ' + id);
+      document.getElementById('orderModal').classList.remove('hidden');
     }
     function markExecuted(id) {
       if (confirm('Σήμανση ως εκτελεσμένη;')) {
-        // σημείωση ως εκτελεσμένη (π.χ. flag field)
+        // update executed flag, e.g. db.collection('orders').doc(id).update({ executed: true });
       }
     }
   </script>
