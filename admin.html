@@ -226,9 +226,37 @@
         if (ptDoc.exists) {
           document.getElementById('orderClientName').value = ptDoc.data().name || '';
         }
-      }
+      });
+      const form = document.getElementById('orderForm');
+      form.reset();
+      document.getElementById('orderItemsContainer').innerHTML = '';
+      // Φόρτωση δεδομένων παραγγελίας
+      const orderRef = db.collection('points').doc(pointId).collection('orders').doc(orderId);
+      orderRef.get().then(doc => {
+        const data = doc.data() || {};
+        // Ημερομηνία & Ώρα
+        if (data.timestamp) {
+          const d = data.timestamp.toDate();
+          const pad = n => String(n).padStart(2,'0');
+          document.getElementById('orderDateTime').value =
+            `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+        // Παρατηρήσεις
+        document.getElementById('orderRemarks').value = data.remarks || '';
+        // Είδη παραγγελίας
+        orderRef.collection('items').get().then(itemsSnap => {
+          itemsSnap.forEach(itemDoc => {
+            const item = itemDoc.data();
+            addOrderItemRow({ productId: item.productId.id.split('/').pop(), quantity: item.quantity });
+          });
+        });
+      });
+    }
+        });
+      });
+    }
 
-async function saveOrder() {
+    async function saveOrder() {
       const { pointId, orderId } = currentEditOrder;
       const orderRef = db.collection('points').doc(pointId).collection('orders').doc(orderId);
       const dt = document.getElementById('orderDateTime').value;
