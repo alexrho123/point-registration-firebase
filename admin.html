@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Πίνακας Διαχείρισης</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
@@ -21,7 +20,7 @@
           <input type="text" id="loginUsername" required class="w-full border px-3 py-2 rounded"/>
         </label>
         <label class="block">
-          Κωδικός
+          Κωδικός Πρόσβασης
           <input type="password" id="loginPassword" required class="w-full border px-3 py-2 rounded"/>
         </label>
         <div class="text-right">
@@ -61,7 +60,7 @@
             <p id="totalRevenue" class="text-2xl"></p>
           </div>
           <div class="bg-white p-4 rounded shadow">
-            <h2>Πελάτες</h2>
+            <h2>Σύνολο Πελατών</h2>
             <p id="totalCustomers" class="text-2xl"></p>
           </div>
         </div>
@@ -75,7 +74,7 @@
             <tr>
               <th class="px-4 py-2">Πελάτης</th>
               <th class="px-4 py-2">Σύνολο (€)</th>
-              <th class="px-4 py-2">Ημ/νία & Ώρα</th>
+              <th class="px-4 py-2">Ημερομηνία & Ώρα</th>
             </tr>
           </thead>
           <tbody id="ordersTable"></tbody>
@@ -107,7 +106,7 @@
         <table class="min-w-full bg-white">
           <thead>
             <tr>
-              <th class="px-4 py-2">Όνομα</th>
+              <th class="px-4 py-2">Όνομα Προϊόντος</th>
               <th class="px-4 py-2">Τιμή (€)</th>
               <th class="px-4 py-2">Διαγραφή</th>
             </tr>
@@ -131,7 +130,6 @@
   </div>
 
   <script>
-    // Firebase αρχικοποίηση
     firebase.initializeApp({
       apiKey: "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
       authDomain: "pointregistrationapp.firebaseapp.com",
@@ -142,7 +140,7 @@
     });
     const db = firebase.firestore();
 
-    // Λογική σύνδεσης admin
+    // Σύνδεση admin
     const loginModal = document.getElementById("loginModal"),
           loginForm = document.getElementById("loginForm"),
           appContent = document.getElementById("appContent"),
@@ -153,7 +151,7 @@
       const pass = document.getElementById("loginPassword").value;
       try {
         const doc = await db.collection("admins").doc(user).get();
-        if(doc.exists && doc.data().password === pass) {
+        if (doc.exists && doc.data().password === pass) {
           loginModal.classList.add("hidden");
           appContent.classList.remove("hidden");
         } else {
@@ -167,46 +165,46 @@
       location.reload();
     });
 
-    // Αλλαγή καρτελών
+    // Εναλλαγή καρτελών
     document.querySelectorAll("#tabs li").forEach(function(tab) {
       tab.addEventListener("click", function() {
-        document.querySelectorAll(".tab-content").forEach(function(c){ c.classList.add("hidden"); });
+        document.querySelectorAll(".tab-content").forEach(function(c) { c.classList.add("hidden"); });
         document.getElementById(tab.dataset.tab).classList.remove("hidden");
-        document.querySelectorAll("#tabs li").forEach(function(t){ t.classList.remove("border-blue-600"); });
+        document.querySelectorAll("#tabs li").forEach(function(t) { t.classList.remove("border-blue-600"); });
         tab.classList.add("border-blue-600");
       });
     });
 
-    // Dashboard στοιχεία
+    // Dashboard δεδομένα
     async function updateDashboard() {
       const ordersSnap = await db.collection("orders").get();
       document.getElementById("totalOrders").textContent = ordersSnap.size;
       let revenue = 0;
-      ordersSnap.docs.forEach(function(d){ revenue += d.data().total; });
+      ordersSnap.docs.forEach(function(d) { revenue += d.data().total; });
       document.getElementById("totalRevenue").textContent = revenue.toFixed(2) + " €";
       const custSnap = await db.collection("clients").get();
       document.getElementById("totalCustomers").textContent = custSnap.size;
     }
     updateDashboard();
 
-    // Live παραγγελίες
+    // Ζωντανές παραγγελίες
     db.collection("orders").onSnapshot(function(snap) {
-      const tb = document.getElementById("ordersTable");
-      tb.innerHTML = "";
+      const tbody = document.getElementById("ordersTable");
+      tbody.innerHTML = "";
       snap.docs.forEach(function(d) {
         const data = d.data();
         const tr = document.createElement("tr");
         tr.innerHTML = "<td class='border px-4 py-2'>" + data.clientName + "</td>" +
                        "<td class='border px-4 py-2'>" + data.total.toFixed(2) + "</td>" +
                        "<td class='border px-4 py-2'>" + new Date(data.timestamp.toDate()).toLocaleString() + "</td>";
-        tb.appendChild(tr);
+        tbody.appendChild(tr);
       });
     });
 
     // Πελάτες
     db.collection("clients").onSnapshot(function(snap) {
-      const tb = document.getElementById("customersTable");
-      tb.innerHTML = "";
+      const tbody = document.getElementById("customersTable");
+      tbody.innerHTML = "";
       snap.docs.forEach(function(doc) {
         const d = doc.data();
         const tr = document.createElement("tr");
@@ -214,7 +212,7 @@
                        "<td class='border px-4 py-2'>" + (d.phone||"–") + "</td>" +
                        "<td class='border px-4 py-2'>" + (d.address||"–") + "</td>";
         tr.addEventListener("click", function() { showClientDetails(doc.id); });
-        tb.appendChild(tr);
+        tbody.appendChild(tr);
       });
     });
     async function showClientDetails(id) {
@@ -227,30 +225,27 @@
     }
 
     // Προϊόντα CRUD
-    const addBtn = document.getElementById("addProductBtn"),
-          prodModal = document.getElementById("productModal"),
-          prodForm = document.getElementById("productForm");
-    addBtn.addEventListener("click", function() {
-      prodModal.classList.remove("hidden");
+    document.getElementById("addProductBtn").addEventListener("click", function() {
+      document.getElementById("productModal").classList.remove("hidden");
     });
-    prodForm.addEventListener("submit", async function(e) {
+    document.getElementById("productForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       const name = document.getElementById("productName").value.trim();
       const price = parseFloat(document.getElementById("productPrice").value);
-      await db.collection("products").add({ name: name, price: price });
-      prodForm.reset();
-      prodModal.classList.add("hidden");
+      await db.collection("products").add({ name, price });
+      e.target.reset();
+      document.getElementById("productModal").classList.add("hidden");
     });
     db.collection("products").onSnapshot(function(snap) {
-      const tb = document.getElementById("productsTable");
-      tb.innerHTML = "";
+      const tbody = document.getElementById("productsTable");
+      tbody.innerHTML = "";
       snap.docs.forEach(function(doc) {
-        const data = doc.data();
+        const d = doc.data();
         const tr = document.createElement("tr");
-        tr.innerHTML = "<td class='border px-4 py-2'>" + data.name + "</td>" +
-                       "<td class='border px-4 py-2'>" + data.price.toFixed(2) + "</td>" +
+        tr.innerHTML = "<td class='border px-4 py-2'>" + d.name + "</td>" +
+                       "<td class='border px-4 py-2'>" + d.price.toFixed(2) + "</td>" +
                        "<td class='border px-4 py-2'><button data-id='" + doc.id + "' class='deleteProd text-red-500'>Διαγραφή</button></td>";
-        tb.appendChild(tr);
+        tbody.appendChild(tr);
       });
       document.querySelectorAll(".deleteProd").forEach(function(b) {
         b.addEventListener("click", async function() {
