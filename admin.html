@@ -40,21 +40,32 @@
 
     <!-- Tabs -->
     <div class="flex border-b px-4">
-      <button data-tab="customers" class="py-2 px-4 text-sm uppercase font-medium">Πελάτες</button>
-      <!-- Add other tabs if needed -->
+      <button data-tab="users" class="py-2 px-4 text-sm uppercase font-medium">Χρήστες</button>
+      <button data-tab="products" class="py-2 px-4 text-sm uppercase font-medium">Προϊόντα</button>
+      <button data-tab="points" class="py-2 px-4 text-sm uppercase font-medium">Σημεία</button>
     </div>
 
     <!-- Content -->
     <main class="flex-1 overflow-auto p-4">
-      <!-- Customers Tab -->
-      <section id="customers" class="tab-content">
-        <div id="customersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      <!-- Users Tab -->
+      <section id="users" class="tab-content hidden">
+        <div id="usersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </section>
+      <!-- Products Tab -->
+      <section id="products" class="tab-content hidden p-4">
+        <h2 class="text-xl font-semibold mb-4">Προϊόντα</h2>
+        <!-- Products CRUD as before -->
+      </section>
+      <!-- Points Tab -->
+      <section id="points" class="tab-content hidden p-4">
+        <h2 class="text-xl font-semibold mb-4">Σημεία</h2>
+        <!-- Points display as in index -->
       </section>
     </main>
   </div>
 
   <script>
-    // Firebase
+    // Firebase init
     firebase.initializeApp({
       apiKey: "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
       authDomain: "pointregistrationapp.firebaseapp.com",
@@ -70,70 +81,71 @@
       const loginForm  = document.getElementById("loginForm");
       const appContent = document.getElementById("appContent");
       const logoutBtn  = document.getElementById("logoutBtn");
-      const userField = document.getElementById("loginUsername");
-      const passField = document.getElementById("loginPassword");
 
-      // Login
       loginForm.addEventListener("submit", async e => {
         e.preventDefault();
-        const user = userField.value.trim();
-        const pass = passField.value;
+        const user = document.getElementById("loginUsername").value.trim();
+        const pass = document.getElementById("loginPassword").value;
         try {
           const doc = await db.collection("admins").doc(user).get();
           if(doc.exists && doc.data().password === pass) {
             loginModal.classList.add("hidden");
             appContent.classList.remove("hidden");
-            loadClients();
-          } else alert("Λάθος διαπιστευτήρια");
+            initAdmin();
+          } else {
+            alert("Λάθος διαπιστευτήρια");
+          }
         } catch {
           alert("Σφάλμα σύνδεσης");
         }
       });
       logoutBtn.addEventListener("click", () => location.reload());
 
-      // Tabs
       document.querySelectorAll("[data-tab]").forEach(btn => {
         btn.addEventListener("click", () => {
           document.querySelectorAll(".tab-content").forEach(sec => sec.classList.add("hidden"));
-          const tab = btn.getAttribute("data-tab");
-          document.getElementById(tab).classList.remove("hidden");
+          document.getElementById(btn.getAttribute("data-tab")).classList.remove("hidden");
         });
       });
-
-      // Client card (from index)
-      function clientCard(cust) {
-        const c = document.createElement("div");
-        c.className = "relative bg-white rounded-xl p-4 shadow-xl transform hover:-translate-y-1 transition overflow-hidden";
-        const ab = document.createElement("div");
-        ab.className = "absolute top-2 left-1/2 transform -translate-x-1/2 bg-region text-white px-2 py-0.5 rounded-full text-xs uppercase";
-        ab.textContent = "ΠΕΛΑΤΗΣ"; c.appendChild(ab);
-        const h3 = document.createElement("h3");
-        h3.className = "mt-6 text-center text-lg font-bold uppercase text-darktext break-words";
-        h3.textContent = cust.name; c.appendChild(h3);
-        if(cust.address || cust.phone){
-          const info = document.createElement("p");
-          info.className = "text-center text-sm text-gray-500 mt-2";
-          info.innerHTML = (cust.address?`Διεύθυνση: ${cust.address}<br/>`:"") +
-                           (cust.phone?`Τηλέφωνο: ${cust.phone}`:"");
-          c.appendChild(info);
-        }
-        return c;
-      }
-
-      // Load clients
-      function loadClients(){
-        db.collection("clients")
-          .orderBy("name")
-          .onSnapshot(snap => {
-            const container = document.getElementById("customersContainer");
-            container.innerHTML = "";
-            snap.docs.forEach(doc => {
-              const data = doc.data();
-              container.appendChild(clientCard(data));
-            });
-          });
-      }
     });
+
+    function clientCard(cust) {
+      const c = document.createElement("div");
+      c.className = "relative bg-white rounded-xl p-4 shadow-xl transform hover:-translate-y-1 transition overflow-hidden";
+      const ab = document.createElement("div");
+      ab.className = "absolute top-2 left-1/2 transform -translate-x-1/2 bg-region text-white px-2 py-0.5 rounded-full text-xs uppercase";
+      ab.textContent = "ΧΡΗΣΤΗΣ"; c.appendChild(ab);
+      const h3 = document.createElement("h3");
+      h3.className = "mt-6 text-center text-lg font-bold uppercase text-darktext break-words";
+      h3.textContent = cust.name; c.appendChild(h3);
+      if(cust.username) {
+        const u = document.createElement("p");
+        u.className = "text-center text-sm text-gray-500 mt-2";
+        u.textContent = "Username: " + cust.username;
+        c.appendChild(u);
+      }
+      if(cust.role) {
+        const r = document.createElement("p");
+        r.className = "text-center text-sm text-gray-500";
+        r.textContent = "Ρόλος: " + cust.role;
+        c.appendChild(r);
+      }
+      return c;
+    }
+
+    function initAdmin() {
+      // Show users by default
+      document.querySelector("[data-tab='users']").click();
+
+      // Load users
+      db.collection("users").orderBy("name").onSnapshot(snap => {
+        const container = document.getElementById("usersContainer");
+        container.innerHTML = "";
+        snap.docs.forEach(doc => {
+          container.appendChild(clientCard(doc.data()));
+        });
+      });
+    }
   </script>
 </body>
 </html>
