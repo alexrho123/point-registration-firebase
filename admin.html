@@ -1,13 +1,13 @@
 <!DOCTYPE html>
+
 <html lang="el">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Admin Panel – Διαχείριση</title>
-
-  <!-- Tailwind CSS + custom colors -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Καταχώριση Σημείου (Firebase) με ταξινόμηση &amp; Παραγγελίες</title>
+<!-- Tailwind CSS + custom colors -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
     tailwind.config = {
       theme: {
         extend: {
@@ -24,203 +24,251 @@
       }
     }
   </script>
-
-  <style>
-    /* Fade effect για όλα τα modals */
-    #addProductModal,
-    #liveOrdersModal,
-    #executedOrdersModal,
-    #orderDetailModal,
-    #addSellerModal {
+<style>
+    @media (orientation: landscape) {
+      #pointsContainer {
+        display: grid !important;
+        grid-template-columns: repeat(2,1fr) !important;
+      }
+    }
+    #cameraModal, #photoModal, #orderModal {
       transition: opacity 0.2s ease;
     }
+    .modal-inner {
+      max-height: 90vh;
+      overflow-y: auto;
+    }
   </style>
-
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 </head>
-<body class="bg-softbg text-darktext min-h-screen flex flex-col">
-
-  <!-- Header & Nav -->
-  <header class="w-full bg-white shadow">
-    <div class="max-w-3xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between">
-      <h1 class="text-2xl font-extrabold text-primary uppercase">Admin Panel</h1>
-      <nav class="mt-2 sm:mt-0 flex space-x-2">
-        <a href="index.html" class="px-3 py-1 bg-region text-white rounded uppercase text-sm hover:bg-region/90">Αρχική</a>
-        <a href="admin.html" class="px-3 py-1 bg-accent text-white rounded uppercase text-sm hover:bg-accent/90">Admin</a>
-      </nav>
-    </div>
-  </header>
-
-  <!-- Login Screen -->
-  <div id="loginContainer" class="flex-1 flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
-      <h2 class="text-2xl font-bold text-center mb-6">Admin Login</h2>
+<body class="bg-softbg text-darktext min-h-screen flex flex-col items-center py-8 font-sans">
+  <!-- Admin Login Modal -->
+  <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
+      <h2 class="text-2xl font-bold mb-4">Admin Login</h2>
       <form id="loginForm" class="space-y-4">
-        <div>
-          <label class="block mb-1">Όνομα χρήστη</label>
-          <input id="username" type="text" required class="w-full border px-3 py-2 rounded focus:ring-2 focus:ring-primary"/>
-        </div>
-        <div>
-          <label class="block mb-1">Κωδικός</label>
-          <input id="password" type="password" required class="w-full border px-3 py-2 rounded focus:ring-2 focus:ring-primary"/>
-        </div>
-        <button type="submit" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary/90">Σύνδεση</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Admin Panel -->
-  <div id="adminPanel" class="hidden flex-1 w-full max-w-3xl mx-auto p-6 flex flex-col gap-8">
-    <h1 class="text-3xl font-bold text-primary mb-4 text-center">Πίνακας Διαχείρισης</h1>
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-6">
-      <!-- Προσθήκη Προϊόντων -->
-      <div id="addProductsCard" class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 cursor-pointer flex flex-col items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-accent mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18" />
-        </svg>
-        <h2 class="text-xl font-semibold">Προσθήκη Προϊόντων</h2>
-      </div>
-      <!-- Live Παραγγελίες -->
-      <div id="liveOrdersCard" class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 cursor-pointer flex flex-col items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-primary mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6h18M3 14h18M3 18h18" />
-        </svg>
-        <h2 class="text-xl font-semibold">Live Παραγγελίες</h2>
-      </div>
-      <!-- Εκτελεσμένες Παραγγελίες -->
-      <div id="executedOrdersCard" class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 cursor-pointer flex flex-col items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-success mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-        <h2 class="text-xl font-semibold">Εκτελεσμένες Παραγγελίες</h2>
-      </div>
-      <!-- Προσθήκη Πωλητή -->
-      <div id="addSellerCard" class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 cursor-pointer flex flex-col items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-indigo-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M5.121 17.804A13.937 13.937 0 0112 15c2.89 0 5.557.93 7.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        <h2 class="text-xl font-semibold">Προσθήκη Πωλητή</h2>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add Products Modal -->
-  <div id="addProductModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center opacity-0 pointer-events-none">
-    <div class="bg-white rounded-lg w-full max-w-lg p-6 relative">
-      <button onclick="closeAddProductModal()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
-      <h2 class="text-2xl font-bold text-primary mb-4 text-center">Προσθήκη Προϊόντων</h2>
-      <form id="productForm" class="space-y-4">
-        <div id="productRows" class="space-y-2">
-          <div class="flex gap-2">
-            <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded focus:ring-2 focus:ring-region"/>
-            <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded focus:ring-2 focus:ring-region"/>
-            <button type="button" onclick="removeRow(this)" class="text-danger hover:text-red-700 text-2xl leading-none">&minus;</button>
-          </div>
-        </div>
-        <div class="flex justify-between">
-          <button type="button" onclick="addRow()" class="bg-accent text-white px-4 py-2 rounded hover:bg-accent/90">+ Νέα Γραμμή</button>
-          <div class="space-x-2">
-            <button type="button" onclick="closeAddProductModal()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Ακύρωση</button>
-            <button type="submit" class="bg-success text-white px-4 py-2 rounded hover:bg-success/90">Αποθήκευση</button>
-          </div>
+        <label class="block">
+          Username
+          <input type="text" id="loginUsername" required class="w-full border px-3 py-2 rounded focus:ring-2 focus:ring-primary"/>
+        </label>
+        <label class="block">
+          Password
+          <input type="password" id="loginPassword" required class="w-full border px-3 py-2 rounded focus:ring-2 focus:ring-primary"/>
+        </label>
+        <div class="text-right">
+          <button type="submit" class="bg-primary text-white px-4 py-2 rounded">Login</button>
         </div>
       </form>
     </div>
   </div>
+  <div id="appContent" style="display:none;">
 
-  <!-- Live Orders Modal -->
-  <div id="liveOrdersModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center opacity-0 pointer-events-none">
-    <div class="bg-white rounded-lg w-full max-w-2xl p-6 relative">
-      <button onclick="closeLiveOrdersModal()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
-      <h2 class="text-2xl font-bold text-primary mb-4 text-center">Ζωντανές Παραγγελίες</h2>
-      <div id="ordersList" class="space-y-3 max-h-80 overflow-auto"></div>
-    </div>
-  </div>
-
-  <!-- Executed Orders Modal -->
-  <div id="executedOrdersModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center opacity-0 pointer-events-none">
-    <div class="bg-white rounded-lg w-full max-w-2xl p-6 relative">
-      <button onclick="closeExecutedOrdersModal()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
-      <h2 class="text-2xl font-bold text-success mb-4 text-center">Εκτελεσμένες Παραγγελίες</h2>
-      <div id="executedList" class="space-y-3 max-h-80 overflow-auto"></div>
-    </div>
-  </div>
-
-  <!-- Order Detail Modal -->
-  <div id="orderDetailModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none p-4">
-    <div class="bg-white rounded-2xl w-full max-w-[90vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6 relative shadow-2xl">
-      <button onclick="closeOrderDetailModal()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
-      <h2 id="detailTitle" class="text-xl sm:text-2xl font-bold text-primary mb-4 text-center uppercase">ΛΕΠΤΟΜΕΡΕΙΕΣ ΠΑΡΑΓΓΕΛΙΑΣ</h2>
-
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm divide-y divide-gray-200">
-          <thead class="bg-accent/20 text-[0.75rem]">
-            <tr>
-              <th class="px-2 py-1 text-left uppercase">Προϊόν</th>
-              <th class="px-2 py-1 text-center uppercase">Ποσ.</th>
-              <th class="px-2 py-1 text-right uppercase">€</th>
-            </tr>
-          </thead>
-          <tbody id="detailContent" class="divide-y divide-gray-100 bg-white text-[0.85rem]"></tbody>
-        </table>
-      </div>
-
-      <div class="mt-3">
-        <h3 class="text-sm font-semibold mb-1">Παρατηρήσεις</h3>
-        <div id="detailRemarks" class="border border-gray-200 rounded-lg p-2 bg-gray-50 italic text-gray-700 text-xs min-h-[2rem]"></div>
-      </div>
-
-      <div class="mt-3 flex justify-between font-bold text-sm uppercase">
-        <span>Σύνολο:</span>
-        <span id="detailTotal" class="text-primary">€0.00</span>
-      </div>
-
-      <div class="mt-4 flex flex-col sm:flex-row justify-between gap-2 text-[0.9rem]">
-        <button id="executeOrderBtn" class="w-full sm:w-auto bg-success text-white px-4 py-1 rounded hover:bg-success/90">Εκτέλεση Παραγγελίας</button>
-        <button id="cancelOrderBtn"  class="w-full sm:w-auto bg-danger  text-white px-4 py-1 rounded hover:bg-danger/90">Ακύρωση Παραγγελίας</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add Seller Modal -->
-  <div id="addSellerModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none">
-    <div class="bg-white rounded-2xl w-full max-w-md p-8 relative shadow-2xl">
-      <button onclick="closeAddSellerModal()" class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-3xl">&times;</button>
-      <h2 class="text-2xl font-bold text-primary mb-6 text-center">Προσθήκη Πωλητή</h2>
-      <form id="sellerForm" class="space-y-4">
-        <div>
-          <label class="block mb-1">Ονοματεπώνυμο</label>
-          <input id="sellerName" type="text" required class="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region"/>
-        </div>
-        <div>
-          <label class="block mb-1">Username</label>
-          <input id="sellerUsername" type="text" required class="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region"/>
-        </div>
-        <div>
-          <label class="block mb-1">Password</label>
-          <input id="sellerPassword" type="password" required class="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region"/>
-        </div>
-        <div>
-          <label class="block mb-1">Ρόλος</label>
-          <select id="sellerRole" required class="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-region">
-            <option value="admin">Admin</option>
-            <option value="seller">Πωλητής</option>
-          </select>
-        </div>
-        <div class="flex justify-end space-x-3">
-          <button type="button" onclick="closeAddSellerModal()" class="px-5 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">Ακύρωση</button>
-          <button type="submit" class="px-5 py-2 bg-success text-white rounded-lg hover:bg-success/90">Αποθήκευση</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- JS -->
-  <script>
-    // Firebase init
+<!-- Header -->
+<header class="w-full bg-white shadow py-3 mb-6">
+<div class="max-w-3xl mx-auto px-4 flex justify-between items-center">
+<h1 class="text-2xl font-extrabold text-primary uppercase">Καταχώριση Σημείου</h1>
+<button class="bg-primary text-white w-10 h-10 rounded-full flex items-center justify-center text-xl" id="openModalBtn">
+        +
+      </button>
+</div>
+</header>
+<!-- Filters & Actions -->
+<main class="w-full max-w-3xl px-4 space-y-4 mb-8">
+<div class="flex justify-center">
+<button class="px-4 py-1 bg-accent text-white rounded uppercase text-sm hover:bg-accent/90" id="refreshStigmaBtn">
+        Ανανέωση Στίγματος
+      </button>
+</div><input class="border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary w-full lg:w-1/3" id="liveSearchInput" placeholder="Φίλτρο επωνυμίας..." type="text"/>
+<div class="flex flex-col md:flex-row gap-2 justify-between items-center">
+<div class="flex gap-2">
+<button class="bg-indigo-500 text-white px-3 py-1 rounded uppercase text-xs hover:bg-indigo-600" id="routeBtn">
+          Δρομολ. Περιοχής
+        </button>
+<button class="bg-teal-500 text-white px-3 py-1 rounded uppercase text-xs hover:bg-teal-600" id="customRouteBtn">
+          Προσαρμ. Διαδρομή
+        </button>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center" id="pointsContainer"></div>
+<button class="hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white px-4 py-1 rounded uppercase text-sm shadow-lg hover:bg-indigo-700 z-50" id="generateCustomRouteBtn">
+<span class="absolute top-1 right-2 text-white text-lg cursor-pointer" id="cancelCustomBtn">✕</span>
+      Δημιούργησε Διαδρομή
+    </button>
+</main>
+<!-- Add Point Modal -->
+<div class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center" id="modal">
+<div class="bg-white rounded p-4 w-full max-w-sm relative">
+<button class="absolute top-2 right-2 text-gray-600 text-xl" onclick="document.getElementById('modal').classList.add('opacity-0','pointer-events-none')">✕</button>
+<h2 class="text-center uppercase mb-4 text-primary text-xl font-semibold">Καταχώριση Σημείου</h2>
+<form class="space-y-4" id="pointForm">
+<div>
+<label class="block uppercase font-medium mb-1">Όνομα Σημείου</label>
+<input class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary" id="pointName" required=""/>
+</div>
+<div>
+<label class="block uppercase font-medium mb-1">Περιοχή</label>
+<select class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region" id="areaSelect" required="">
+<option value="">Επιλέξτε...</option>
+<option value="Πόλη">Πόλη</option>
+<option value="Ιαλυσός">Ιαλυσός</option>
+<option value="Φαληράκι">Φαληράκι</option>
+<option value="Κολύμπια">Κολύμπια</option>
+<option value="Νότια Ρόδος">Νότια Ρόδος</option>
+<option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
+</select>
+</div>
+<div class="flex justify-end gap-2">
+<button class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" id="cancelBtn" type="button">Ακύρωση</button>
+<button class="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90" type="submit">Καταχώριση</button>
+</div>
+</form>
+</div>
+</div>
+<!-- Edit Point Modal -->
+<div class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center" id="editModal">
+<div class="bg-white rounded p-4 w-full max-w-sm relative">
+<button class="absolute top-2 right-2 text-gray-600 text-xl" onclick="document.getElementById('editModal').classList.add('opacity-0','pointer-events-none')">✕</button>
+<h2 class="text-center uppercase mb-4 text-primary text-xl font-semibold">Επεξεργασία Σημείου</h2>
+<form class="space-y-4" id="editForm">
+<div>
+<label class="block uppercase font-medium mb-1">Όνομα Σημείου</label>
+<input class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary" name="editName" required=""/>
+</div>
+<div>
+<label class="block uppercase font-medium mb-1">Περιοχή</label>
+<select class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region" name="editArea" required="">
+<option value="">Επιλέξτε...</option>
+<option value="Πόλη">Πόλη</option>
+<option value="Ιαλυσός">Ιαλυσός</option>
+<option value="Φαληράκι">Φαληράκι</option>
+<option value="Κολύμπια">Κολύμπια</option>
+<option value="Νότια Ρόδος">Νότια Ρόδος</option>
+<option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
+</select>
+</div>
+<div class="flex justify-end gap-2">
+<button class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" id="editCancel" type="button">Ακύρωση</button>
+<button class="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90" type="submit">Αποθήκευση</button>
+</div>
+</form>
+</div>
+</div>
+<!-- Route Modal -->
+<div class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center" id="routeModal">
+<div class="bg-white rounded p-4 w-full max-w-sm relative">
+<button class="absolute top-2 right-2 text-gray-600 text-xl" onclick="document.getElementById('routeModal').classList.add('opacity-0','pointer-events-none')">✕</button>
+<h2 class="text-center uppercase mb-4 text-primary text-xl font-semibold">Δρομολόγιο Περιοχής</h2>
+<form class="space-y-4" id="routeForm">
+<div>
+<label class="block uppercase font-medium mb-1">Περιοχή</label>
+<select class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-region" id="routeRegion" required="">
+<option value="all">Όλες οι περιοχές</option>
+<option value="Πόλη">Πόλη</option>
+<option value="Ιαλυσός">Ιαλυσός</option>
+<option value="Φαληράκι">Φαληράκι</option>
+<option value="Κολύμπια">Κολύμπια</option>
+<option value="Νότια Ρόδος">Νότια Ρόδος</option>
+<option value="Δυτική Ρόδος">Δυτική Ρόδος</option>
+</select>
+</div>
+<div>
+<label class="block uppercase font-medium mb-1">Εύρος Ημερών</label>
+<select class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary" id="routeDays">
+<option value="all">Όλες</option>
+<option value="lt3">Λιγότερο από 3</option>
+<option value="3to7">3–7</option>
+<option value="gt7">Πάνω από 7</option>
+<option value="never">Ποτέ</option>
+</select>
+</div>
+<p class="text-center text-gray-700 text-sm" id="routeCount"></p>
+<div class="flex justify-end gap-2">
+<button class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" id="routeCancel" type="button">Ακύρωση</button>
+<button class="px-4 py-2 bg-success text-white rounded hover:bg-success/90" type="submit">Εξέλιξη</button>
+</div>
+</form>
+</div>
+</div>
+<!-- Camera Modal -->
+<div class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex flex-col items-center justify-center p-4" id="cameraModal">
+<video autoplay="" class="w-full max-w-md rounded-lg mb-4" id="cameraVideo" playsinline=""></video>
+<div class="flex gap-4">
+<button class="bg-success text-white px-4 py-2 rounded" id="captureBtn">Τράβηγμα</button>
+<button class="bg-danger text-white px-4 py-2 rounded" id="cancelCaptureBtn">Ακύρωση</button>
+</div>
+</div>
+<!-- Photo Preview Modal -->
+<div class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center p-4" id="photoModal">
+<div class="bg-white rounded p-4 w-full max-w-sm relative">
+<button class="absolute top-2 right-2 text-gray-600 text-xl" id="closePhotoModal">✕</button>
+<img class="w-full h-auto rounded mb-2" id="photoImg"/>
+<p class="text-center text-gray-600 text-xs mb-2" id="photoDate"></p>
+<button class="block mx-auto bg-danger text-white px-3 py-1 rounded uppercase text-xs" id="deletePhotoBtn">
+        Διαγραφή
+      </button>
+</div>
+</div>
+<!-- Hidden fallback file input -->
+<input accept="image/*" capture="environment" id="photoInput" style="display:none" type="file"/>
+<!-- Add Order Modal -->
+<div class="fixed inset-0 bg-black bg-opacity-60 opacity-0 pointer-events-none flex items-center justify-center p-4 z-50" id="orderModal"><div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 md:mx-0 transform scale-95 transition-transform duration-200">
+<div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+<h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Προσθήκη Παραγγελίας</h2>
+<button class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" onclick="closeOrderModal()" type="button">
+<svg class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<div class="px-6 py-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
+<form class="space-y-4" id="orderForm">
+<!-- Client name readonly -->
+<div class="flex flex-col">
+<label class="text-sm font-medium text-gray-700 dark:text-gray-300" for="orderClientName">Πελάτης</label>
+<input class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" id="orderClientName" name="clientName" readonly="" type="text"/>
+</div>
+<!-- DateTime -->
+<div class="flex flex-col">
+<label class="text-sm font-medium text-gray-700 dark:text-gray-300" for="orderDateTime">Ημερομηνία &amp; Ώρα</label>
+<input class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" disabled="" id="orderDateTime" name="dateTime" type="datetime-local"/>
+</div>
+<!-- Items container -->
+<div class="space-y-2" id="orderItemsContainer">
+<label class="text-sm font-medium text-gray-700 dark:text-gray-300">Είδη Παραγγελίας</label>
+</div>
+<button class="inline-flex items-center px-3 py-1.5 bg-primary text-white text-sm font-medium rounded hover:bg-primary/90" onclick="addOrderItemRow()" type="button">
+<svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+          Προσθήκη Είδους
+        </button>
+<!-- Remarks -->
+<div class="flex flex-col">
+<label class="text-sm font-medium text-gray-700 dark:text-gray-300" for="orderRemarks">Παρατηρήσεις (προαιρετικό)</label>
+<textarea class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" id="orderRemarks" name="remarks" placeholder="Ειδικές οδηγίες, ώρα παράδοσης κ.λπ." rows="2"></textarea>
+</div>
+<!-- Total display -->
+<div class="flex justify-between items-center pt-2">
+<span class="text-xl font-medium text-gray-800 dark:text-gray-100">Σύνολο</span>
+<span class="text-2xl font-extrabold text-gray-800 dark:text-gray-100" id="orderTotal">€0.00</span>
+</div>
+</form>
+</div>
+<div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-2">
+<button class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-500" onclick="closeOrderModal()" type="button">
+        Άκυρο
+      </button>
+<button class="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90" id="submitOrderBtn" type="button">
+        Αποστολή
+      </button>
+</div>
+</div></div>
+<script>
+    // Initialize Firebase
     const firebaseConfig = {
       apiKey:    "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
       authDomain:"pointregistrationapp.firebaseapp.com",
@@ -230,230 +278,729 @@
       appId:     "1:925139386507:web:588ae991f39a7bab04548e"
     };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    const db = firebase.firestore(), storage = firebase.storage();
 
-    // Login handling
-    document.getElementById('loginForm').onsubmit = async e => {
-      e.preventDefault();
-      const u = document.getElementById('username').value.trim();
-      const p = document.getElementById('password').value;
-      const doc = await db.collection('users').doc(u).get();
-      if (!doc.exists) {
-        if (u==='admin'&&p==='123') {
-          await db.collection('users').doc(u).set({password:'123',role:'admin'});
-        } else return alert('Σφάλμα σύνδεσης');
+    // Helpers
+    function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+      const toRad = x => x * Math.PI / 180;
+      const R = 6371;
+      const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat/2)**2 +
+                Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*
+                Math.sin(dLon/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+    function daysSince(ts) {
+      return ts ? (new Date() - ts.toDate()) / (1000*60*60*24) : Infinity;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      let userLat, userLng, userLocationAllowed = false;
+      let allPoints = [], editId, selectionMode = false, currentPhotoId, cameraStream;
+      let currentPointId;
+
+      // Elements
+      const openBtn = document.getElementById("openModalBtn"),
+            container = document.getElementById("pointsContainer"),
+            refreshBtn = document.getElementById("refreshStigmaBtn"),
+            cancelBtn = document.getElementById("cancelBtn"),
+            form = document.getElementById("pointForm"),
+            editModal = document.getElementById("editModal"),
+            editCancel = document.getElementById("editCancel"),
+            editForm = document.getElementById("editForm"),
+            routeModal = document.getElementById("routeModal"),
+            routeCancel = document.getElementById("routeCancel"),
+            routeForm = document.getElementById("routeForm"),
+            routeRegion = document.getElementById("routeRegion"),
+            routeDays = document.getElementById("routeDays"),
+            routeCount = document.getElementById("routeCount"),
+            routeBtn = document.getElementById("routeBtn"),
+            customBtn = document.getElementById("customRouteBtn"),
+            genBtn = document.getElementById("generateCustomRouteBtn"),
+            cancelGen = document.getElementById("cancelCustomBtn"),
+            cameraModal = document.getElementById("cameraModal"),
+            cameraVideo = document.getElementById("cameraVideo"),
+            captureBtn = document.getElementById("captureBtn"),
+            cancelCapture = document.getElementById("cancelCaptureBtn"),
+            photoModal = document.getElementById("photoModal"),
+            photoImg = document.getElementById("photoImg"),
+            photoDate = document.getElementById("photoDate"),
+            deletePhoto = document.getElementById("deletePhotoBtn"),
+            closePhoto = document.getElementById("closePhotoModal"),
+            photoInput = document.getElementById("photoInput"),
+            orderModal = document.getElementById("orderModal"),
+            orderForm = document.getElementById("orderForm"),
+            itemsCont = document.getElementById("orderItemsContainer"),
+            totalSpan = document.getElementById("orderTotal"),
+            remarksIn = document.getElementById("orderRemarks");
+
+      window.openOrderModal = openOrderModal;
+      window.closeOrderModal = closeOrderModal;
+
+      // Geolocation on load
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          userLat = pos.coords.latitude; userLng = pos.coords.longitude;
+          userLocationAllowed = true; render();
+      // Start watchPosition for automatic updates
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(pos => {
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          render();
+        }, err => console.warn('watchPosition error', err), { enableHighAccuracy: true, maximumAge: 30000, timeout: 27000 });
       }
-      const data = (await db.collection('users').doc(u).get()).data();
-      if (data.password === p) {
-        document.getElementById('loginContainer').classList.add('hidden');
-        document.getElementById('adminPanel').classList.remove('hidden');
-        initAdmin();
-      } else alert('Σφάλμα σύνδεσης');
-    };
 
-    // Add Product Modal logic...
-    const addProductModal = document.getElementById('addProductModal');
-    window.openAddProductModal  = ()=> addProductModal.classList.remove('opacity-0','pointer-events-none');
-    window.closeAddProductModal = ()=> {
-      addProductModal.classList.add('opacity-0','pointer-events-none');
-      document.getElementById('productForm').reset();
-      document.getElementById('productRows').innerHTML = `
-        <div class="flex gap-2">
-          <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded focus:ring-2 focus:ring-region"/>
-          <input type="number" placeholder="Τιμή" step="0.01" required class="w-24 border px-3 py-2 rounded focus:ring-2 focus:ring-region"/>
-          <button type="button" onclick="removeRow(this)" class="text-danger text-2xl leading-none">&minus;</button>
-        </div>`;
-    };
-    document.getElementById('addProductsCard').onclick = openAddProductModal;
-    function addRow(){
-      const rows = document.getElementById('productRows');
-      const div = document.createElement('div');
-      div.className = 'flex gap-2';
-      div.innerHTML=`
-        <input type="text" placeholder="Όνομα προϊόντος" required class="flex-1 border px-3 py-2 rounded focus:ring-2 focus:ring-region"/>
-        <input type="number" placeholder="Τιμή"      step="0.01" required class="w-24 border px-3 py-2 rounded focus:ring-2 focus:ring-region"/>
-        <button type="button" onclick="removeRow(this)" class="text-danger text-2xl leading-none">&minus;</button>`;
-      rows.appendChild(div);
-    }
-    function removeRow(btn){ btn.closest('div').remove(); }
-    document.getElementById('productForm').onsubmit = async e=>{
-      e.preventDefault();
-      for (let row of [...document.getElementById('productRows').children]) {
-        const name = row.querySelector('input[type=text]').value.trim();
-        const price= parseFloat(row.querySelector('input[type=number]').value);
-        if (name&&!isNaN(price)) await db.collection('products').add({name,price});
+        }, () => render(), { enableHighAccuracy: true, timeout: 10000 });
+      } else render();
+
+      // Refresh stigma
+      refreshBtn.onclick = () => {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(pos => {
+            userLat = pos.coords.latitude; userLng = pos.coords.longitude;
+            userLocationAllowed = true; render();
+      // Start watchPosition for automatic updates
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(pos => {
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          render();
+        }, err => console.warn('watchPosition error', err), { enableHighAccuracy: true, maximumAge: 30000, timeout: 27000 });
       }
-      alert('Προϊόντα αποθηκεύτηκαν');
-      closeAddProductModal();
-    };
 
-    // Live Orders
-    const liveOrdersModal     = document.getElementById('liveOrdersModal'),
-          ordersList          = document.getElementById('ordersList'),
-          executedOrdersModal = document.getElementById('executedOrdersModal'),
-          executedList        = document.getElementById('executedList'),
-          orderDetailModal    = document.getElementById('orderDetailModal'),
-          detailTitle         = document.getElementById('detailTitle'),
-          detailRemarks       = document.getElementById('detailRemarks'),
-          detailContent       = document.getElementById('detailContent'),
-          detailTotal         = document.getElementById('detailTotal'),
-          executeOrderBtn     = document.getElementById('executeOrderBtn'),
-          cancelOrderBtn      = document.getElementById('cancelOrderBtn');
-    let currentOrderRef = null;
+          }, () => alert("Δεν μπορούμε να ανανεώσουμε τη θέση."), { enableHighAccuracy: true, timeout: 10000 });
+        } else alert("Το Geolocation δεν υποστηρίζεται.");
+      };
 
-    document.getElementById('liveOrdersCard').onclick = openLiveOrdersModal;
-    function openLiveOrdersModal(){
-      ordersList.innerHTML = '<p class="text-center text-gray-500">Φόρτωση…</p>';
-      liveOrdersModal.classList.remove('opacity-0','pointer-events-none');
-      db.collectionGroup('orders').orderBy('timestamp','desc')
-        .onSnapshot(async snap=>{
-          ordersList.innerHTML = '';
-          const today = new Date().toDateString();
-          for (let doc of snap.docs) {
-            const od = doc.data();
-            if (od.executed) continue;
-            const ts = od.timestamp?.toDate();
-            if (ts && ts.toDateString()!==today) continue;
-            const itemsSnap = await doc.ref.collection('items').get();
-            let qty=0; itemsSnap.docs.forEach(i=> qty+=i.data().quantity);
-            if (qty===0) continue;
-            const pt = await doc.ref.parent.parent.get();
-            let pname = pt.exists ? pt.data().name : '—';
-            pname = pname.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-            const btn = document.createElement('button');
-            btn.className = 'w-full flex justify-between p-4 bg-white border-l-4 border-primary rounded-lg shadow-lg hover:shadow-xl transition';
-            btn.innerHTML = `
-              <div class="text-left">
-                <div class="font-semibold">${pname}</div>
-                <div class="text-sm text-gray-500">${qty} τεμ.</div>
-              </div>
-              <div class="font-bold text-primary">€${od.total.toFixed(2)}</div>`;
-            btn.onclick = () => openOrderDetail(doc.ref, pname);
-            ordersList.appendChild(btn);
-          }
-          if (!ordersList.firstChild)
-            ordersList.innerHTML = '<p class="text-center text-gray-500">Δεν υπάρχουν ενεργές.</p>';
-        }, err=>{
-          ordersList.innerHTML = `<p class="text-red-500 text-center">Σφάλμα: ${err.message}</p>`;
+      // Add Point
+      openBtn.onclick = () => navigator.geolocation.getCurrentPosition(pos => {
+        window._tempLat = pos.coords.latitude; window._tempLng = pos.coords.longitude;
+        document.getElementById('modal').classList.remove('opacity-0','pointer-events-none');
+      }, () => alert("Άδεια τοποθεσίας απαραίτητη."));
+
+      cancelBtn.onclick = () => {
+        document.getElementById('modal').classList.add('opacity-0','pointer-events-none');
+        form.reset();
+      };
+
+      form.onsubmit = async e => {
+        e.preventDefault();
+        const name = form.pointName.value.trim(),
+              area = form.areaSelect.value,
+              lat  = window._tempLat,
+              lng  = window._tempLng;
+        if (!name || !area || lat===undefined || lng===undefined) return alert("Συμπληρώστε όλα τα πεδία.");
+        await db.collection("points").add({
+          name, area, latitude:lat, longitude:lng,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
-    }
-    function closeLiveOrdersModal(){
-      liveOrdersModal.classList.add('opacity-0','pointer-events-none');
-    }
+        cancelBtn.click();
+      };
 
-    // Executed Orders
-    document.getElementById('executedOrdersCard').onclick = openExecutedOrdersModal;
-    function openExecutedOrdersModal(){
-      executedList.innerHTML = '<p class="text-center text-gray-500">Φόρτωση…</p>';
-      executedOrdersModal.classList.remove('opacity-0','pointer-events-none');
-      const today = new Date().toDateString();
-      db.collectionGroup('orders').orderBy('timestamp','desc')
-        .onSnapshot(async snap=>{
-          executedList.innerHTML = '';
-          for (let doc of snap.docs) {
-            const od = doc.data();
-            if (!od.executed) continue;
-            const ts = od.timestamp?.toDate();
-            if (ts && ts.toDateString()!==today) continue;
-            const pt = await doc.ref.parent.parent.get();
-            let pname = pt.exists ? pt.data().name : '—';
-            pname = pname.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-            const execAt = od.executedAt ? new Date(od.executedAt.toDate()).toLocaleString() : '—';
-            const div = document.createElement('div');
-            div.className = 'w-full flex justify-between p-4 bg-gray-50 border-l-4 border-success rounded-lg shadow-inner';
-            div.innerHTML = `
-              <div>
-                <div class="font-semibold">${pname}</div>
-                <div class="text-sm text-gray-500">${execAt}</div>
-              </div>
-              <div class="font-bold text-success">€${od.total.toFixed(2)}</div>`;
-            executedList.appendChild(div);
-          }
-          if (!executedList.firstChild)
-            executedList.innerHTML = '<p class="text-center text-gray-500">Δεν υπάρχουν εκτελεσμένες.</p>';
+      // Edit Point
+      editCancel.onclick = () => {
+        editModal.classList.add("opacity-0","pointer-events-none");
+        editForm.reset();
+      };
+      editForm.onsubmit = async e => {
+        e.preventDefault();
+        const name = editForm.editName.value.trim(),
+              area = editForm.editArea.value;
+        if (!name || !area) return alert("Συμπληρώστε όλα τα πεδία.");
+        await db.collection("points").doc(editId).update({ name, area });
+        editCancel.click();
+      };
+
+      // Route by area
+      routeBtn.onclick = () => {
+        routeModal.classList.remove("opacity-0","pointer-events-none");
+        updateRouteCount();
+      };
+      routeCancel.onclick = () => {
+        routeModal.classList.add("opacity-0","pointer-events-none");
+        routeForm.reset();
+        routeCount.textContent = "";
+      };
+      routeForm.onsubmit = e => {
+        e.preventDefault();
+        const sel = routeRegion.value, days = routeDays.value;
+        let pts = allPoints.filter(p => sel==='all'||p.area===sel)
+          .filter(p => {
+            const age = daysSince(p.lastVisit||0);
+            if (days==='lt3') return age<3;
+            if (days==='3to7') return age>=3&&age<=7;
+            if (days==='gt7') return age>7;
+            if (days==='never') return !p.lastVisit;
+            return true;
+          });
+        if (pts.length < 2) return alert("Ελάχιστα 2 σημεία.");
+        pts.sort((a,b)=>a.timestamp.seconds-b.timestamp.seconds);
+        const coords = pts.map(p=>`${p.latitude},${p.longitude}`),
+              o = coords.shift(),
+              d = coords.pop(),
+              w = coords.join("|");
+        let url = `https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}`;
+        if (w) url += `&waypoints=${w}`;
+        window.open(url,"_blank");
+        routeCancel.click();
+      };
+      routeRegion.onchange = updateRouteCount;
+      routeDays.onchange = updateRouteCount;
+      function updateRouteCount(){
+        const sel = routeRegion.value, days = routeDays.value;
+        const cnt = allPoints.filter(p => sel==='all'||p.area===sel)
+          .filter(p => {
+            const age = daysSince(p.lastVisit||0);
+            if (days==='lt3') return age<3;
+            if (days==='3to7') return age>=3&&age<=7;
+            if (days==='gt7') return age>7;
+            if (days==='never') return !p.lastVisit;
+            return true;
+          }).length;
+        routeCount.textContent = `Βρέθηκαν ${cnt} σημεία`;
+      }
+
+      // Custom Route
+      customBtn.onclick = () => {
+        selectionMode = true;
+        genBtn.classList.remove("hidden");
+        cancelGen.classList.remove("hidden");
+        render();
+      };
+      cancelGen.onclick = e => {
+        e.stopPropagation();
+        selectionMode = false;
+        genBtn.classList.add("hidden");
+        cancelGen.classList.add("hidden");
+        render();
+      };
+      genBtn.onclick = () => {
+        const checked = [...container.querySelectorAll("input[type=checkbox]:checked")];
+        if (!checked.length) return alert("Επιλέξτε σημεία.");
+        const coords = checked.map(cb => {
+          const p = window.clientDocs.find(x=>x.id===cb.dataset.id);
+          return `${p.latitude},${p.longitude}`;
         });
-    }
-    function closeExecutedOrdersModal(){
-      executedOrdersModal.classList.add('opacity-0','pointer-events-none');
-    }
+        const o = coords.shift(), d = coords.pop(), w = coords.join("|");
+        let url = `https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}`;
+        if (w) url += `&waypoints=${w}`;
+        window.open(url,"_blank");
+        cancelGen.click();
+      };
 
-    // Order Detail
-    function openOrderDetail(ref, pname){
-      currentOrderRef = ref;
-      detailTitle.textContent = `ΠΑΡΑΓΓΕΛΙΑ @ ${pname}`;
-      detailRemarks.textContent = '';
-      detailContent.innerHTML = '';
-      detailTotal.textContent = '€0.00';
-      orderDetailModal.classList.remove('opacity-0','pointer-events-none');
-
-      ref.get().then(async odoc=>{
-        const od = odoc.data();
-        detailRemarks.textContent = od.remarks || '';
-        let sum = 0;
-        const itemsSnap = await ref.collection('items').get();
-        for (let it of itemsSnap.docs) {
-          const itm = it.data();
-          const ps = await itm.productId.get();
-          const name = (ps.exists ? ps.data().name : itm.productId.id)
-                         .toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-          const qty = itm.quantity;
-          const sub = itm.subtotal;
-          sum += sub;
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td class="px-2 py-1">${name}</td>
-            <td class="px-2 py-1 text-center">${qty}</td>
-            <td class="px-2 py-1 text-right">€${sub.toFixed(2)}</td>`;
-          detailContent.appendChild(tr);
+      // Photo / Camera logic
+      function showPhoto(id){
+        currentPhotoId = id;
+        db.collection("points").doc(id).get().then(doc=>{
+          const data = doc.data()||{};
+          if (data.photoURL){
+            photoImg.src = data.photoURL;
+            photoDate.textContent = new Date(data.photoTimestamp.toDate()).toLocaleString();
+            photoModal.classList.remove("opacity-0","pointer-events-none");
+          } else {
+            if (navigator.mediaDevices?.getUserMedia){
+              cameraModal.classList.remove("opacity-0","pointer-events-none");
+              navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+                .then(stream=>{ cameraStream=stream; cameraVideo.srcObject=stream; })
+                .catch(()=>photoInput.click());
+            } else {
+              photoInput.click();
+            }
+          }
+        }).catch(err=>{
+          alert("Σφάλμα ανάκτησης φωτογραφίας: "+err.message);
+        });
+      }
+      captureBtn.onclick = ()=>{
+        if (!cameraVideo?.videoWidth) return;
+        const canvas = document.createElement('canvas');
+        canvas.width = cameraVideo.videoWidth;
+        canvas.height = cameraVideo.videoHeight;
+        canvas.getContext('2d').drawImage(cameraVideo,0,0);
+        cameraStream.getTracks().forEach(t=>t.stop());
+        cameraModal.classList.add("opacity-0","pointer-events-none");
+        if (!confirm("Θέλεις να αποθηκεύσεις τη φωτογραφία;")) return;
+        canvas.toBlob(async blob=>{
+          try{
+            const ref = storage.ref(`points/${currentPhotoId}.jpg`);
+            const snap = await ref.put(blob);
+            const url = await ref.getDownloadURL();
+            const ts = firebase.firestore.FieldValue.serverTimestamp();
+            await db.collection("points").doc(currentPhotoId).update({ photoURL:url, photoTimestamp:ts });
+            photoImg.src = url;
+            photoDate.textContent = new Date().toLocaleString();
+            photoModal.classList.remove("opacity-0","pointer-events-none");
+          } catch(err){
+            alert("Σφάλμα upload: "+err.message);
+          }
+        }, 'image/jpeg', 0.8);
+      };
+      cancelCapture.onclick = ()=>{
+        cameraStream?.getTracks().forEach(t=>t.stop());
+        cameraModal.classList.add("opacity-0","pointer-events-none");
+      };
+      photoInput.onchange = async ()=>{
+        const file = photoInput.files[0];
+        if (!file || !currentPhotoId || !confirm("Θέλεις να αποθηκεύσεις τη φωτογραφία;")) return;
+        try{
+          const ref = storage.ref(`points/${currentPhotoId}.jpg`);
+          await ref.put(file);
+          const url = await ref.getDownloadURL();
+          const ts = firebase.firestore.FieldValue.serverTimestamp();
+          await db.collection("points").doc(currentPhotoId).update({ photoURL:url, photoTimestamp:ts });
+          photoImg.src = url;
+          photoDate.textContent = new Date().toLocaleString();
+          photoModal.classList.remove("opacity-0","pointer-events-none");
+        } catch(err){
+          alert("Σφάλμα upload (fallback): "+err.message);
         }
-        detailTotal.textContent = `€${sum.toFixed(2)}`;
-      });
-    }
-    function closeOrderDetailModal(){
-      orderDetailModal.classList.add('opacity-0','pointer-events-none');
-    }
+      };
+      deletePhoto.onclick = async ()=>{
+        if (!currentPhotoId || !confirm("Θέλεις να διαγράψεις τη φωτογραφία;")) return;
+        try{
+          await storage.ref(`points/${currentPhotoId}.jpg`).delete();
+          await db.collection("points").doc(currentPhotoId).update({
+            photoURL: firebase.firestore.FieldValue.delete(),
+            photoTimestamp: firebase.firestore.FieldValue.delete()
+          });
+          photoModal.classList.add("opacity-0","pointer-events-none");
+        } catch(err){
+          alert("Σφάλμα διαγραφής: "+err.message);
+        }
+      };
+      closePhoto.onclick = ()=> photoModal.classList.add("opacity-0","pointer-events-none");
 
-    // Execute / Cancel Order
-    executeOrderBtn.onclick = async ()=>{
-      if (!currentOrderRef) return;
-      if (!confirm('Εκτέλεση παραγγελίας;')) return;
-      await currentOrderRef.update({
-        executed:true,
-        executedAt:firebase.firestore.FieldValue.serverTimestamp()
-      });
-      closeOrderDetailModal();
-      closeLiveOrdersModal();
-    };
-    cancelOrderBtn.onclick = async ()=>{
-      if (!currentOrderRef) return;
-      if (!confirm('Διαγραφή παραγγελίας;')) return;
-      const itemsSnap = await currentOrderRef.collection('items').get();
-      for (let it of itemsSnap.docs) await it.ref.delete();
-      await currentOrderRef.delete();
-      closeOrderDetailModal();
-      closeLiveOrdersModal();
-    };
+      // Order modal functions
+      function openOrderModal(pointId){
+        currentPointId = pointId;
+        itemsCont.innerHTML = '';
+        totalSpan.textContent = '€0.00';
+        remarksIn.value = '';
+        db.collection('products').get().then(snap=>{
+          snap.docs.forEach(doc=>{
+            const {name, price} = doc.data();
+            const row = document.createElement('div');
+            row.className = 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 bg-gray-50 rounded-lg shadow-inner';
+            const spanName = document.createElement('span');
+            spanName.className = 'flex-1 text-lg font-medium';
+            spanName.textContent = name;
+            row.appendChild(spanName);
+            const ctrl = document.createElement('div');
+            ctrl.className = 'flex items-center gap-2';
+            const input = document.createElement('input');
+            input.type = 'number'; input.min='0'; input.value='0';
+            input.dataset.id = doc.id; input.dataset.price = price;
+            input.className = 'w-16 border rounded-lg px-2 py-1 text-center focus:ring-2 focus:ring-accent';
+            input.addEventListener('input', updateOrderTotal);
+            [1,3,5].forEach(delta=>{
+              const btn = document.createElement('button');
+              btn.type='button';
+              btn.className = 'bg-primary text-white px-2 py-1 rounded-lg hover:bg-primary/90 text-sm';
+              btn.textContent = `+${delta}`;
+              btn.addEventListener('click', ()=>{
+                input.value = Math.max(0, (parseInt(input.value)||0) + delta);
+                updateOrderTotal();
+              });
+              ctrl.appendChild(btn);
+            });
+            ctrl.appendChild(input);
+            const spanPrice = document.createElement('span');
+            spanPrice.className = 'w-20 text-right text-sm text-gray-600';
+            spanPrice.textContent = `€${price.toFixed(2)}`;
+            ctrl.appendChild(spanPrice);
+            const spanSub = document.createElement('span');
+            spanSub.className = 'w-24 text-right font-semibold item-subtotal';
+            spanSub.textContent = '€0.00';
+            ctrl.appendChild(spanSub);
+            row.appendChild(ctrl);
+            itemsCont.appendChild(row);
+          });
+        });
+        orderModal.classList.remove('opacity-0','pointer-events-none');
+      }
+      function closeOrderModal(){
+        orderModal.classList.add('opacity-0','pointer-events-none');
+      }
+      function updateOrderTotal(){
+        let total = 0;
+        document.querySelectorAll('#orderItemsContainer > div').forEach(row=>{
+          const inp = row.querySelector('input'),
+                qty = parseInt(inp.value)||0,
+                price = parseFloat(inp.dataset.price),
+                st = qty*price;
+          row.querySelector('.item-subtotal').textContent = `€${st.toFixed(2)}`;
+          total += st;
+        });
+        totalSpan.textContent = `€${total.toFixed(2)}`;
+      }
 
-    // Add Seller Modal
-    const addSellerModal = document.getElementById('addSellerModal');
-    document.getElementById('addSellerCard').onclick = ()=> addSellerModal.classList.remove('opacity-0','pointer-events-none');
-    function closeAddSellerModal(){
-      addSellerModal.classList.add('opacity-0','pointer-events-none');
-      document.getElementById('sellerForm').reset();
-    }
-    document.getElementById('sellerForm').onsubmit = async e=>{
-      e.preventDefault();
-      const name     = document.getElementById('sellerName').value.trim();
-      const user     = document.getElementById('sellerUsername').value.trim();
-      const pass     = document.getElementById('sellerPassword').value;
-      const role     = document.getElementById('sellerRole').value;
-      if(!name||!user||!pass) return alert('Συμπληρώστε όλα τα πεδία.');
-      await db.collection('users').add({ displayName:name, username:user, password:pass, role });
-      alert('Ο πωλητής καταχωρήθηκε.');
-      closeAddSellerModal();
-    };
+      // HERE is the FIX: use for…of + await instead of forEach
+      orderForm.onsubmit = async e=>{
+        e.preventDefault();
+        const total   = parseFloat(totalSpan.textContent.replace('€','')),
+              remarks = remarksIn.value.trim();
+        const orderRef = await db.collection('points').doc(currentPointId)
+                                .collection('orders').add({
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          total, remarks
+        });
+        const rows = Array.from(document.querySelectorAll('#orderItemsContainer > div'));
+        for (let row of rows) {
+          const inp = row.querySelector('input'),
+                qty = parseInt(inp.value) || 0;
+          if (qty > 0) {
+            const pid   = inp.dataset.id,
+                  price = parseFloat(inp.dataset.price);
+            await orderRef.collection('items').add({
+              productId: db.doc(`products/${pid}`),
+              quantity: qty,
+              price,
+              subtotal: qty * price
+            });
+          }
+        }
+        closeOrderModal();
+        alert('Η παραγγελία καταχωρήθηκε!');
+      };
 
-    function initAdmin(){ /* δεν χρειάζεται άλλο init */ }
+      // Firestore listener & render
+      db.collection("points").orderBy("timestamp","desc")
+        .onSnapshot(snap=>{
+          allPoints = snap.docs.map(d=>({id:d.id, ...d.data()}));
+          render();
+        });
+
+      
+      function render() {
+        container.innerHTML = '';
+        if (userLocationAllowed && userLat != null && userLng != null) {
+          // Compute distances and sort
+          const ptsWithDist = allPoints.map(pt => {
+            if (pt.latitude != null && pt.longitude != null) {
+              const dist = getDistanceFromLatLonInKm(userLat, userLng, pt.latitude, pt.longitude);
+              return { pt: pt, dist: dist };
+            } else {
+              return { pt: pt, dist: null };
+            }
+          });
+          ptsWithDist.sort((a, b) => {
+            if (a.dist === null && b.dist === null) return 0;
+            if (a.dist === null) return 1;
+            if (b.dist === null) return -1;
+            return a.dist - b.dist;
+          });
+          ptsWithDist.forEach(item => {
+            container.append(card(item.pt, item.dist));
+          });
+        } else {
+          // No location: render in existing order
+          allPoints.forEach(pt => {
+            container.append(card(pt, null));
+          });
+        }
+      }
+      function card(pt, distKm) {
+        const c = document.createElement("div");
+        // Highlight if within threshold (e.g., 0.5 km)
+              const AUTO_RADIUS_KM = 0.5; // highlight within 0.5 km
+                let classes = "client-card relative bg-white rounded-xl p-4 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition overflow-hidden";
+        if (distKm !== null && distKm <= AUTO_RADIUS_KM) {
+          // Add highlight styles
+          classes += " border-2 border-success bg-green-50";
+        }
+        c.className = classes;
+        // Area badge
+        const ab = document.createElement("div");
+        ab.className = "absolute top-2 left-1/2 transform -translate-x-1/2 bg-region text-white px-2 py-0.5 rounded-full text-xs uppercase";
+        ab.textContent = pt.area;
+        c.append(ab);
+        // Name with distance if available
+        const h3 = document.createElement("h3");
+        h3.className = "mt-6 text-center text-lg font-bold uppercase text-darktext break-words";
+                let nameText = pt.name + (distKm!=null?(" (" + distKm.toFixed(2) + " km)"):"");
+        if (distKm !== null) {
+        }
+                h3.textContent = nameText;
+        c.append(h3);
+        // Age and buttons
+        const row = document.createElement("div");
+        row.className = "mt-4 flex justify-between items-center";
+        const ageDiv = document.createElement("div");
+        const age = daysSince(pt.lastVisit || 0);
+        const dc = age===Infinity||age>7?"bg-danger animate-pulse":age>3?"bg-accent animate-ping":"bg-success";
+        ageDiv.innerHTML = `<span class="${dc} inline-block w-2 h-2 rounded-full"></span>
+                            <span class="text-xs text-gray-500 uppercase ml-1">
+                              ${age===Infinity?"Ποτέ":Math.floor(age)===1?"1 ημέρα":`${Math.floor(age)} ημέρες`}
+                            </span>`;
+        row.append(ageDiv);
+        const btns = document.createElement("div");
+                btns.className = "flex gap-2";
+        ["Επίσκεψη","Αλλαγή","Διαγραφή","Προβολή"].forEach(lbl=>{
+          const b = document.createElement("button");
+          b.className = "px-2 py-1 text-xs rounded text-white "+
+                        (lbl==="Επίσκεψη"?"bg-success":lbl==="Αλλαγή"?"bg-accent":lbl==="Διαγραφή"?"bg-danger":"bg-region");
+          b.textContent = lbl;
+          b.onclick = {
+            "Επίσκεψη": async ()=>{
+              const now = new Date();
+              await db.collection("points").doc(pt.id)
+                       .update({ lastVisit: firebase.firestore.FieldValue.serverTimestamp() });
+              pt.lastVisit = { toDate: ()=>now };
+              render();
+            },
+            "Αλλαγή": ()=>{
+              editId = pt.id;
+              document.querySelector("#editForm input[name=editName]").value = pt.name;
+              document.querySelector("#editForm select[name=editArea]").value = pt.area;
+              editModal.classList.remove("opacity-0","pointer-events-none");
+            },
+            "Διαγραφή": async ()=>{
+              if (confirm("Διαγραφή;")) await db.collection("points").doc(pt.id).delete();
+            },
+            "Προβολή": ()=> showPhoto(pt.id)
+          }[lbl];
+          btns.append(b);
+        });
+        row.append(btns);
+        c.append(row);
+        if (pt.lastVisit){
+          const p = document.createElement("p");
+          p.className = "text-xs text-gray-500 italic mt-2 text-center";
+          p.textContent = "Τελευταία επίσκεψη: "+pt.lastVisit.toDate().toLocaleString();
+          c.append(p);
+        }
+        const addOrderBtn = document.createElement("button");
+        addOrderBtn.textContent = "Προσθήκη Παραγγελίας";
+        addOrderBtn.className = "block w-full mt-2 bg-accent text-white py-1 rounded uppercase text-xs hover:bg-accent/90";
+        addOrderBtn.onclick = ()=> openOrderModal(pt.id);
+        c.append(addOrderBtn);
+        const a = document.createElement("a");
+        a.href = `https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}`;
+        a.target = "_blank";
+        a.className = "block text-center bg-primary text-white py-1 rounded uppercase text-xs mt-2 hover:bg-primary/90";
+        a.textContent = "Χάρτης";
+        c.append(a);
+        if (selectionMode){
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.dataset.id = pt.id;
+          cb.className = "absolute top-2 right-1 form-checkbox h-4 w-4 text-primary";
+          c.append(cb);
+        }
+        return c;
+      }
+
+    });
   </script>
-</body>
-</html>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var liveInput = document.getElementById('liveSearchInput');
+  var container = document.getElementById('pointsContainer');
+  if (liveInput && container) {
+    liveInput.addEventListener('input', function() {
+      var filter = this.value.trim().toLowerCase();
+      container.querySelectorAll('.client-card, .bg-white').forEach(function(card) {
+        var nameEl = card.querySelector('h3');
+        var name = nameEl ? nameEl.textContent.toLowerCase() : '';
+        card.style.display = name.includes(filter) ? '' : 'none';
+      });
+    });
+  }
+});
+</script><script>
+// Order Modal functions
+let currentOrderClientId = null;
+
+function openOrderModal(clientId) {
+  currentOrderClientId = clientId;
+  // Set client name
+  const nameInput = document.getElementById('orderClientName');
+  if (nameInput && window.clientDocs) {
+    const doc = window.clientDocs.find(d => d.id === clientId);
+    nameInput.value = doc ? (doc.data().name || "") : "";
+  // Set current datetime automatically
+  const dtInput = document.getElementById('orderDateTime');
+  if (dtInput) {
+    const now = new Date();
+    const pad = n => n.toString().padStart(2,'0');
+    const localISO = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    dtInput.value = localISO;
+  }
+  }
+  // Set current datetime
+  const dtInput = document.getElementById('orderDateTime');
+  if (dtInput) {
+    const now = new Date();
+    const pad = n => n.toString().padStart(2,'0');
+    const localISO = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    dtInput.value = localISO;
+  }
+  // Clear previous items
+  const itemsContainer = document.getElementById('orderItemsContainer');
+  if (itemsContainer) {
+    itemsContainer.querySelectorAll('.order-item-row').forEach(el => el.remove());
+  }
+  // Add one initial row
+  addOrderItemRow();
+  // Reset total and remarks
+  const totalSpan = document.getElementById('orderTotal');
+  if (totalSpan) totalSpan.textContent = '€0.00';
+  const remarksIn = document.getElementById('orderRemarks');
+  if (remarksIn) remarksIn.value = '';
+  // Show modal
+  const modal = document.getElementById('orderModal');
+  if (modal) {
+    modal.classList.remove('opacity-0','pointer-events-none');
+    setTimeout(() => {
+      const inner = modal.firstElementChild;
+      if (inner) inner.classList.remove('scale-95');
+      modal.classList.add('opacity-100');
+    }, 10);
+  }
+}
+
+function closeOrderModal() {
+  const modal = document.getElementById('orderModal');
+  if (modal) {
+    const inner = modal.firstElementChild;
+    if (inner) {
+      inner.classList.add('scale-95');
+    }
+    modal.classList.remove('opacity-100');
+    setTimeout(() => {
+      modal.classList.add('opacity-0','pointer-events-none');
+    }, 200);
+  }
+  // Reset form
+  const form = document.getElementById('orderForm');
+  if (form) form.reset();
+  currentOrderClientId = null;
+}
+
+function addOrderItemRow() {
+  const container = document.getElementById('orderItemsContainer');
+  if (!container) return;
+  const row = document.createElement('div');
+    row.className = 'order-item-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 p-1 bg-gray-50 dark:bg-gray-700 rounded-md';
+  // Product selector (if products collection exists) or text input
+  const prodInput = document.createElement('input');
+  prodInput.type = 'text';
+  prodInput.name = 'productName';
+  prodInput.placeholder = 'Προϊόν';
+  prodInput.required = true;
+    prodInput.className = 'flex-1 border border-gray-300 dark:border-gray-600 rounded-md px-1 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary';
+  // Quantity input
+  const qtyInput = document.createElement('input');
+  qtyInput.type = 'number';
+  qtyInput.name = 'quantity';
+  qtyInput.placeholder = 'Ποσότητα';
+  qtyInput.min = '1';
+  qtyInput.value = '1';
+  qtyInput.required = true;
+    qtyInput.className = 'w-16 border border-gray-300 dark:border-gray-600 rounded-md px-1 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary';
+  qtyInput.addEventListener('input', updateOrderTotal);
+  // Delete button
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button';
+  delBtn.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500 hover:text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+    </svg>`;
+  delBtn.onclick = () => {
+    row.remove();
+    updateOrderTotal();
+  };
+  // Append elements
+  row.append(prodInput, qtyInput, delBtn);
+  container.append(row);
+}
+
+function updateOrderTotal() {
+  let total = 0;
+  document.querySelectorAll('#orderItemsContainer .order-item-row').forEach(row => {
+    const prodName = row.querySelector('input[name="productName"]')?.value.trim();
+    const qty = parseInt(row.querySelector('input[name="quantity"]')?.value) || 0;
+    let price = 0;
+    // If products collection exists with price data, could fetch price; here leave price=0 or implement lookup
+    // For now, subtotal remains 0; user can adjust if needed
+    const subtotal = qty * price;
+    const spanSub = row.querySelector('.item-subtotal');
+    if (spanSub) spanSub.textContent = `€${subtotal.toFixed(2)}`;
+    total += subtotal;
+  });
+  const totalSpan = document.getElementById('orderTotal');
+  if (totalSpan) totalSpan.textContent = `€${total.toFixed(2)}`;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const submitBtn = document.getElementById('submitOrderBtn');
+  if (submitBtn) {
+    submitBtn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      if (!currentOrderClientId) {
+        alert('Δεν έχει επιλεχθεί πελάτης.');
+        return;
+      }
+      const form = document.getElementById('orderForm');
+      if (!form) return;
+      // Gather data
+      const data = {};
+      data.clientId = currentOrderClientId;
+      const dtInput = document.getElementById('orderDateTime');
+      data.dateTime = dtInput && dtInput.value ? new Date(dtInput.value) : new Date();
+      // Items
+      const items = [];
+      document.querySelectorAll('#orderItemsContainer .order-item-row').forEach(row => {
+        const name = row.querySelector('input[name="productName"]')?.value.trim();
+        const qty = parseInt(row.querySelector('input[name="quantity"]')?.value) || 0;
+        if (name && qty > 0) {
+          items.push({ name, quantity: qty });
+        }
+      });
+      if (items.length === 0) {
+        alert('Πρέπει να προσθέσεις τουλάχιστον ένα είδος.');
+        return;
+      }
+      data.items = items;
+      const remarksIn = document.getElementById('orderRemarks');
+      if (remarksIn) data.remarks = remarksIn.value.trim();
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      try {
+        // Save under points/{id}/orders
+        await firebase.firestore().collection('points').doc(currentOrderClientId)
+          .collection('orders').add(data);
+        alert('Η παραγγελία καταχωρήθηκε!');
+        closeOrderModal();
+      } catch(err) {
+        console.error('Error saving order:', err);
+        alert('Σφάλμα κατά την αποθήκευση της παραγγελίας.');
+      }
+    });
+  }
+});</script>  </div>
+
+<script>
+// Admin Login Logic
+const loginModal = document.getElementById("loginModal"),
+      loginForm = document.getElementById("loginForm"),
+      appContent = document.getElementById("appContent");
+loginForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  const user = document.getElementById("loginUsername").value.trim();
+  const pass = document.getElementById("loginPassword").value;
+  try {
+    const doc = await db.collection("admins").doc(user).get();
+    if (doc.exists && doc.data().password === pass) {
+      loginModal.style.display = "none";
+      appContent.style.display = "block";
+    } else {
+      throw new Error("Invalid credentials");
+    }
+  } catch {
+    alert("Login failed");
+  }
+});
+</script>
+
+</body></html>
