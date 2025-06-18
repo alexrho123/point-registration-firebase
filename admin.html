@@ -192,7 +192,18 @@
       });
     });
 
-    tbody.appendChild(tr);
+    // Πελάτες
+    db.collection("clients").onSnapshot(function(snap) {
+      const tbody = document.getElementById("customersTable");
+      tbody.innerHTML = "";
+      snap.docs.forEach(function(doc) {
+        const d = doc.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = "<td class='border px-4 py-2 cursor-pointer'>" + d.name + "</td>" +
+                       "<td class='border px-4 py-2'>" + (d.phone||"–") + "</td>" +
+                       "<td class='border px-4 py-2'>" + (d.address||"–") + "</td>";
+        tr.addEventListener("click", function() { showClientDetails(doc.id); });
+        tbody.appendChild(tr);
       });
     });
     async function showClientDetails(id) {
