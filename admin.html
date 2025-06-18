@@ -11,17 +11,17 @@
 </head>
 <body class="bg-gray-100">
 
-  <!-- Σύνδεση Modal -->
+  <!-- Modal Σύνδεσης Διαχειριστή -->
   <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
-      <h2 class="text-2xl font-bold mb-4">Admin Σύνδεση</h2>
+      <h2 class="text-2xl font-bold mb-4">Σύνδεση Διαχειριστή</h2>
       <form id="loginForm" class="space-y-4">
         <label class="block">
-          Username
+          Όνομα Χρήστη
           <input type="text" id="loginUsername" required class="w-full border px-3 py-2 rounded"/>
         </label>
         <label class="block">
-          Password
+          Κωδικός
           <input type="password" id="loginPassword" required class="w-full border px-3 py-2 rounded"/>
         </label>
         <div class="text-right">
@@ -31,16 +31,16 @@
     </div>
   </div>
 
-  <!-- App Content -->
+  <!-- Περιεχόμενο Εφαρμογής -->
   <div id="appContent" class="hidden">
 
-    <!-- Navbar -->
+    <!-- Μενού -->
     <nav class="bg-white shadow p-4 flex justify-between">
       <h1 class="text-xl font-bold">Πίνακας Διαχείρισης</h1>
       <button id="logoutBtn" class="bg-red-500 text-white px-3 py-1 rounded">Αποσύνδεση</button>
     </nav>
 
-    <!-- Tabs -->
+    <!-- Κεφαλίδες -->
     <div class="p-4">
       <ul id="tabs" class="flex space-x-4 border-b">
         <li data-tab="dashboard" class="pb-2 border-blue-600 cursor-pointer">Πίνακας Ελέγχου</li>
@@ -53,8 +53,8 @@
       <div id="dashboard" class="tab-content p-4">
         <div class="grid grid-cols-3 gap-4">
           <div class="bg-white p-4 rounded shadow">
-            <h2>Total Παραγγελίες</h2>
-            <p id="totalΠαραγγελίες" class="text-2xl"></p>
+            <h2>Σύνολο Παραγγελιών</h2>
+            <p id="totalOrders" class="text-2xl"></p>
           </div>
           <div class="bg-white p-4 rounded shadow">
             <h2>Σύνολο Εσόδων</h2>
@@ -62,20 +62,20 @@
           </div>
           <div class="bg-white p-4 rounded shadow">
             <h2>Πελάτες</h2>
-            <p id="totalΠελάτες" class="text-2xl"></p>
+            <p id="totalCustomers" class="text-2xl"></p>
           </div>
         </div>
       </div>
 
       <!-- Παραγγελίες -->
       <div id="orders" class="tab-content hidden p-4">
-        <h2>Live Παραγγελίες</h2>
+        <h2>Ζωντανές Παραγγελίες</h2>
         <table class="min-w-full bg-white">
           <thead>
             <tr>
               <th class="px-4 py-2">Πελάτης</th>
               <th class="px-4 py-2">Σύνολο (€)</th>
-              <th class="px-4 py-2">Ημερομηνία/Ώρα</th>
+              <th class="px-4 py-2">Ημ/νία & Ώρα</th>
             </tr>
           </thead>
           <tbody id="ordersTable"></tbody>
@@ -90,7 +90,7 @@
             <tr>
               <th class="px-4 py-2">Όνομα</th>
               <th class="px-4 py-2">Τηλέφωνο</th>
-              <th class="px-4 py-2">Προσθήκηress</th>
+              <th class="px-4 py-2">Διεύθυνση</th>
             </tr>
           </thead>
           <tbody id="customersTable"></tbody>
@@ -108,8 +108,8 @@
           <thead>
             <tr>
               <th class="px-4 py-2">Όνομα</th>
-              <th class="px-4 py-2">Price</th>
-              <th class="px-4 py-2">Actions</th>
+              <th class="px-4 py-2">Τιμή (€)</th>
+              <th class="px-4 py-2">Διαγραφή</th>
             </tr>
           </thead>
           <tbody id="productsTable"></tbody>
@@ -118,20 +118,20 @@
     </div>
   </div>
 
-  <!-- Προσθήκη Product Modal -->
+  <!-- Modal Προσθήκης Προϊόντος -->
   <div id="productModal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
     <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
-      <h2 class="text-xl mb-4">Προσθήκη Product</h2>
+      <h2 class="text-xl mb-4">Προσθήκη Προϊόντος</h2>
       <form id="productForm" class="space-y-4">
-        <label>Όνομα<input type="text" id="productΌνομα" required class="w-full border px-3 py-2 rounded"/></label>
-        <label>Price<input type="number" id="productPrice" required class="w-full border px-3 py-2 rounded"/></label>
+        <label>Όνομα<input type="text" id="productName" required class="w-full border px-3 py-2 rounded"/></label>
+        <label>Τιμή<input type="number" id="productPrice" required class="w-full border px-3 py-2 rounded"/></label>
         <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Αποθήκευση</button>
       </form>
     </div>
   </div>
 
   <script>
-    // Firebase init
+    // Firebase αρχικοποίηση
     firebase.initializeApp({
       apiKey: "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
       authDomain: "pointregistrationapp.firebaseapp.com",
@@ -141,113 +141,121 @@
       appId: "1:925139386507:web:588ae991f39a7bab04548e"
     });
     const db = firebase.firestore();
-    console.log("Firebase initialized");
 
-    // Admin login
+    // Λογική σύνδεσης admin
     const loginModal = document.getElementById("loginModal"),
           loginForm = document.getElementById("loginForm"),
           appContent = document.getElementById("appContent"),
           logoutBtn = document.getElementById("logoutBtn");
     loginForm.addEventListener("submit", async function(e) {
       e.preventDefault();
-      var user = document.getElementById("loginUsername").value.trim();
-      var pass = document.getElementById("loginPassword").value;
-      console.log("Σύνδεση attempt:", user);
+      const user = document.getElementById("loginUsername").value.trim();
+      const pass = document.getElementById("loginPassword").value;
       try {
-        var doc = await db.collection("admins").doc(user).get();
-        console.log("Admin doc:", doc.exists, doc.data());
+        const doc = await db.collection("admins").doc(user).get();
         if(doc.exists && doc.data().password === pass) {
           loginModal.classList.add("hidden");
           appContent.classList.remove("hidden");
         } else {
-          throw new Error("Invalid credentials");
+          alert("Λάθος διαπιστευτήρια");
         }
-      } catch(err) {
-        console.error(err);
-        alert("Σύνδεση failed");
+      } catch {
+        alert("Σφάλμα σύνδεσης");
       }
     });
     logoutBtn.addEventListener("click", function() {
       location.reload();
     });
 
-    // Tab switching
+    // Αλλαγή καρτελών
     document.querySelectorAll("#tabs li").forEach(function(tab) {
       tab.addEventListener("click", function() {
-        document.querySelectorAll(".tab-content").forEach(function(c){c.classList.add("hidden");});
-        document.getElementById(tab.getAttribute("data-tab")).classList.remove("hidden");
-        document.querySelectorAll("#tabs li").forEach(function(t){t.classList.remove("border-blue-600");});
+        document.querySelectorAll(".tab-content").forEach(function(c){ c.classList.add("hidden"); });
+        document.getElementById(tab.dataset.tab).classList.remove("hidden");
+        document.querySelectorAll("#tabs li").forEach(function(t){ t.classList.remove("border-blue-600"); });
         tab.classList.add("border-blue-600");
       });
     });
 
-    // Πίνακας Ελέγχου stats
-    async function updateΠίνακας Ελέγχου() {
-      var ordersSnap = await db.collection("orders").get();
-      document.getElementById("totalΠαραγγελίες").textContent = ordersSnap.size;
-      var revenue = 0;
-      ordersSnap.docs.forEach(function(d){revenue += d.data().total;});
+    // Dashboard στοιχεία
+    async function updateDashboard() {
+      const ordersSnap = await db.collection("orders").get();
+      document.getElementById("totalOrders").textContent = ordersSnap.size;
+      let revenue = 0;
+      ordersSnap.docs.forEach(function(d){ revenue += d.data().total; });
       document.getElementById("totalRevenue").textContent = revenue.toFixed(2) + " €";
-      var custSnap = await db.collection("clients").get();
-      document.getElementById("totalΠελάτες").textContent = custSnap.size;
+      const custSnap = await db.collection("clients").get();
+      document.getElementById("totalCustomers").textContent = custSnap.size;
     }
-    updateΠίνακας Ελέγχου();
+    updateDashboard();
 
-    // Live orders
+    // Live παραγγελίες
     db.collection("orders").onSnapshot(function(snap) {
-      var tbody = document.getElementById("ordersTable");
-      tbody.innerHTML = "";
+      const tb = document.getElementById("ordersTable");
+      tb.innerHTML = "";
       snap.docs.forEach(function(d) {
-        var data = d.data();
-        var tr = document.createElement("tr");
-        tr.innerHTML = "<td class='border px-4 py-2'>" + data.clientΌνομα + "</td><td class='border px-4 py-2'>" + data.total.toFixed(2) + "</td><td class='border px-4 py-2'>" + new Date(data.timestamp.toDate()).toLocaleString() + "</td>";
-        tbody.appendChild(tr);
+        const data = d.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = "<td class='border px-4 py-2'>" + data.clientName + "</td>" +
+                       "<td class='border px-4 py-2'>" + data.total.toFixed(2) + "</td>" +
+                       "<td class='border px-4 py-2'>" + new Date(data.timestamp.toDate()).toLocaleString() + "</td>";
+        tb.appendChild(tr);
       });
     });
 
     // Πελάτες
     db.collection("clients").onSnapshot(function(snap) {
-      var tbody = document.getElementById("customersTable");
-      tbody.innerHTML = "";
+      const tb = document.getElementById("customersTable");
+      tb.innerHTML = "";
       snap.docs.forEach(function(doc) {
-        var d = doc.data();
-        var tr = document.createElement("tr");
-        tr.innerHTML = "<td class='border px-4 py-2 cursor-pointer'>" + d.name + "</td><td class='border px-4 py-2'>" + (d.phone||"") + "</td><td class='border px-4 py-2'>" + (d.address||"") + "</td>";
+        const d = doc.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = "<td class='border px-4 py-2 cursor-pointer'>" + d.name + "</td>" +
+                       "<td class='border px-4 py-2'>" + (d.phone||"–") + "</td>" +
+                       "<td class='border px-4 py-2'>" + (d.address||"–") + "</td>";
         tr.addEventListener("click", function() { showClientDetails(doc.id); });
-        tbody.appendChild(tr);
+        tb.appendChild(tr);
       });
     });
     async function showClientDetails(id) {
-      var d = (await db.collection("clients").doc(id).get()).data();
-      var details = document.getElementById("customerDetails");
+      const d = (await db.collection("clients").doc(id).get()).data();
+      const details = document.getElementById("customerDetails");
       details.classList.remove("hidden");
-      details.innerHTML = "<h3 class='font-bold'>" + d.name + "</h3><p><strong>Προσθήκηress:</strong> " + (d.address||"—") + "</p><p><strong>Τηλέφωνο:</strong> " + (d.phone||"—") + "</p>";
+      details.innerHTML = "<h3 class='font-bold'>" + d.name + "</h3>" +
+                          "<p><strong>Διεύθυνση:</strong> " + (d.address||"–") + "</p>" +
+                          "<p><strong>Τηλέφωνο:</strong> " + (d.phone||"–") + "</p>";
     }
 
     // Προϊόντα CRUD
-    var addBtn = document.getElementById("addProductBtn"),
-        prodModal = document.getElementById("productModal"),
-        prodForm = document.getElementById("productForm");
-    addBtn.addEventListener("click", function(){ prodModal.classList.remove("hidden"); });
-    prodForm.addEventListener("submit", async function(e){
+    const addBtn = document.getElementById("addProductBtn"),
+          prodModal = document.getElementById("productModal"),
+          prodForm = document.getElementById("productForm");
+    addBtn.addEventListener("click", function() {
+      prodModal.classList.remove("hidden");
+    });
+    prodForm.addEventListener("submit", async function(e) {
       e.preventDefault();
-      var name = document.getElementById("productΌνομα").value.trim();
-      var price = parseFloat(document.getElementById("productPrice").value);
+      const name = document.getElementById("productName").value.trim();
+      const price = parseFloat(document.getElementById("productPrice").value);
       await db.collection("products").add({ name: name, price: price });
       prodForm.reset();
       prodModal.classList.add("hidden");
     });
-    db.collection("products").onSnapshot(function(snap){
-      var tbody = document.getElementById("productsTable");
-      tbody.innerHTML = "";
+    db.collection("products").onSnapshot(function(snap) {
+      const tb = document.getElementById("productsTable");
+      tb.innerHTML = "";
       snap.docs.forEach(function(doc) {
-        var data = doc.data();
-        var tr = document.createElement("tr");
-        tr.innerHTML = "<td class='border px-4 py-2'>" + data.name + "</td><td class='border px-4 py-2'>" + data.price.toFixed(2) + "</td><td class='border px-4 py-2'><button data-id='"+doc.id+"' class='deleteProd text-red-500'>Διαγραφή</button></td>";
-        tbody.appendChild(tr);
+        const data = doc.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = "<td class='border px-4 py-2'>" + data.name + "</td>" +
+                       "<td class='border px-4 py-2'>" + data.price.toFixed(2) + "</td>" +
+                       "<td class='border px-4 py-2'><button data-id='" + doc.id + "' class='deleteProd text-red-500'>Διαγραφή</button></td>";
+        tb.appendChild(tr);
       });
-      document.querySelectorAll(".deleteProd").forEach(function(b){
-        b.addEventListener("click", async function(){ await db.collection("products").doc(b.getAttribute("data-id")).delete(); });
+      document.querySelectorAll(".deleteProd").forEach(function(b) {
+        b.addEventListener("click", async function() {
+          await db.collection("products").doc(b.getAttribute("data-id")).delete();
+        });
       });
     });
   </script>
