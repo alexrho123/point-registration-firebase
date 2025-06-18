@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Πίνακας Διαχείρισης</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -9,104 +9,52 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
-<body class="bg-gray-100">
+<body class="bg-softbg text-darktext min-h-screen flex flex-col">
 
   <!-- Login Modal -->
   <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
       <h2 class="text-2xl font-bold mb-4">Σύνδεση Διαχειριστή</h2>
       <form id="loginForm" class="space-y-4">
-        <label class="block">
-          Όνομα Χρήστη
+        <label class="block">Όνομα Χρήστη
           <input type="text" id="loginUsername" required class="w-full border px-3 py-2 rounded"/>
         </label>
-        <label class="block">
-          Κωδικός Πρόσβασης
+        <label class="block">Κωδικός
           <input type="password" id="loginPassword" required class="w-full border px-3 py-2 rounded"/>
         </label>
         <div class="text-right">
-          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Σύνδεση</button>
+          <button type="submit" class="bg-primary text-white px-4 py-2 rounded">Σύνδεση</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- App Content -->
-  <div id="appContent" class="hidden">
+  <div id="appContent" class="hidden flex-1 flex flex-col">
 
     <!-- Navbar -->
-    <nav class="bg-white shadow p-4 flex justify-between">
-      <h1 class="text-xl font-bold">Πίνακας Διαχείρισης</h1>
-      <button id="logoutBtn" class="bg-red-500 text-white px-3 py-1 rounded">Αποσύνδεση</button>
+    <nav class="bg-white shadow px-4 py-3 flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-primary uppercase">Πίνακας Διαχείρισης</h1>
+      <button id="logoutBtn" class="bg-danger text-white px-3 py-1 rounded">Αποσύνδεση</button>
     </nav>
 
     <!-- Tabs -->
-    <div class="p-4">
-      <ul id="tabs" class="flex space-x-4 border-b">
-        <li data-tab="dashboard" class="pb-2 border-blue-600 cursor-pointer">Πίνακας Ελέγχου</li>
-        <li data-tab="orders" class="pb-2 cursor-pointer">Παραγγελίες</li>
-        <li data-tab="customers" class="pb-2 cursor-pointer">Πελάτες</li>
-        <li data-tab="products" class="pb-2 cursor-pointer">Προϊόντα</li>
-      </ul>
-
-      <!-- Dashboard -->
-      <div id="dashboard" class="tab-content p-4">
-        <div class="grid grid-cols-3 gap-4">
-          <div class="bg-white p-4 rounded shadow">
-            <h2>Σύνολο Παραγγελιών</h2><p id="totalOrders" class="text-2xl"></p>
-          </div>
-          <div class="bg-white p-4 rounded shadow">
-            <h2>Σύνολο Εσόδων</h2><p id="totalRevenue" class="text-2xl"></p>
-          </div>
-          <div class="bg-white p-4 rounded shadow">
-            <h2>Σύνολο Πελατών</h2><p id="totalCustomers" class="text-2xl"></p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Orders -->
-      <div id="orders" class="tab-content hidden p-4">
-        <h2>Ζωντανές Παραγγελίες</h2>
-        <table class="min-w-full bg-white">
-          <thead><tr><th class="px-4 py-2">Πελάτης</th><th class="px-4 py-2">Σύνολο (€)</th><th class="px-4 py-2">Ημερομηνία & Ώρα</th></tr></thead>
-          <tbody id="ordersTable"></tbody>
-        </table>
-      </div>
-
-      <!-- Customers -->
-      <div id="customers" class="tab-content hidden p-4">
-        <h2>Πελάτες</h2>
-        <div id="customersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4"></div>
-        <div id="customerDetails" class="bg-white p-4 rounded shadow hidden"></div>
-      </div>
-
-      <!-- Products -->
-      <div id="products" class="tab-content hidden p-4">
-        <div class="flex justify-between mb-4">
-          <h2>Προϊόντα</h2><button id="addProductBtn" class="bg-green-600 text-white px-3 py-1 rounded">Προσθήκη</button>
-        </div>
-        <table class="min-w-full bg-white">
-          <thead><tr><th class="px-4 py-2">Όνομα Προϊόντος</th><th class="px-4 py-2">Τιμή (€)</th><th class="px-4 py-2">Διαγραφή</th></tr></thead>
-          <tbody id="productsTable"></tbody>
-        </table>
-      </div>
+    <div class="flex border-b px-4">
+      <button data-tab="customers" class="py-2 px-4 text-sm uppercase font-medium">Πελάτες</button>
+      <!-- Add other tabs if needed -->
     </div>
-  </div>
 
-  <!-- Add Product Modal -->
-  <div id="productModal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
-    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
-      <h2 class="text-xl mb-4">Προσθήκη Προϊόντος</h2>
-      <form id="productForm" class="space-y-4">
-        <label>Όνομα<input type="text" id="productName" required class="w-full border px-3 py-2 rounded"/></label>
-        <label>Τιμή<input type="number" id="productPrice" required class="w-full border px-3 py-2 rounded"/></label>
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Αποθήκευση</button>
-      </form>
-    </div>
+    <!-- Content -->
+    <main class="flex-1 overflow-auto p-4">
+      <!-- Customers Tab -->
+      <section id="customers" class="tab-content">
+        <div id="customersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </section>
+    </main>
   </div>
 
   <script>
-    // Firebase init
+    // Firebase
     firebase.initializeApp({
       apiKey: "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
       authDomain: "pointregistrationapp.firebaseapp.com",
@@ -117,116 +65,75 @@
     });
     const db = firebase.firestore();
 
-    // Login logic
-    const loginModal = document.getElementById("loginModal"),
-          loginForm = document.getElementById("loginForm"),
-          appContent = document.getElementById("appContent"),
-          logoutBtn = document.getElementById("logoutBtn");
-    loginForm.addEventListener("submit", async e => {
-      e.preventDefault();
-      const user = document.getElementById("loginUsername").value.trim();
-      const pass = document.getElementById("loginPassword").value;
-      try {
-        const doc = await db.collection("admins").doc(user).get();
-        if (doc.exists && doc.data().password === pass) {
-          loginModal.classList.add("hidden");
-          appContent.classList.remove("hidden");
-        } else {
-          alert("Λάθος διαπιστευτήρια");
+    document.addEventListener("DOMContentLoaded", () => {
+      const loginModal = document.getElementById("loginModal");
+      const loginForm  = document.getElementById("loginForm");
+      const appContent = document.getElementById("appContent");
+      const logoutBtn  = document.getElementById("logoutBtn");
+      const userField = document.getElementById("loginUsername");
+      const passField = document.getElementById("loginPassword");
+
+      // Login
+      loginForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        const user = userField.value.trim();
+        const pass = passField.value;
+        try {
+          const doc = await db.collection("admins").doc(user).get();
+          if(doc.exists && doc.data().password === pass) {
+            loginModal.classList.add("hidden");
+            appContent.classList.remove("hidden");
+            loadClients();
+          } else alert("Λάθος διαπιστευτήρια");
+        } catch {
+          alert("Σφάλμα σύνδεσης");
         }
-      } catch {
-        alert("Σφάλμα σύνδεσης");
+      });
+      logoutBtn.addEventListener("click", () => location.reload());
+
+      // Tabs
+      document.querySelectorAll("[data-tab]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".tab-content").forEach(sec => sec.classList.add("hidden"));
+          const tab = btn.getAttribute("data-tab");
+          document.getElementById(tab).classList.remove("hidden");
+        });
+      });
+
+      // Client card (from index)
+      function clientCard(cust) {
+        const c = document.createElement("div");
+        c.className = "relative bg-white rounded-xl p-4 shadow-xl transform hover:-translate-y-1 transition overflow-hidden";
+        const ab = document.createElement("div");
+        ab.className = "absolute top-2 left-1/2 transform -translate-x-1/2 bg-region text-white px-2 py-0.5 rounded-full text-xs uppercase";
+        ab.textContent = "ΠΕΛΑΤΗΣ"; c.appendChild(ab);
+        const h3 = document.createElement("h3");
+        h3.className = "mt-6 text-center text-lg font-bold uppercase text-darktext break-words";
+        h3.textContent = cust.name; c.appendChild(h3);
+        if(cust.address || cust.phone){
+          const info = document.createElement("p");
+          info.className = "text-center text-sm text-gray-500 mt-2";
+          info.innerHTML = (cust.address?`Διεύθυνση: ${cust.address}<br/>`:"") +
+                           (cust.phone?`Τηλέφωνο: ${cust.phone}`:"");
+          c.appendChild(info);
+        }
+        return c;
       }
-    });
-    logoutBtn.addEventListener("click", () => location.reload());
 
-    // Tabs
-    document.querySelectorAll("#tabs li").forEach(tab => {
-      tab.addEventListener("click", () => {
-        document.querySelectorAll(".tab-content").forEach(c => c.classList.add("hidden"));
-        document.getElementById(tab.dataset.tab).classList.remove("hidden");
-        document.querySelectorAll("#tabs li").forEach(t => t.classList.remove("border-blue-600"));
-        tab.classList.add("border-blue-600");
-      });
-    });
-
-    // Dashboard
-    async function updateDashboard() {
-      const ordersSnap = await db.collection("orders").get();
-      document.getElementById("totalOrders").textContent = ordersSnap.size;
-      let revenue = 0;
-      ordersSnap.docs.forEach(d => revenue += d.data().total);
-      document.getElementById("totalRevenue").textContent = revenue.toFixed(2) + " €";
-      const custSnap = await db.collection("clients").get();
-      document.getElementById("totalCustomers").textContent = custSnap.size;
-    }
-    updateDashboard();
-
-    // Live orders
-    db.collection("orders").onSnapshot(snap => {
-      const tbody = document.getElementById("ordersTable");
-      tbody.innerHTML = "";
-      snap.docs.forEach(d => {
-        const data = d.data();
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td class="border px-4 py-2">${data.clientName}</td>
-                        <td class="border px-4 py-2">${data.total.toFixed(2)}</td>
-                        <td class="border px-4 py-2">${new Date(data.timestamp.toDate()).toLocaleString()}</td>`;
-        tbody.appendChild(tr);
-      });
-    });
-
-    // clientCard from Index
-    function clientCard(cust) {
-      const c = document.createElement("div");
-      c.className = "relative bg-white rounded-xl p-4 shadow-xl transform hover:-translate-y-1 transition overflow-hidden";
-      const ab = document.createElement("div");
-      ab.className = "absolute top-2 left-1/2 transform -translate-x-1/2 bg-region text-white px-2 py-0.5 rounded-full text-xs uppercase";
-      ab.textContent = "ΠΕΛΑΤΗΣ"; c.appendChild(ab);
-      const h3 = document.createElement("h3");
-      h3.className = "mt-6 text-center text-lg font-bold uppercase text-darktext break-words";
-      h3.textContent = cust.name; c.appendChild(h3);
-      if(cust.address || cust.phone) {
-        const info = document.createElement("p");
-        info.className = "text-center text-sm text-gray-500 mt-2";
-        info.innerHTML = (cust.address?`Διεύθυνση: ${cust.address}<br/>`:"") +
-                         (cust.phone?`Τηλέφωνο: ${cust.phone}`:"");
-        c.appendChild(info);
+      // Load clients
+      function loadClients(){
+        db.collection("clients")
+          .orderBy("name")
+          .onSnapshot(snap => {
+            const container = document.getElementById("customersContainer");
+            container.innerHTML = "";
+            snap.docs.forEach(doc => {
+              const data = doc.data();
+              container.appendChild(clientCard(data));
+            });
+          });
       }
-      return c;
-    }
-
-    // Customers as cards
-    db.collection("clients").onSnapshot(snap => {
-      const container = document.getElementById("customersContainer");
-      container.innerHTML = "";
-      snap.docs.forEach(doc => container.appendChild(clientCard(doc.data())));
-    });
-
-    // Products CRUD
-    const addBtn = document.getElementById("addProductBtn"),
-          prodModal = document.getElementById("productModal"),
-          prodForm = document.getElementById("productForm");
-    addBtn.addEventListener("click",()=>prodModal.classList.remove("hidden"));
-    prodForm.addEventListener("submit",async e=>{
-      e.preventDefault();
-      const name=document.getElementById("productName").value.trim(),
-            price=parseFloat(document.getElementById("productPrice").value);
-      await db.collection("products").add({name,price});
-      e.target.reset(); prodModal.classList.add("hidden");
-    });
-    db.collection("products").onSnapshot(snap=>{
-      const tbody=document.getElementById("productsTable"); tbody.innerHTML="";
-      snap.docs.forEach(doc=>{
-        const d=doc.data(), tr=document.createElement("tr");
-        tr.innerHTML=`<td class="border px-4 py-2">${d.name}</td>
-                      <td class="border px-4 py-2">${d.price.toFixed(2)}</td>
-                      <td class="border px-4 py-2"><button data-id="${doc.id}" class="deleteProd text-red-500">Διαγραφή</button></td>`;
-        tbody.appendChild(tr);
-      });
-      document.querySelectorAll(".deleteProd").forEach(b=>b.addEventListener("click",async()=>await db.collection("products").doc(b.getAttribute("data-id")).delete()));
     });
   </script>
-
 </body>
 </html>
