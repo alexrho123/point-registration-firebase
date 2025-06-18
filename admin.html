@@ -29,8 +29,8 @@
     </div>
   </div>
 
-  <!-- App Content -->
-  <div id="appContent" class="hidden flex-1 flex flex-col">
+  <!-- Admin App Content -->
+  <div id="appContent" class="hidden flex flex-col flex-1">
 
     <!-- Navbar -->
     <nav class="bg-white shadow px-4 py-3 flex justify-between items-center">
@@ -39,7 +39,7 @@
     </nav>
 
     <!-- Tabs -->
-    <div class="flex border-b px-4">
+    <div class="flex border-b bg-white px-4">
       <button data-tab="users" class="py-2 px-4 text-sm uppercase font-medium">Χρήστες</button>
       <button data-tab="products" class="py-2 px-4 text-sm uppercase font-medium">Προϊόντα</button>
       <button data-tab="points" class="py-2 px-4 text-sm uppercase font-medium">Σημεία</button>
@@ -52,16 +52,33 @@
         <div id="usersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </section>
       <!-- Products Tab -->
-      <section id="products" class="tab-content hidden p-4">
-        <h2 class="text-xl font-semibold mb-4">Προϊόντα</h2>
-        <!-- Products CRUD as before -->
+      <section id="products" class="tab-content hidden">
+        <button id="addProductBtn" class="bg-green-600 text-white px-3 py-1 rounded mb-4">Προσθήκη Προϊόντος</button>
+        <div id="productsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </section>
       <!-- Points Tab -->
-      <section id="points" class="tab-content hidden p-4">
-        <h2 class="text-xl font-semibold mb-4">Σημεία</h2>
-        <!-- Points display as in index -->
+      <section id="points" class="tab-content hidden">
+        <div id="pointsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </section>
     </main>
+  </div>
+
+  <!-- Add Product Modal -->
+  <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
+      <h2 class="text-xl font-bold mb-4">Προσθήκη Προϊόντος</h2>
+      <form id="productForm" class="space-y-4">
+        <label class="block">Όνομα
+          <input type="text" id="productName" required class="w-full border px-3 py-2 rounded"/>
+        </label>
+        <label class="block">Τιμή (€)
+          <input type="number" id="productPrice" required class="w-full border px-3 py-2 rounded"/>
+        </label>
+        <div class="text-right">
+          <button type="submit" class="bg-primary text-white px-4 py-2 rounded">Αποθήκευση</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script>
@@ -77,8 +94,8 @@
     const db = firebase.firestore();
 
     document.addEventListener("DOMContentLoaded", () => {
-      const loginModal = document.getElementById("loginModal");
       const loginForm  = document.getElementById("loginForm");
+      const loginModal = document.getElementById("loginModal");
       const appContent = document.getElementById("appContent");
       const logoutBtn  = document.getElementById("logoutBtn");
 
@@ -86,25 +103,21 @@
         e.preventDefault();
         const user = document.getElementById("loginUsername").value.trim();
         const pass = document.getElementById("loginPassword").value;
-        try {
-          const doc = await db.collection("admins").doc(user).get();
-          if(doc.exists && doc.data().password === pass) {
-            loginModal.classList.add("hidden");
-            appContent.classList.remove("hidden");
-            initAdmin();
-          } else {
-            alert("Λάθος διαπιστευτήρια");
-          }
-        } catch {
-          alert("Σφάλμα σύνδεσης");
+        const doc = await db.collection("admins").doc(user).get();
+        if(doc.exists && doc.data().password === pass) {
+          loginModal.classList.add("hidden");
+          appContent.classList.remove("hidden");
+          initAdmin();
+        } else {
+          alert("Λάθος διαπιστευτήρια");
         }
       });
       logoutBtn.addEventListener("click", () => location.reload());
 
       document.querySelectorAll("[data-tab]").forEach(btn => {
         btn.addEventListener("click", () => {
-          document.querySelectorAll(".tab-content").forEach(sec => sec.classList.add("hidden"));
-          document.getElementById(btn.getAttribute("data-tab")).classList.remove("hidden");
+          document.querySelectorAll(".tab-content").forEach(s => s.classList.add("hidden"));
+          document.getElementById(btn.dataset.tab).classList.remove("hidden");
         });
       });
     });
@@ -119,33 +132,81 @@
       h3.className = "mt-6 text-center text-lg font-bold uppercase text-darktext break-words";
       h3.textContent = cust.name; c.appendChild(h3);
       if(cust.username) {
-        const u = document.createElement("p");
-        u.className = "text-center text-sm text-gray-500 mt-2";
-        u.textContent = "Username: " + cust.username;
-        c.appendChild(u);
+        const p = document.createElement("p");
+        p.className = "text-center text-sm text-gray-500 mt-2";
+        p.textContent = "username: " + cust.username;
+        c.appendChild(p);
       }
       if(cust.role) {
-        const r = document.createElement("p");
-        r.className = "text-center text-sm text-gray-500";
-        r.textContent = "Ρόλος: " + cust.role;
-        c.appendChild(r);
+        const p = document.createElement("p");
+        p.className = "text-center text-sm text-gray-500";
+        p.textContent = "role: " + cust.role;
+        c.appendChild(p);
       }
       return c;
     }
 
+    function productCard(prod) {
+      const c = document.createElement("div");
+      c.className = "bg-white rounded-xl p-4 shadow";
+      c.innerHTML = `
+        <h3 class="text-lg font-bold mb-2 uppercase">${prod.name}</h3>
+        <p class="text-gray-700">€${prod.price.toFixed(2)}</p>
+      `;
+      return c;
+    }
+
+    function pointCard(pt) {
+      const c = document.createElement("div");
+      c.className = "relative bg-white rounded-xl p-4 shadow";
+      const ab = document.createElement("div");
+      ab.className = "absolute top-2 left-1/2 transform -translate-x-1/2 bg-region text-white px-2 py-0.5 rounded-full text-xs uppercase";
+      ab.textContent = pt.area; c.appendChild(ab);
+      const h3 = document.createElement("h3");
+      h3.className = "mt-6 text-center text-lg font-bold uppercase text-darktext";
+      h3.textContent = pt.name; c.appendChild(h3);
+      return c;
+    }
+
     function initAdmin() {
-      // Show users by default
+      // Default to users tab
       document.querySelector("[data-tab='users']").click();
 
       // Load users
       db.collection("users").orderBy("name").onSnapshot(snap => {
-        const container = document.getElementById("usersContainer");
-        container.innerHTML = "";
-        snap.docs.forEach(doc => {
-          container.appendChild(clientCard(doc.data()));
-        });
+        const cont = document.getElementById("usersContainer");
+        cont.innerHTML = "";
+        snap.docs.forEach(d => cont.appendChild(clientCard(d.data())));
+      });
+
+      // Load products
+      document.getElementById("addProductBtn").addEventListener("click", () => {
+        document.getElementById("productModal").classList.remove("hidden");
+      });
+      document.getElementById("productForm").addEventListener("submit", async e => {
+        e.preventDefault();
+        const n = document.getElementById("productName").value.trim();
+        const p = parseFloat(document.getElementById("productPrice").value);
+        if(n && !isNaN(p)) {
+          await db.collection("products").add({ name: n, price: p });
+          e.target.reset();
+          document.getElementById("productModal").classList.add("hidden");
+        }
+      });
+      db.collection("products").onSnapshot(snap => {
+        const cont = document.getElementById("productsContainer");
+        cont.innerHTML = "";
+        snap.docs.forEach(d => cont.appendChild(productCard(d.data())));
+      });
+
+      // Load points
+      db.collection("points").orderBy("timestamp","desc").onSnapshot(snap => {
+        const cont = document.getElementById("pointsContainer");
+        cont.innerHTML = "";
+        snap.docs.forEach(d => cont.appendChild(pointCard(d.data())));
       });
     }
   </script>
+
 </body>
 </html>
