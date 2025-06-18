@@ -8,7 +8,6 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 </head>
 <body class="bg-gray-100">
 
@@ -44,7 +43,7 @@
     <!-- Tabs -->
     <div class="p-4">
       <ul id="tabs" class="flex space-x-4 border-b">
-        <li data-tab="dashboard" class="pb-2 border-b-2 border-blue-600 cursor-pointer">Dashboard</li>
+        <li data-tab="dashboard" class="pb-2 border-blue-600 cursor-pointer">Dashboard</li>
         <li data-tab="orders" class="pb-2 cursor-pointer">Orders</li>
         <li data-tab="customers" class="pb-2 cursor-pointer">Customers</li>
         <li data-tab="products" class="pb-2 cursor-pointer">Products</li>
@@ -54,15 +53,15 @@
       <div id="dashboard" class="tab-content p-4">
         <div class="grid grid-cols-3 gap-4">
           <div class="bg-white p-4 rounded shadow">
-            <h2 class="text-lg font-semibold">Total Orders</h2>
+            <h2>Total Orders</h2>
             <p id="totalOrders" class="text-2xl"></p>
           </div>
           <div class="bg-white p-4 rounded shadow">
-            <h2 class="text-lg font-semibold">Total Revenue</h2>
+            <h2>Total Revenue</h2>
             <p id="totalRevenue" class="text-2xl"></p>
           </div>
           <div class="bg-white p-4 rounded shadow">
-            <h2 class="text-lg font-semibold">Customers</h2>
+            <h2>Customers</h2>
             <p id="totalCustomers" class="text-2xl"></p>
           </div>
         </div>
@@ -70,7 +69,7 @@
 
       <!-- Orders -->
       <div id="orders" class="tab-content hidden p-4">
-        <h2 class="text-lg font-semibold mb-2">Live Orders</h2>
+        <h2>Live Orders</h2>
         <table class="min-w-full bg-white">
           <thead>
             <tr>
@@ -85,7 +84,7 @@
 
       <!-- Customers -->
       <div id="customers" class="tab-content hidden p-4">
-        <h2 class="text-lg font-semibold mb-2">Customers</h2>
+        <h2>Customers</h2>
         <table class="min-w-full bg-white mb-4">
           <thead>
             <tr>
@@ -101,9 +100,9 @@
 
       <!-- Products -->
       <div id="products" class="tab-content hidden p-4">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg font-semibold">Products</h2>
-          <button id="addProductBtn" class="bg-green-600 text-white px-3 py-1 rounded">Add Product</button>
+        <div class="flex justify-between mb-4">
+          <h2>Products</h2>
+          <button id="addProductBtn" class="bg-green-600 text-white px-3 py-1 rounded">Add</button>
         </div>
         <table class="min-w-full bg-white">
           <thead>
@@ -122,150 +121,135 @@
   <!-- Add Product Modal -->
   <div id="productModal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
     <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
-      <h2 class="text-xl font-bold mb-4">Add Product</h2>
+      <h2 class="text-xl mb-4">Add Product</h2>
       <form id="productForm" class="space-y-4">
-        <label class="block">
-          Name
-          <input type="text" id="productName" required class="w-full border px-3 py-2 rounded"/>
-        </label>
-        <label class="block">
-          Price
-          <input type="number" id="productPrice" required class="w-full border px-3 py-2 rounded"/>
-        </label>
-        <div class="text-right">
-          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
-        </div>
+        <label>Name<input type="text" id="productName" required class="w-full border px-3 py-2 rounded"/></label>
+        <label>Price<input type="number" id="productPrice" required class="w-full border px-3 py-2 rounded"/></label>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
       </form>
     </div>
   </div>
 
   <script>
     // Firebase init
-    const firebaseConfig = { /*...*/ };
-    firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp({
+      apiKey: "AIzaSyDe966NdE-AW_eZrDCEKjw8y2h5mSdHr6o",
+      authDomain: "pointregistrationapp.firebaseapp.com",
+      projectId: "pointregistrationapp",
+      storageBucket: "pointregistrationapp.appspot.com",
+      messagingSenderId: "925139386507",
+      appId: "1:925139386507:web:588ae991f39a7bab04548e"
+    });
     const db = firebase.firestore();
+    console.log("Firebase initialized");
 
-    // Login logic
+    // Admin login
     const loginModal = document.getElementById("loginModal"),
           loginForm = document.getElementById("loginForm"),
           appContent = document.getElementById("appContent"),
           logoutBtn = document.getElementById("logoutBtn");
-    loginForm.addEventListener("submit", async e => {
+    loginForm.addEventListener("submit", async function(e) {
       e.preventDefault();
-      const user = document.getElementById("loginUsername").value.trim();
-      const pass = document.getElementById("loginPassword").value;
-      const doc = await db.collection("admins").doc(user).get();
-      if (doc.exists && doc.data().password === pass) {
-        loginModal.classList.add("hidden");
-        appContent.classList.remove("hidden");
-      } else {
-        alert("Invalid credentials");
+      var user = document.getElementById("loginUsername").value.trim();
+      var pass = document.getElementById("loginPassword").value;
+      console.log("Login attempt:", user);
+      try {
+        var doc = await db.collection("admins").doc(user).get();
+        console.log("Admin doc:", doc.exists, doc.data());
+        if(doc.exists && doc.data().password === pass) {
+          loginModal.classList.add("hidden");
+          appContent.classList.remove("hidden");
+        } else {
+          throw new Error("Invalid credentials");
+        }
+      } catch(err) {
+        console.error(err);
+        alert("Login failed");
       }
     });
-    logoutBtn.addEventListener("click", () => {
-      window.location.reload();
+    logoutBtn.addEventListener("click", function() {
+      location.reload();
     });
 
     // Tab switching
-    document.querySelectorAll("#tabs li").forEach(tab => {
-      tab.addEventListener("click", () => {
-        document.querySelectorAll(".tab-content").forEach(c => c.classList.add("hidden"));
-        document.getElementById(tab.dataset.tab).classList.remove("hidden");
-        document.querySelectorAll("#tabs li").forEach(t => t.classList.remove("border-blue-600"));
+    document.querySelectorAll("#tabs li").forEach(function(tab) {
+      tab.addEventListener("click", function() {
+        document.querySelectorAll(".tab-content").forEach(function(c){c.classList.add("hidden");});
+        document.getElementById(tab.getAttribute("data-tab")).classList.remove("hidden");
+        document.querySelectorAll("#tabs li").forEach(function(t){t.classList.remove("border-blue-600");});
         tab.classList.add("border-blue-600");
       });
     });
 
     // Dashboard stats
     async function updateDashboard() {
-      const ordersSnap = await db.collection("orders").get();
+      var ordersSnap = await db.collection("orders").get();
       document.getElementById("totalOrders").textContent = ordersSnap.size;
-      let revenue = 0;
-      ordersSnap.docs.forEach(d => revenue += d.data().total);
+      var revenue = 0;
+      ordersSnap.docs.forEach(function(d){revenue += d.data().total;});
       document.getElementById("totalRevenue").textContent = revenue.toFixed(2) + " €";
-      const customersSnap = await db.collection("clients").get();
-      document.getElementById("totalCustomers").textContent = customersSnap.size;
+      var custSnap = await db.collection("clients").get();
+      document.getElementById("totalCustomers").textContent = custSnap.size;
     }
+    updateDashboard();
 
     // Live orders
-    db.collection("orders").onSnapshot(snap => {
-      const tbody = document.getElementById("ordersTable");
+    db.collection("orders").onSnapshot(function(snap) {
+      var tbody = document.getElementById("ordersTable");
       tbody.innerHTML = "";
-      snap.docs.forEach(doc => {
-        const d = doc.data();
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="border px-4 py-2">${d.clientName}</td>
-          <td class="border px-4 py-2">${d.total.toFixed(2)}</td>
-          <td class="border px-4 py-2">${new Date(d.timestamp.toDate()).toLocaleString()}</td>`;
+      snap.docs.forEach(function(d) {
+        var data = d.data();
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td class='border px-4 py-2'>" + data.clientName + "</td><td class='border px-4 py-2'>" + data.total.toFixed(2) + "</td><td class='border px-4 py-2'>" + new Date(data.timestamp.toDate()).toLocaleString() + "</td>";
         tbody.appendChild(tr);
       });
     });
 
-    // Customers list
-    db.collection("clients").onSnapshot(snap => {
-      const tbody = document.getElementById("customersTable");
+    // Customers
+    db.collection("clients").onSnapshot(function(snap) {
+      var tbody = document.getElementById("customersTable");
       tbody.innerHTML = "";
-      snap.docs.forEach(doc => {
-        const d = doc.data();
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="border px-4 py-2 cursor-pointer">${d.name}</td>
-          <td class="border px-4 py-2">${d.phone || ""}</td>
-          <td class="border px-4 py-2">${d.address || ""}</td>`;
-        tr.addEventListener("click", () => showClientDetails(doc.id));
+      snap.docs.forEach(function(doc) {
+        var d = doc.data();
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td class='border px-4 py-2 cursor-pointer'>" + d.name + "</td><td class='border px-4 py-2'>" + (d.phone||"") + "</td><td class='border px-4 py-2'>" + (d.address||"") + "</td>";
+        tr.addEventListener("click", function() { showClientDetails(doc.id); });
         tbody.appendChild(tr);
       });
     });
-
     async function showClientDetails(id) {
-      const doc = await db.collection("clients").doc(id).get();
-      const d = doc.data();
-      const details = document.getElementById("customerDetails");
+      var d = (await db.collection("clients").doc(id).get()).data();
+      var details = document.getElementById("customerDetails");
       details.classList.remove("hidden");
-      details.innerHTML = \`
-        <h3 class="text-lg font-bold mb-2">\${d.name}</h3>
-        <p><strong>Address:</strong> \${d.address || '—'}</p>
-        <p><strong>Phone:</strong> \${d.phone || '—'}</p>
-      \`;
+      details.innerHTML = "<h3 class='font-bold'>" + d.name + "</h3><p><strong>Address:</strong> " + (d.address||"—") + "</p><p><strong>Phone:</strong> " + (d.phone||"—") + "</p>";
     }
 
     // Products CRUD
-    const productModal = document.getElementById("productModal"),
-          addProductBtn = document.getElementById("addProductBtn"),
-          productForm = document.getElementById("productForm");
-    addProductBtn.addEventListener("click", () => productModal.classList.remove("hidden"));
-    productForm.addEventListener("submit", async e => {
+    var addBtn = document.getElementById("addProductBtn"),
+        prodModal = document.getElementById("productModal"),
+        prodForm = document.getElementById("productForm");
+    addBtn.addEventListener("click", function(){ prodModal.classList.remove("hidden"); });
+    prodForm.addEventListener("submit", async function(e){
       e.preventDefault();
-      const name = document.getElementById("productName").value.trim();
-      const price = parseFloat(document.getElementById("productPrice").value);
-      await db.collection("products").add({ name, price });
-      productForm.reset();
-      productModal.classList.add("hidden");
+      var name = document.getElementById("productName").value.trim();
+      var price = parseFloat(document.getElementById("productPrice").value);
+      await db.collection("products").add({ name: name, price: price });
+      prodForm.reset();
+      prodModal.classList.add("hidden");
     });
-    db.collection("products").onSnapshot(snap => {
-      const tbody = document.getElementById("productsTable");
+    db.collection("products").onSnapshot(function(snap){
+      var tbody = document.getElementById("productsTable");
       tbody.innerHTML = "";
-      snap.docs.forEach(doc => {
-        const d = doc.data();
-        const tr = document.createElement("tr");
-        tr.innerHTML = \`
-          <td class="border px-4 py-2">\${d.name}</td>
-          <td class="border px-4 py-2">\${d.price.toFixed(2)}</td>
-          <td class="border px-4 py-2">
-            <button data-id="\${doc.id}" class="deleteProduct text-red-500">Delete</button>
-          </td>\`;
+      snap.docs.forEach(function(doc) {
+        var data = doc.data();
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td class='border px-4 py-2'>" + data.name + "</td><td class='border px-4 py-2'>" + data.price.toFixed(2) + "</td><td class='border px-4 py-2'><button data-id='"+doc.id+"' class='deleteProd text-red-500'>Delete</button></td>";
         tbody.appendChild(tr);
       });
-      document.querySelectorAll(".deleteProduct").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          await db.collection("products").doc(btn.dataset.id).delete();
-        });
+      document.querySelectorAll(".deleteProd").forEach(function(b){
+        b.addEventListener("click", async function(){ await db.collection("products").doc(b.getAttribute("data-id")).delete(); });
       });
     });
-
-    // Initialize Dashboard on load
-    updateDashboard();
   </script>
 </body>
 </html>
