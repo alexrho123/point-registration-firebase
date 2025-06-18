@@ -218,6 +218,7 @@
       document.getElementById('orderTotal').textContent = `€${total.toFixed(2)}`;
     }
 
+    
     function openEditOrder(pointId, orderId) {
       currentEditOrder = { pointId, orderId };
       document.getElementById('orderModal').classList.remove('hidden');
@@ -252,11 +253,7 @@
         });
       });
     }
-        });
-      });
-    }
-
-    async function saveOrder() {
+async function saveOrder() {
       const { pointId, orderId } = currentEditOrder;
       const orderRef = db.collection('points').doc(pointId).collection('orders').doc(orderId);
       const dt = document.getElementById('orderDateTime').value;
