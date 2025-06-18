@@ -33,7 +33,8 @@
 
   <!-- Login Modal -->
   <div id="loginModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl p-8 shadow-strong w-full max-w-md">
+    <div class="bg-white rounded-2xl p-8 shadow-strong w-full max-w-md relative">
+      <button onclick="document.getElementById('loginModal').classList.add('hidden')" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">✕</button>
       <h2 class="text-2xl font-semibold text-primary mb-4 text-center">Σύνδεση Διαχειριστή</h2>
       <form id="loginForm" class="space-y-4">
         <input id="loginUsername" type="text" placeholder="Όνομα χρήστη" required class="w-full px-4 py-2 border rounded-lg"/>
@@ -76,9 +77,9 @@
       </section>
       <!-- Orders -->
       <section id="orders" class="tab-content hidden flex flex-col items-center">
-        <table class="w-full bg-white rounded-xl shadow-strong overflow-hidden">
+        <table class="w-full bg-white rounded-2xl shadow-strong overflow-hidden">
           <thead class="bg-primary text-white">
-            <tr><th class="px-4 py-2">Σημείο</th><th>Σύνολο (€)</th><th>Ώρα</th><th>Διαγραφή</th></tr>
+            <tr><th class="px-4 py-2">Σημείο</th><th class="px-4 py-2">Σύνολο (€)</th><th class="px-4 py-2">Ώρα</th><th class="px-4 py-2">Διαγραφή</th></tr>
           </thead>
           <tbody id="ordersTable"></tbody>
         </table>
@@ -88,22 +89,24 @@
 
   <!-- Modals -->
   <div id="userModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-2xl p-6 shadow-strong w-full max-w-md">
+    <div class="bg-white rounded-2xl p-6 shadow-strong w-full max-w-md relative">
+      <button onclick="closeModal('userModal')" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">✕</button>
       <h3 class="text-xl font-semibold mb-4">Νέος Χρήστης</h3>
       <form id="userForm" class="space-y-3">
-        <input id="userName" type="text" placeholder="Όνομα" required class="w-full px-3 py-2 border rounded-lg"/>
-        <input id="userUsername" type="text" placeholder="Username" required class="w-full px-3 py-2 border rounded-lg"/>
-        <input id="userRole" type="text" placeholder="Ρόλος" required class="w-full px-3 py-2 border rounded-lg"/>
+        <input id="userName" placeholder="Όνομα" required class="w-full px-3 py-2 border rounded-lg"/>
+        <input id="userUsername" placeholder="Username" required class="w-full px-3 py-2 border rounded-lg"/>
+        <input id="userRole" placeholder="Ρόλος" required class="w-full px-3 py-2 border rounded-lg"/>
         <input id="userPass" type="password" placeholder="Κωδικός" required class="w-full px-3 py-2 border rounded-lg"/>
         <button type="submit" class="w-full bg-primary text-white py-2 rounded-xl">Αποθήκευση</button>
       </form>
     </div>
   </div>
   <div id="productModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-2xl p-6 shadow-strong w-full max-w-md">
+    <div class="bg-white rounded-2xl p-6 shadow-strong w-full max-w-md relative">
+      <button onclick="closeModal('productModal')" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">✕</button>
       <h3 class="text-xl font-semibold mb-4">Νέο Προϊόν</h3>
       <form id="productForm" class="space-y-3">
-        <input id="productNameInput" type="text" placeholder="Όνομα" required class="w-full px-3 py-2 border rounded-lg"/>
+        <input id="productNameInput" placeholder="Όνομα" required class="w-full px-3 py-2 border rounded-lg"/>
         <input id="productPriceInput" type="number" placeholder="Τιμή" required class="w-full px-3 py-2 border rounded-lg"/>
         <button type="submit" class="w-full bg-primary text-white py-2 rounded-xl">Αποθήκευση</button>
       </form>
@@ -112,46 +115,45 @@
 
   <script>
     // Firebase init
-    firebase.initializeApp({apiKey:"AIzaSy...",authDomain:"pointregistrationapp.firebaseapp.com",projectId:"pointregistrationapp",storageBucket:"...",messagingSenderId:"...",appId:"..."});
+    firebase.initializeApp({apiKey:"AIzaSy...",authDomain:"pointregistrationapp.firebaseapp.com",projectId:"pointregistrationapp",storageBucket:"pointregistrationapp.appspot.com",messagingSenderId:"925139386507",appId:"1:925139386507:web:..."});
     const db = firebase.firestore();
 
-    document.addEventListener("DOMContentLoaded",()=>{
+    // Close modal helper
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    document.addEventListener("DOMContentLoaded", ()=>{
       const loginForm=document.getElementById("loginForm"), loginModal=document.getElementById("loginModal"), appContent=document.getElementById("appContent"), logoutBtn=document.getElementById("logoutBtn");
-      loginForm.addEventListener("submit",async e=>{
+      loginForm.addEventListener("submit", async e => {
         e.preventDefault();
         const user=document.getElementById("loginUsername").value.trim(), pass=document.getElementById("loginPassword").value;
         const doc=await db.collection("admins").doc(user).get();
-        if(doc.exists&&doc.data().password===pass){
-          loginModal.classList.add("hidden"); appContent.classList.remove("hidden"); initAdmin();
-        } else alert("Λάθος διαπιστευτήρια");
+        if(doc.exists&&doc.data().password===pass){ loginModal.classList.add("hidden"); appContent.classList.remove("hidden"); initAdmin(); }
+        else alert("Λάθος διαπιστευτήρια");
       });
-      logoutBtn.addEventListener("click",()=>location.reload());
-      document.querySelectorAll("[data-tab]").forEach(btn=>btn.addEventListener("click",()=>{
+      logoutBtn.addEventListener("click", ()=> location.reload());
+      document.querySelectorAll("[data-tab]").forEach(btn=>btn.addEventListener("click", ()=>{
         document.querySelectorAll(".tab-content").forEach(s=>s.classList.add("hidden"));
         document.getElementById(btn.dataset.tab).classList.remove("hidden");
       }));
     });
 
-    function clientCard(c){const d=document.createElement("div");d.className="relative bg-gradient-to-br from-primary-light to-primary-dark rounded-2xl p-6 shadow-strong transform hover:scale-105 transition";d.innerHTML=`<div class="absolute top-3 left-1/2 -translate-x-1/2 bg-accent text-white px-3 py-1 rounded-full text-xs uppercase">Χρήστης</div><h3 class="mt-8 text-center text-xl font-semibold text-white uppercase">${c.name}</h3><p class="mt-2 text-center text-sm text-white/80">username: ${c.username}</p><p class="text-center text-sm text-white/80">role: ${c.role}</p>`;return d;}
-    function productCard(p){const d=document.createElement("div");d.className="bg-white rounded-2xl p-6 shadow-strong transform hover:translate-y-1 transition";d.innerHTML=`<h3 class="text-xl font-semibold text-primary mb-2">${p.name}</h3><p class="text-gray-700">€${p.price.toFixed(2)}</p>`;return d;}
-    function pointCard(p){const d=document.createElement("div");d.className="relative bg-white rounded-2xl p-6 shadow-strong transform hover:translate-y-1 transition";d.innerHTML=`<div class="absolute top-3 left-1/2 -translate-x-1/2 bg-region text-white px-3 py-1 rounded-full text-xs uppercase">${p.area}</div><h3 class="mt-8 text-center text-xl font-semibold text-darktext uppercase">${p.name}</h3><div class="flex justify-center mt-4 space-x-2"><button onclick="editPoint('${p.id}')" class="px-3 py-1 bg-accent text-white rounded">Επεξεργασία</button><button onclick="deletePoint('${p.id}')" class="px-3 py-1 bg-danger text-white rounded">Διαγραφή</button></div>`;return d;}
+    // Card builders...
+    function clientCard(c){ const d=document.createElement("div"); d.className="relative bg-gradient-to-br from-primary-light to-primary-dark rounded-2xl p-6 shadow-strong transform hover:scale-105 transition"; d.innerHTML=`<div class="absolute top-3 left-1/2 -translate-x-1/2 bg-accent text-white px-3 py-1 rounded-full text-xs uppercase">Χρήστης</div><h3 class="mt-8 text-center text-xl font-semibold text-white uppercase">${c.name}</h3><p class="mt-2 text-white/80 text-center">username: ${c.username}</p><p class="text-white/80 text-center">role: ${c.role}</p>`; return d; }
+    function productCard(p){ const d=document.createElement("div"); d.className="bg-white rounded-2xl p-6 shadow-strong"; d.innerHTML=`<h3 class="text-xl font-semibold text-primary mb-2">${p.name}</h3><p class="text-gray-700">€${p.price.toFixed(2)}</p>`; return d; }
+    function pointCard(p){ const d=document.createElement("div"); d.className="relative bg-white rounded-2xl p-6 shadow-strong"; d.innerHTML=`<div class="absolute top-3 left-1/2 -translate-x-1/2 bg-region text-white px-3 py-1 rounded-full text-xs uppercase">${p.area}</div><h3 class="mt-8 text-darktext text-center text-xl font-semibold uppercase">${p.name}</h3><div class="mt-4 flex justify-center space-x-2"><button onclick="editPoint('${p.id}')" class="px-3 py-1 bg-accent text-white rounded">✎</button><button onclick="deletePoint('${p.id}')" class="px-3 py-1 bg-danger text-white rounded">🗑</button></div>`; return d; }
 
     function initAdmin(){
       document.querySelector("[data-tab='users']").click();
-      // Users
-      db.collection("users").orderBy("name").onSnapshot(s=>{const cont=document.getElementById("usersContainer");cont.innerHTML="";s.docs.forEach(d=>cont.appendChild(clientCard({...d.data(),id:d.id})));});
+      db.collection("users").orderBy("name").onSnapshot(s=>{ const cont=document.getElementById("usersContainer"); cont.innerHTML=""; s.docs.forEach(d=>cont.appendChild(clientCard({...d.data(),id:d.id}))); });
       document.getElementById("addUserBtn").onclick=()=>document.getElementById("userModal").classList.remove("hidden");
-      document.getElementById("userForm").onsubmit=async e=>{e.preventDefault();await db.collection("users").add({name:document.getElementById("userName").value.trim(),username:document.getElementById("userUsername").value.trim(),role:document.getElementById("userRole").value.trim(),password:document.getElementById("userPass").value});document.getElementById("userModal").classList.add("hidden");};
-      // Products
-      db.collection("products").orderBy("name").onSnapshot(s=>{const cont=document.getElementById("productsContainer");cont.innerHTML="";s.docs.forEach(d=>cont.appendChild(productCard({...d.data(),id:d.id})));});
+      document.getElementById("userForm").onsubmit=async e=>{e.preventDefault(); await db.collection("users").add({ name:document.getElementById("userName").value.trim(), username:document.getElementById("userUsername").value.trim(), role:document.getElementById("userRole").value.trim(), password:document.getElementById("userPass").value }); closeModal('userModal'); };
+      db.collection("products").orderBy("name").onSnapshot(s=>{ const cont=document.getElementById("productsContainer"); cont.innerHTML=""; s.docs.forEach(d=>cont.appendChild(productCard({...d.data(),id:d.id}))); });
       document.getElementById("addProductBtn").onclick=()=>document.getElementById("productModal").classList.remove("hidden");
-      document.getElementById("productForm").onsubmit=async e=>{e.preventDefault();await db.collection("products").add({name:document.getElementById("productNameInput").value.trim(),price:parseFloat(document.getElementById("productPriceInput").value)});document.getElementById("productModal").classList.add("hidden");};
-      // Points
-      db.collection("points").orderBy("timestamp","desc").onSnapshot(s=>{const cont=document.getElementById("pointsContainer");cont.innerHTML="";s.docs.forEach(d=>cont.appendChild(pointCard({...d.data(),id:d.id})));});
-      window.deletePoint=id=>{if(confirm("Διαγραφή σημείου;"))db.collection("points").doc(id).delete();};
-      window.editPoint=id=>{alert("Υλοποιήστε φόρμα επεξεργασίας για: "+id);};
-      // Orders
-      db.collectionGroup("orders").orderBy("timestamp","desc").onSnapshot(s=>{const tb=document.getElementById("ordersTable");tb.innerHTML="";s.docs.forEach(d=>{const od=d.data(),parent=d.ref.parent.parent.id,row=document.createElement("tr");row.innerHTML=`<td class="px-4 py-2">${parent}</td><td class="px-4 py-2">${od.total.toFixed(2)}</td><td class="px-4 py-2">${new Date(od.timestamp.toDate()).toLocaleString()}</td><td class="px-4 py-2"><button onclick="d.ref.delete()" class="text-red-500">Διαγραφή</button></td>`;tb.appendChild(row);});});
+      document.getElementById("productForm").onsubmit=async e=>{e.preventDefault(); await db.collection("products").add({ name:document.getElementById("productNameInput").value.trim(), price:parseFloat(document.getElementById("productPriceInput").value) }); closeModal('productModal'); };
+      db.collection("points").orderBy("timestamp","desc").onSnapshot(s=>{ const cont=document.getElementById("pointsContainer"); cont.innerHTML=""; s.docs.forEach(d=>cont.appendChild(pointCard({...d.data(),id:d.id}))); });
+      window.deletePoint=id=>{ if(confirm("Διαγραφή σημείου;")) db.collection("points").doc(id).delete(); };
+      window.editPoint=id=>{ alert("Υλοποιήστε επεξεργασία για: "+id); };
+      db.collectionGroup("orders").orderBy("timestamp","desc").onSnapshot(s=>{ const tb=document.getElementById("ordersTable"); tb.innerHTML=""; s.docs.forEach(async odDoc=>{ const od=odDoc.data(), pointRef=odDoc.ref.parent.parent; const pd=await pointRef.get(); const pointName=pd.exists?pd.data().name:pointRef.id; const tr=document.createElement("tr"); tr.innerHTML=`<td class="px-4 py-2">${pointName}</td><td class="px-4 py-2">${od.total.toFixed(2)}</td><td class="px-4 py-2">${new Date(od.timestamp.toDate()).toLocaleString()}</td><td class="px-4 py-2"><button onclick="odDoc.ref.delete()" class="text-red-500">🗑</button></td>`; tb.appendChild(tr); }); });
     }
   </script>
 </body>
