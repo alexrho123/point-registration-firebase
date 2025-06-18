@@ -79,7 +79,7 @@
       <section id="orders" class="tab-content hidden flex flex-col items-center">
         <table class="w-full bg-white rounded-2xl shadow-strong overflow-hidden">
           <thead class="bg-primary text-white">
-            <tr><th class="px-4 py-2">Σημείο</th><th class="px-4 py-2">Σύνολο (€)</th><th class="px-4 py-2">Ώρα</th><th class="px-4 py-2">Διαγραφή</th></tr>
+            <tr><th class="px-4 py-2">Σημείο</th><th class="px-4 py-2">Σύνολο (€)</th><th class="px-4 py-2">Ώρα</th><th class="px-4 py-2">Διαγραφ</th><th>Επεξ.</th><th>Εκτέλ.</th></tr>
           </thead>
           <tbody id="ordersTable"></tbody>
         </table>
@@ -91,11 +91,10 @@
   <div id="userModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-2xl p-6 shadow-strong w-full max-w-md relative">
       <button onclick="closeModal('userModal')" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">✕</button>
-      <h3 class="text-xl font-semibold mb-4">Νέος Χρήστης</h3>
+      <h3 class="text-xl font-semibold mb-4 text-center">Νέος Χρήστης</h3>
       <form id="userForm" class="space-y-3">
         <input id="userName" placeholder="Όνομα" required class="w-full px-3 py-2 border rounded-lg"/>
         <input id="userUsername" placeholder="Username" required class="w-full px-3 py-2 border rounded-lg"/>
-        <input id="userRole" placeholder="Ρόλος" required class="w-full px-3 py-2 border rounded-lg"/>
         <input id="userPass" type="password" placeholder="Κωδικός" required class="w-full px-3 py-2 border rounded-lg"/>
         <button type="submit" class="w-full bg-primary text-white py-2 rounded-xl">Αποθήκευση</button>
       </form>
@@ -104,7 +103,7 @@
   <div id="productModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-2xl p-6 shadow-strong w-full max-w-md relative">
       <button onclick="closeModal('productModal')" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">✕</button>
-      <h3 class="text-xl font-semibold mb-4">Νέο Προϊόν</h3>
+      <h3 class="text-xl font-semibold mb-4 text-center">Νέο Προϊόν</h3>
       <form id="productForm" class="space-y-3">
         <input id="productNameInput" placeholder="Όνομα" required class="w-full px-3 py-2 border rounded-lg"/>
         <input id="productPriceInput" type="number" placeholder="Τιμή" required class="w-full px-3 py-2 border rounded-lg"/>
@@ -112,49 +111,65 @@
       </form>
     </div>
   </div>
+  <div id="pointModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl p-6 shadow-strong w-full max-w-md relative">
+      <button onclick="closeModal('pointModal')" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">✕</button>
+      <h3 class="text-xl font-semibold mb-4 text-center">Επεξεργασία Σημείου</h3>
+      <form id="pointForm" class="space-y-3">
+        <input id="pointNameInput" placeholder="Όνομα" required class="w-full px-3 py-2 border rounded-lg"/>
+        <select id="pointAreaInput" class="w-full px-3 py-2 border rounded-lg">
+          <option>Πόλη</option><option>Ιαλυσός</option><option>Φαληράκι</option><option>Κολύμπια</option><option>Νότια Ρόδος</option><option>Δυτική Ρόδος</option>
+        </select>
+        <button type="submit" class="w-full bg-primary text-white py-2 rounded-xl">Αποθήκευση</button>
+      </form>
+    </div>
+  </div>
+  <div id="orderModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl p-6 shadow-strong w-full max-w-lg relative overflow-auto max-h-[90vh]">
+      <button onclick="closeModal('orderModal')" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">✕</button>
+      <h3 class="text-xl font-semibold mb-4 text-center">Επεξεργασία Παραγγελίας</h3>
+      <!-- Order form fields here -->
+      <button onclick="saveOrder()" class="mt-4 w-full bg-primary text-white py-2 rounded-xl">Αποθήκευση</button>
+    </div>
+  </div>
 
   <script>
     // Firebase init
-    firebase.initializeApp({apiKey:"AIzaSy...",authDomain:"pointregistrationapp.firebaseapp.com",projectId:"pointregistrationapp",storageBucket:"pointregistrationapp.appspot.com",messagingSenderId:"925139386507",appId:"1:925139386507:web:..."});
+    firebase.initializeApp({apiKey:"AIzaSy...",authDomain:"pointregistrationapp.firebaseapp.com",projectId:"pointregistrationapp",storageBucket:"...",messagingSenderId:"...",appId:"..."});
     const db = firebase.firestore();
 
-    // Close modal helper
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function closeModal(id){document.getElementById(id).classList.add('hidden');}
 
-    document.addEventListener("DOMContentLoaded", ()=>{
-      const loginForm=document.getElementById("loginForm"), loginModal=document.getElementById("loginModal"), appContent=document.getElementById("appContent"), logoutBtn=document.getElementById("logoutBtn");
-      loginForm.addEventListener("submit", async e => {
-        e.preventDefault();
-        const user=document.getElementById("loginUsername").value.trim(), pass=document.getElementById("loginPassword").value;
-        const doc=await db.collection("admins").doc(user).get();
-        if(doc.exists&&doc.data().password===pass){ loginModal.classList.add("hidden"); appContent.classList.remove("hidden"); initAdmin(); }
-        else alert("Λάθος διαπιστευτήρια");
-      });
-      logoutBtn.addEventListener("click", ()=> location.reload());
-      document.querySelectorAll("[data-tab]").forEach(btn=>btn.addEventListener("click", ()=>{
-        document.querySelectorAll(".tab-content").forEach(s=>s.classList.add("hidden"));
-        document.getElementById(btn.dataset.tab).classList.remove("hidden");
-      }));
+    document.addEventListener("DOMContentLoaded",()=>{
+      const loginForm=document.getElementById("loginForm"),loginModal=document.getElementById("loginModal"),appContent=document.getElementById("appContent"),logoutBtn=document.getElementById("logoutBtn");
+      loginForm.addEventListener("submit",async e=>{e.preventDefault();const u=document.getElementById("loginUsername").value.trim(),p=document.getElementById("loginPassword").value,doc=await db.collection("admins").doc(u).get();if(doc.exists&&doc.data().password===p){loginModal.classList.add("hidden");appContent.classList.remove("hidden");initAdmin()}else alert("Λάθος διαπιστευτήρια")});
+      logoutBtn.addEventListener("click",()=>location.reload());
+      document.querySelectorAll("[data-tab]").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".tab-content").forEach(s=>s.classList.add("hidden"));document.getElementById(btn.dataset.tab).classList.remove("hidden")}));
     });
 
-    // Card builders...
-    function clientCard(c){ const d=document.createElement("div"); d.className="relative bg-gradient-to-br from-primary-light to-primary-dark rounded-2xl p-6 shadow-strong transform hover:scale-105 transition"; d.innerHTML=`<div class="absolute top-3 left-1/2 -translate-x-1/2 bg-accent text-white px-3 py-1 rounded-full text-xs uppercase">Χρήστης</div><h3 class="mt-8 text-center text-xl font-semibold text-white uppercase">${c.name}</h3><p class="mt-2 text-white/80 text-center">username: ${c.username}</p><p class="text-white/80 text-center">role: ${c.role}</p>`; return d; }
-    function productCard(p){ const d=document.createElement("div"); d.className="bg-white rounded-2xl p-6 shadow-strong"; d.innerHTML=`<h3 class="text-xl font-semibold text-primary mb-2">${p.name}</h3><p class="text-gray-700">€${p.price.toFixed(2)}</p>`; return d; }
-    function pointCard(p){ const d=document.createElement("div"); d.className="relative bg-white rounded-2xl p-6 shadow-strong"; d.innerHTML=`<div class="absolute top-3 left-1/2 -translate-x-1/2 bg-region text-white px-3 py-1 rounded-full text-xs uppercase">${p.area}</div><h3 class="mt-8 text-darktext text-center text-xl font-semibold uppercase">${p.name}</h3><div class="mt-4 flex justify-center space-x-2"><button onclick="editPoint('${p.id}')" class="px-3 py-1 bg-accent text-white rounded">✎</button><button onclick="deletePoint('${p.id}')" class="px-3 py-1 bg-danger text-white rounded">🗑</button></div>`; return d; }
-
-    function initAdmin(){
+    function clientCard(c){const d=document.createElement("div");d.className="relative bg-gradient-to-br from-primary-light to-primary-dark rounded-2xl p-6 shadow-strong transform hover:scale-105 transition";d.innerHTML=`<h3 class="mt-8 text-center text-xl font-semibold text-white uppercase">${c.name}</h3><div class="absolute top-3 right-3 flex space-x-2"><button onclick="openEditUser('${c.id}')" class="px-2 py-1 bg-accent text-white rounded">✎</button><button onclick="deleteUser('${c.id}')" class="px-2 py-1 bg-danger text-white rounded">🗑️</button></div><p class="mt-2 text-white/80 text-center">username: ${c.username}</p>`;return d;}
+    function productCard(p){const d=document.createElement("div");d.className="relative bg-white rounded-2xl p-6 shadow-strong";d.innerHTML=`<h3 class="text-xl font-semibold text-primary mb-2">${p.name}</h3><div class="absolute top-3 right-3 space-x-2"><button onclick="openEditProduct('${p.id}')" class="px-2 py-1 bg-accent text-white rounded">✎</button><button onclick="deleteProduct('${p.id}')" class="px-2 py-1 bg-danger text-white rounded">🗑️</button></div><p class="text-gray-700">€${p.price.toFixed(2)}</p>`;return d;}
+    function pointCard(p){const d=document.createElement("div");d.className="relative bg-white rounded-2xl p-6 shadow-strong";d.innerHTML=`<h3 class="mt-8 text-center text-xl font-semibold text-darktext uppercase">${p.name}</h3><div class="absolute top-3 right-3 space-x-2"><button onclick="openEditPoint('${p.id}','${p.name}','${p.area}')" class="px-2 py-1 bg-accent text-white rounded">✎</button><button onclick="deletePoint('${p.id}')" class="px-2 py-1 bg-danger text-white rounded">🗑️</button></div><p class="mt-2 text-gray-500 text-sm text-center">${p.area}</p>`;return d;}
+    function orderRow(o,dn){const tr=document.createElement("tr");tr.innerHTML=`<td class="px-4 py-2">${dn}</td><td class="px-4 py-2">${o.total.toFixed(2)}</td><td class="px-4 py-2">${new Date(o.timestamp.toDate()).toLocaleString()}</td><td class="px-4 py-2"><button onclick="deleteOrder('${o.id}')" class="bg-danger text-white px-2 py-1 rounded">🗑️</button></td><td><button onclick="openEditOrder('${o.id}')" class="bg-accent text-white px-2 py-1 rounded">✎</button></td><td><button onclick="markExecuted('${o.id}')" class="bg-success text-white px-2 py-1 rounded">✔️</button></td>`;return tr;}
+    async function initAdmin(){
       document.querySelector("[data-tab='users']").click();
-      db.collection("users").orderBy("name").onSnapshot(s=>{ const cont=document.getElementById("usersContainer"); cont.innerHTML=""; s.docs.forEach(d=>cont.appendChild(clientCard({...d.data(),id:d.id}))); });
+      db.collection("users").orderBy("name").onSnapshot(s=>{const c=document.getElementById("usersContainer");c.innerHTML="";s.docs.forEach(d=>c.appendChild(clientCard({...d.data(),id:d.id}))});
       document.getElementById("addUserBtn").onclick=()=>document.getElementById("userModal").classList.remove("hidden");
-      document.getElementById("userForm").onsubmit=async e=>{e.preventDefault(); await db.collection("users").add({ name:document.getElementById("userName").value.trim(), username:document.getElementById("userUsername").value.trim(), role:document.getElementById("userRole").value.trim(), password:document.getElementById("userPass").value }); closeModal('userModal'); };
-      db.collection("products").orderBy("name").onSnapshot(s=>{ const cont=document.getElementById("productsContainer"); cont.innerHTML=""; s.docs.forEach(d=>cont.appendChild(productCard({...d.data(),id:d.id}))); });
+      document.getElementById("userForm").onsubmit=async e=>{e.preventDefault();await db.collection("users").add({name:document.getElementById("userName").value.trim(),username:document.getElementById("userUsername").value.trim(),role:"Χρήστης",password:document.getElementById("userPass").value});closeModal("userModal")};
+      db.collection("products").orderBy("name").onSnapshot(s=>{const c=document.getElementById("productsContainer");c.innerHTML="";s.docs.forEach(d=>c.appendChild(productCard({...d.data(),id:d.id}))});
       document.getElementById("addProductBtn").onclick=()=>document.getElementById("productModal").classList.remove("hidden");
-      document.getElementById("productForm").onsubmit=async e=>{e.preventDefault(); await db.collection("products").add({ name:document.getElementById("productNameInput").value.trim(), price:parseFloat(document.getElementById("productPriceInput").value) }); closeModal('productModal'); };
-      db.collection("points").orderBy("timestamp","desc").onSnapshot(s=>{ const cont=document.getElementById("pointsContainer"); cont.innerHTML=""; s.docs.forEach(d=>cont.appendChild(pointCard({...d.data(),id:d.id}))); });
-      window.deletePoint=id=>{ if(confirm("Διαγραφή σημείου;")) db.collection("points").doc(id).delete(); };
-      window.editPoint=id=>{ alert("Υλοποιήστε επεξεργασία για: "+id); };
-      db.collectionGroup("orders").orderBy("timestamp","desc").onSnapshot(s=>{ const tb=document.getElementById("ordersTable"); tb.innerHTML=""; s.docs.forEach(async odDoc=>{ const od=odDoc.data(), pointRef=odDoc.ref.parent.parent; const pd=await pointRef.get(); const pointName=pd.exists?pd.data().name:pointRef.id; const tr=document.createElement("tr"); tr.innerHTML=`<td class="px-4 py-2">${pointName}</td><td class="px-4 py-2">${od.total.toFixed(2)}</td><td class="px-4 py-2">${new Date(od.timestamp.toDate()).toLocaleString()}</td><td class="px-4 py-2"><button onclick="odDoc.ref.delete()" class="text-red-500">🗑</button></td>`; tb.appendChild(tr); }); });
+      document.getElementById("productForm").onsubmit=async e=>{e.preventDefault();await db.collection("products").add({name:document.getElementById("productNameInput").value.trim(),price:parseFloat(document.getElementById("productPriceInput").value)});closeModal("productModal")};
+      db.collection("points").orderBy("timestamp","desc").onSnapshot(s=>{const c=document.getElementById("pointsContainer");c.innerHTML="";s.docs.forEach(d=>c.appendChild(pointCard({...d.data(),id:d.id}))});
+      db.collectionGroup("orders").orderBy("timestamp","desc").onSnapshot(async s=>{const tb=document.getElementById("ordersTable");tb.innerHTML="";for(const d of s.docs){const o=d.data(),pid=d.ref.parent.parent.id,pd=await d.ref.parent.parent.get();const dn=pd.exists?pd.data().name:pid;tb.append(orderRow({...o,id:d.id},dn))}});
     }
+    function deleteUser(id){if(confirm("Διαγραφή χρήστη;"))db.collection("users").doc(id).delete();}
+    function deleteProduct(id){if(confirm("Διαγραφή προϊόντος;"))db.collection("products").doc(id).delete();}
+    function deletePoint(id){if(confirm("Διαγραφή σημείου;"))db.collection("points").doc(id).delete();}
+    function deleteOrder(id){if(confirm("Διαγραφή παραγγελίας;"))db.collectionGroup("orders").where(firebase.firestore.FieldPath.documentId(),"==",id).get().then(s=>s.docs[0].ref.delete());}
+    function openEditPoint(id,name,area){document.getElementById("pointModal").classList.remove("hidden");document.getElementById("pointNameInput").value=name;document.getElementById("pointAreaInput").value=area;document.getElementById("pointForm").onsubmit=async e=>{e.preventDefault();await db.collection("points").doc(id).update({name:document.getElementById("pointNameInput").value.trim(),area:document.getElementById("pointAreaInput").value});closeModal("pointModal")}};
+    // Edit and mark executed for orders and users/products similarly...
+    function openEditOrder(id){alert("Επεξεργασία παραγγελίας: "+id);}
+    function markExecuted(id){if(confirm("Σήμανση ως εκτελεσμένη;")){ /* update flag */ }}
   </script>
 </body>
 </html>
