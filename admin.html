@@ -102,8 +102,6 @@
     </main>
   </div>
 
-  <!-- Modals -->
-
   <!-- User Modal -->
   <div id="userModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center">
     <div class="bg-white rounded-xl p-6 shadow-lg w-full max-w-md">
@@ -196,15 +194,14 @@
     const db = firebase.firestore();
     let currentEditOrder = { pointId:null, orderId:null };
 
-    // Utility to close modals
-    function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
 
-    // Add an order-item row
     async function addOrderItemRow(item={productId:'',quantity:1}) {
       const cont = document.getElementById('orderItemsContainer');
       const row = document.createElement('div');
       row.className = 'flex gap-2 items-center';
-      // Product select
       const sel = document.createElement('select');
       sel.className = 'flex-1 px-2 py-1 border rounded';
       const prodSnap = await db.collection('products').orderBy('name').get();
@@ -214,12 +211,10 @@
         if(d.id===item.productId) o.selected=true;
         sel.append(o);
       });
-      // qty
       const qty = document.createElement('input');
       qty.type='number'; qty.min='1'; qty.value=item.quantity;
       qty.className='w-16 px-2 py-1 border rounded text-center';
       qty.oninput = updateOrderTotal;
-      // remove btn
       const rem = document.createElement('button');
       rem.type='button'; rem.textContent='✕';
       rem.className='px-2 py-1 bg-danger text-white rounded';
@@ -231,11 +226,10 @@
 
     function updateOrderTotal(){
       let tot=0;
-      document.querySelectorAll('#orderItemsContainer > div').forEach(r=> {
-        const q = parseInt(r.querySelector('input').value)||0;
-        const pid = r.querySelector('select').value;
-        const price = window.productsMap?.[pid]||0;
-        tot += price*q;
+      document.querySelectorAll('#orderItemsContainer > div').forEach(r=>{
+        const q=parseInt(r.querySelector('input').value)||0;
+        const pid=r.querySelector('select').value;
+        tot+=(window.productsMap?.[pid]||0)*q;
       });
       document.getElementById('orderTotal').textContent=`€${tot.toFixed(2)}`;
     }
@@ -249,7 +243,6 @@
       });
       document.getElementById('orderForm').reset();
       document.getElementById('orderItemsContainer').innerHTML='';
-      // load order
       const oRef=db.collection('points').doc(pointId).collection('orders').doc(orderId);
       oRef.get().then(d=>{
         const data=d.data()||{};
@@ -270,21 +263,18 @@
     async function saveOrder(){
       const {pointId,orderId}=currentEditOrder;
       const oRef=db.collection('points').doc(pointId).collection('orders').doc(orderId);
-      // compute total
       let tot=0;
       document.querySelectorAll('#orderItemsContainer > div').forEach(r=>{
         const q=parseInt(r.querySelector('input').value)||0;
         const pid=r.querySelector('select').value;
-        tot+= (window.productsMap?.[pid]||0)*q;
+        tot+=(window.productsMap?.[pid]||0)*q;
       });
-      // update
       const dt=document.getElementById('orderDateTime').value;
-      const timestamp = dt
+      const timestamp=dt
         ? firebase.firestore.Timestamp.fromDate(new Date(dt))
         : firebase.firestore.FieldValue.serverTimestamp();
       const remarks=document.getElementById('orderRemarks').value.trim();
       await oRef.update({timestamp,remarks,total:tot});
-      // replace items
       const snap=await oRef.collection('items').get();
       const batch=db.batch();
       snap.forEach(d=>batch.delete(d.ref));
@@ -303,14 +293,13 @@
       });
       await batch.commit();
       closeModal('orderModal');
-      // onSnapshot θα ανανεώσει αυτόματα
     }
 
     function deleteOrder(pointId,orderId,btn){
       if(!confirm('Διαγραφή παραγγελίας;'))return;
       db.collection('points').doc(pointId)
         .collection('orders').doc(orderId).delete()
-        .then(()=> btn.closest('tr').remove() );
+        .then(()=>btn.closest('tr').remove());
     }
 
     function markExecuted(id,btn){
@@ -320,9 +309,7 @@
       btn.remove();
     }
 
-    // --- Document Ready ---
     document.addEventListener('DOMContentLoaded',()=>{
-      // Firebase productsMap
       window.productsMap={};
       db.collection('products').get().then(s=>{
         s.docs.forEach(d=>window.productsMap[d.id]=d.data().price);
@@ -347,7 +334,6 @@
 
       logoutBtn.addEventListener('click',()=>location.reload());
 
-      // tabs
       document.querySelectorAll('[data-tab]').forEach(li=>{
         li.addEventListener('click',()=>{
           document.querySelectorAll('.tab-content').forEach(s=>s.classList.add('hidden'));
@@ -356,120 +342,78 @@
       });
     });
 
-    // initAdmin: attach onSnapshot listeners
     function initAdmin(){
-      // USERS
+      // Users
       const uc=document.getElementById('usersContainer');
-      uc.innerHTML='';
-      db.collection('users').orderBy('name').onSnapshot(s=>{
-        uc.innerHTML='';
-        s.docs.forEach(d=> uc.appendChild(cardUser(d)));
+      db.collection('users').orderBy('name').onSnapshot(s=> {
+        uc.innerHTML=''; s.docs.forEach(d=>{
+          const div=document.createElement('div');
+          const u=d.data();
+          div.className='bg-white p-4 rounded shadow relative';
+          div.innerHTML=`<h4 class="font-semibold">${u.name}</h4><p class="text-sm">${u.username}</p>
+            <button onclick="if(confirm('Διαγραφή;'))db.collection('users').doc('${d.id}').delete()"
+              class="absolute top-2 right-2 text-red-600">🗑️</button>`;
+          uc.append(div);
+        });
       });
       document.getElementById('addUserBtn').onclick=()=>document.getElementById('userModal').classList.remove('hidden');
-      document.getElementById('userForm').onsubmit=async e=>{
-        e.preventDefault();
-        await db.collection('users').add({
-          name:document.getElementById('userName').value.trim(),
-          username:document.getElementById('userUsername').value.trim(),
-          role:'Χρήστης',
-          password:document.getElementById('userPass').value
-        });
-        closeModal('userModal');
-      };
 
-      // PRODUCTS
+      // Products
       const pc=document.getElementById('productsContainer');
-      pc.innerHTML='';
-      db.collection('products').orderBy('name').onSnapshot(s=>{
-        pc.innerHTML='';
-        s.docs.forEach(d=> pc.appendChild(cardProduct(d)));
+      db.collection('products').orderBy('name').onSnapshot(s=> {
+        pc.innerHTML=''; s.docs.forEach(d=>{
+          const p=d.data();
+          const div=document.createElement('div');
+          div.className='bg-white p-4 rounded shadow relative';
+          div.innerHTML=`<h4 class="font-semibold">${p.name}</h4><p>€${p.price.toFixed(2)}</p>
+            <button onclick="if(confirm('Διαγραφή;'))db.collection('products').doc('${d.id}').delete()"
+              class="absolute top-2 right-2 text-red-600">🗑️</button>`;
+          pc.append(div);
+        });
       });
       document.getElementById('addProductBtn').onclick=()=>document.getElementById('productModal').classList.remove('hidden');
-      document.getElementById('productForm').onsubmit=async e=>{
-        e.preventDefault();
-        await db.collection('products').add({
-          name:document.getElementById('productNameInput').value.trim(),
-          price:parseFloat(document.getElementById('productPriceInput').value)
-        });
-        closeModal('productModal');
-      };
 
-      // POINTS
+      // Points
       const ptc=document.getElementById('pointsContainer');
-      ptc.innerHTML='';
-      db.collection('points').orderBy('timestamp','desc').onSnapshot(s=>{
-        ptc.innerHTML='';
-        s.docs.forEach(d=> ptc.appendChild(cardPoint(d)));
+      db.collection('points').orderBy('timestamp','desc').onSnapshot(s=> {
+        ptc.innerHTML=''; s.docs.forEach(d=>{
+          const p=d.data();
+          const div=document.createElement('div');
+          div.className='bg-white p-4 rounded shadow relative';
+          div.innerHTML=`<h4 class="font-semibold">${p.name}</h4><p class="text-sm">${p.area}</p>
+            <button onclick="openEditPoint('${d.id}')" class="absolute top-2 right-8 text-yellow-600">✏️</button>
+            <button onclick="if(confirm('Διαγραφή;'))db.collection('points').doc('${d.id}').delete()"
+              class="absolute top-2 right-2 text-red-600">🗑️</button>`;
+          ptc.append(div);
+        });
       });
 
-      // ORDERS
+      // Orders
       const otc=document.getElementById('ordersTable');
       db.collectionGroup('orders').orderBy('timestamp','desc').onSnapshot(async s=>{
         otc.innerHTML='';
         for(const d of s.docs){
-          const pd = await d.ref.parent.parent.get();
-          const pname = pd.exists?pd.data().name:pd.id;
-          otc.appendChild(rowOrder(d,pname));
+          const data=d.data();
+          const parent=d.ref.parent.parent;
+          const pd=await parent.get();
+          const name=pd.exists?pd.data().name:parent.id;
+          const tr=document.createElement('tr');
+          tr.innerHTML=`<td class="border px-2 py-1">${name}</td>
+            <td class="border px-2 py-1">${(data.total||0).toFixed(2)}</td>
+            <td class="border px-2 py-1">${new Date(data.timestamp.toDate()).toLocaleString()}</td>
+            <td class="border px-2 py-1">
+              <button onclick="deleteOrder('${parent.id}','${d.id}',this)" class="text-red-600">🗑️</button>
+            </td>
+            <td class="border px-2 py-1">
+              <button onclick="openEditOrder('${parent.id}','${d.id}')" class="text-yellow-600">✏️</button>
+            </td>
+            <td class="border px-2 py-1">
+              <button onclick="markExecuted('${d.id}',this)" class="text-green-600">✔️</button>
+            </td>`;
+          otc.append(tr);
         }
       });
       document.getElementById('refreshOrdersBtn').onclick=()=>initAdmin();
-    }
-
-    // Card generators
-    function cardUser(d){
-      const div=document.createElement('div');
-      const u=d.data();
-      div.className='bg-white p-4 rounded-lg shadow relative';
-      div.innerHTML=`
-        <h4 class="font-semibold">${u.name}</h4>
-        <p class="text-sm text-gray-600">${u.username}</p>
-        <div class="absolute top-2 right-2 space-x-1">
-          <button onclick="if(confirm('Διαγραφή χρήστη;'))db.collection('users').doc('${d.id}').delete()" class="text-red-600">🗑️</button>
-        </div>`;
-      return div;
-    }
-    function cardProduct(d){
-      const div=document.createElement('div');
-      const p=d.data();
-      div.className='bg-white p-4 rounded-lg shadow relative';
-      div.innerHTML=`
-        <h4 class="font-semibold">${p.name}</h4>
-        <p class="text-gray-700">€${p.price.toFixed(2)}</p>
-        <div class="absolute top-2 right-2 space-x-1">
-          <button onclick="if(confirm('Διαγραφή προϊόντος;'))db.collection('products').doc('${d.id}').delete()" class="text-red-600">🗑️</button>
-        </div>`;
-      return div;
-    }
-    function cardPoint(d){
-      const div=document.createElement('div');
-      const p=d.data();
-      div.className='bg-white p-4 rounded-lg shadow relative';
-      div.innerHTML=`
-        <h4 class="font-semibold">${p.name}</h4>
-        <p class="text-sm text-gray-600">${p.area}</p>
-        <div class="absolute top-2 right-2 space-x-1">
-          <button onclick="openEditPoint('${d.id}')" class="text-yellow-600">✏️</button>
-          <button onclick="if(confirm('Διαγραφή σημείου;'))db.collection('points').doc('${d.id}').delete()" class="text-red-600">🗑️</button>
-        </div>`;
-      return div;
-    }
-    function rowOrder(d, pname){
-      const data=d.data();
-      const tr=document.createElement('tr');
-      tr.innerHTML=`
-        <td class="border px-2 py-1">${pname}</td>
-        <td class="border px-2 py-1">${data.total?.toFixed(2)||'0.00'}</td>
-        <td class="border px-2 py-1">${new Date(data.timestamp.toDate()).toLocaleString()}</td>
-        <td class="border px-2 py-1">
-          <button onclick="deleteOrder('${d.ref.parent.parent.id}','${d.id}',this)" class="text-red-600">🗑️</button>
-        </td>
-        <td class="border px-2 py-1">
-          <button onclick="openEditOrder('${d.ref.parent.parent.id}','${d.id}')" class="text-yellow-600">✏️</button>
-        </td>
-        <td class="border px-2 py-1">
-          <button onclick="markExecuted('${d.id}',this)" class="text-green-600">✔️</button>
-        </td>`;
-      return tr;
     }
 
     function openEditPoint(id){
