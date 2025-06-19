@@ -385,7 +385,7 @@
         <td class="px-4 py-2">${pointName}</td>
         <td class="px-4 py-2">${o.total.toFixed(2)}</td>
         <td class="px-4 py-2">${new Date(o.timestamp.toDate()).toLocaleString()}</td>
-        <td class="px-4 py-2"><button onclick="deleteOrder('${o.id}')" class="bg-danger text-white px-2 py-1 rounded">🗑️</button></td>
+        <td class=\"px-4 py-2\"><button onclick=\"deleteOrder('${o.id}','${o.id}', this)\" class="bg-danger text-white px-2 py-1 rounded">🗑️</button></td>
         <td class="px-4 py-2"><button onclick="openEditOrder('${o.pointId}','${o.id}')" class="bg-accent text-white px-2 py-1 rounded">✎</button></td>
         <td class="px-4 py-2"><button onclick="markExecuted('${o.id}', this)" class="bg-success text-white px-2 py-1 rounded">✔️</button></td>`;
       return tr;
@@ -472,10 +472,20 @@
         db.collection('points').doc(id).delete();
       }
     }
-    function deleteOrder(id) {
+    
+    function deleteOrder(pointId, orderId, btn) {
       if (confirm('Διαγραφή παραγγελίας;')) {
-        db.collectionGroup('orders').where(firebase.firestore.FieldPath.documentId(),'==',id).get()
-          .then(snap => { if (snap.docs[0]) snap.docs[0].ref.delete(); });
+        db.collection('points').doc(pointId)
+          .collection('orders').doc(orderId)
+          .delete()
+          .then(() => {
+            // Remove row from table
+            const tr = btn.closest('tr');
+            if (tr) tr.remove();
+          });
+      }
+    };
+
       }
     }
     function openEditUser(id) {
