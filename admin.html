@@ -387,7 +387,7 @@
         <td class="px-4 py-2">${new Date(o.timestamp.toDate()).toLocaleString()}</td>
         <td class="px-4 py-2"><button onclick="deleteOrder('${o.id}')" class="bg-danger text-white px-2 py-1 rounded">🗑️</button></td>
         <td class="px-4 py-2"><button onclick="openEditOrder('${o.pointId}','${o.id}')" class="bg-accent text-white px-2 py-1 rounded">✎</button></td>
-        <td class="px-4 py-2"><button onclick="markExecuted('${o.id}')" class="bg-success text-white px-2 py-1 rounded">✔️</button></td>`;
+        <td class="px-4 py-2"><button onclick="markExecuted('${o.id}', this)" class="bg-success text-white px-2 py-1 rounded">✔️</button></td>`;
       return tr;
     }
 
@@ -497,9 +497,12 @@
         closeModal('pointModal');
       };
     }
-    function markExecuted(id) {
+    function markExecuted(id, btn) {
       if (confirm('Σήμανση ως εκτελεσμένη;')) {
-        // Προαιρετικά: ενημέρωση εκτελέσθηκε flag
+        // UI αλλαγή
+        const tr = btn.closest('tr');
+        tr.classList.add('bg-success','bg-opacity-20');
+        btn.remove();
       }
     }
   </script>
