@@ -253,13 +253,31 @@
         });
       });
     }
-async function saveOrder() {
+
+    async function saveOrder() {
       const { pointId, orderId } = currentEditOrder;
       const orderRef = db.collection('points').doc(pointId).collection('orders').doc(orderId);
+
+      // Compute updated total
+      let newTotal = 0;
+      document.querySelectorAll('#orderItemsContainer > div').forEach(row => {
+        const qty = parseInt(row.querySelector('input').value) || 0;
+        const prodId = row.querySelector('select').value;
+        const price = window.productsMap?.[prodId] || 0;
+        newTotal += price * qty;
+      });
+
+      // Update timestamp and remarks
       const dt = document.getElementById('orderDateTime').value;
-      const timestamp = dt ? firebase.firestore.Timestamp.fromDate(new Date(dt)) : firebase.firestore.FieldValue.serverTimestamp();
+      const timestamp = dt
+        ? firebase.firestore.Timestamp.fromDate(new Date(dt))
+        : firebase.firestore.FieldValue.serverTimestamp();
       const remarks = document.getElementById('orderRemarks').value.trim();
-      await orderRef.update({ timestamp, remarks });
+
+      // Update order doc with new total
+      await orderRef.update({ timestamp, remarks, total: newTotal });
+
+      // Replace items subcollection
       const itemsSnap = await orderRef.collection('items').get();
       const batch = db.batch();
       itemsSnap.forEach(doc => batch.delete(doc.ref));
@@ -277,8 +295,11 @@ async function saveOrder() {
         }
       });
       await batch.commit();
+
       closeModal('orderModal');
+      initAdmin();
     }
+
 
     document.addEventListener('DOMContentLoaded', () => {
       window.productsMap = {};
